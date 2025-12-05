@@ -1,6 +1,7 @@
 // =============================================================
 // INDICONS – Sistema completo + SQLite + LP Premium + Painel Comercial
 // + Histórico de status + Layout profissional com tabelas
+// + Produtos AUTOS (códigos 8749–8730) com botão "Copiar link"
 // =============================================================
 const express = require("express");
 const session = require("express-session");
@@ -45,7 +46,12 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS produtos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT NOT NULL,
-      descricao TEXT
+      descricao TEXT,
+      codigo TEXT,
+      credito TEXT,
+      prazo TEXT,
+      primeira_parcela TEXT,
+      demais_parcelas TEXT
     )
   `);
 
@@ -90,19 +96,39 @@ db.serialize(() => {
     )
   `);
 
+  // Seed de produtos AUTOS (apenas se tabela estiver vazia)
   db.get("SELECT COUNT(*) AS c FROM produtos", (err, row) => {
     if (row && row.c === 0) {
-      db.run(
-        `INSERT INTO produtos (nome, descricao) VALUES (?, ?)`,
-        [
-          "Consórcio Imobiliário",
-          "Crédito para imóveis residenciais e comerciais",
-        ]
-      );
-      db.run(
-        `INSERT INTO produtos (nome, descricao) VALUES (?, ?)`,
-        ["Consórcio Automóvel", "Crédito para veículos leves e pesados"]
-      );
+      const stmt = db.prepare(`
+        INSERT INTO produtos
+          (nome, descricao, codigo, credito, prazo, primeira_parcela, demais_parcelas)
+        VALUES (?,?,?,?,?,?,?)
+      `);
+
+      const autos = [
+        ["Autos", "Plano Autos 8749", "8749", "R$ 180.000,00", "100 meses", "R$ 5.706,00", "R$ 2.106,00"],
+        ["Autos", "Plano Autos 8748", "8748", "R$ 170.000,00", "101 meses", "R$ 5.389,00", "R$ 1.989,00"],
+        ["Autos", "Plano Autos 8747", "8747", "R$ 160.000,00", "102 meses", "R$ 5.072,00", "R$ 1.872,00"],
+        ["Autos", "Plano Autos 8746", "8746", "R$ 150.000,00", "103 meses", "R$ 4.755,00", "R$ 1.755,00"],
+        ["Autos", "Plano Autos 8745", "8745", "R$ 140.000,00", "104 meses", "R$ 4.438,00", "R$ 1.638,00"],
+        ["Autos", "Plano Autos 8744", "8744", "R$ 130.000,00", "105 meses", "R$ 4.121,00", "R$ 1.521,00"],
+        ["Autos", "Plano Autos 8743", "8743", "R$ 120.000,00", "106 meses", "R$ 3.804,00", "R$ 1.404,00"],
+        ["Autos", "Plano Autos 8742", "8742", "R$ 110.000,00", "107 meses", "R$ 3.487,00", "R$ 1.287,00"],
+        ["Autos", "Plano Autos 8741", "8741", "R$ 100.000,00", "108 meses", "R$ 3.170,00", "R$ 1.170,00"],
+        ["Autos", "Plano Autos 8739", "8739", "R$ 90.000,00", "109 meses", "R$ 2.853,00", "R$ 1.053,00"],
+        ["Autos", "Plano Autos 8738", "8738", "R$ 85.000,00", "110 meses", "R$ 2.694,50", "R$ 994,50"],
+        ["Autos", "Plano Autos 8737", "8737", "R$ 80.000,00", "111 meses", "R$ 2.536,00", "R$ 936,00"],
+        ["Autos", "Plano Autos 8736", "8736", "R$ 75.000,00", "112 meses", "R$ 2.377,50", "R$ 877,50"],
+        ["Autos", "Plano Autos 8735", "8735", "R$ 70.000,00", "113 meses", "R$ 2.219,00", "R$ 819,00"],
+        ["Autos", "Plano Autos 8734", "8734", "R$ 65.000,00", "114 meses", "R$ 2.060,50", "R$ 760,50"],
+        ["Autos", "Plano Autos 8733", "8733", "R$ 60.000,00", "115 meses", "R$ 1.902,00", "R$ 702,00"],
+        ["Autos", "Plano Autos 8732", "8732", "R$ 55.000,00", "116 meses", "R$ 1.743,50", "R$ 643,50"],
+        ["Autos", "Plano Autos 8731", "8731", "R$ 50.000,00", "117 meses", "R$ 1.585,00", "R$ 585,00"],
+        ["Autos", "Plano Autos 8730", "8730", "R$ 45.000,00", "118 meses", "R$ 1.426,50", "R$ 526,50"],
+      ];
+
+      autos.forEach((p) => stmt.run(p));
+      stmt.finalize();
     }
   });
 });
@@ -360,7 +386,7 @@ app.get("/", (req, res) => {
 });
 
 // =============================================================
-// LANDING PAGE PREMIUM /lp (mantida, já é bem didática)
+// LANDING PAGE PREMIUM /lp
 // =============================================================
 app.get("/lp", (req, res) => {
   const content = `
@@ -818,7 +844,7 @@ app.post("/indicador/login", async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – DASHBOARD COMERCIAL + GRÁFICO (tabelas)
+// INDICADOR – DASHBOARD COMERCIAL + GRÁFICO
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -996,58 +1022,117 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – LINKS
+// INDICADOR – LINKS (TABELA + BOTÃO COPIAR)
 // =============================================================
 app.get("/indicador/links", requireIndicador, async (req, res) => {
-  const produtos = await dbAll("SELECT * FROM produtos");
+  const produtos = await dbAll("SELECT * FROM produtos ORDER BY nome, codigo");
   const base = process.env.BASE_URL || "https://indicons.onrender.com";
+
+  const content = `
+    <div class="card">
+      <h2>Produtos de consórcio para indicação</h2>
+      <p class="muted">
+        Use a tabela abaixo para gerar e copiar os links de indicação. Cada linha representa um plano de consórcio.
+        Clique em <strong>Copiar link</strong> ao lado do plano que deseja enviar para seu cliente.
+      </p>
+    </div>
+
+    <div class="card">
+      ${
+        produtos.length === 0
+          ? `<p class="muted">Nenhum produto cadastrado. Cadastre os planos na tabela <code>produtos</code>.</p>`
+          : `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Código</th>
+              <th>Crédito</th>
+              <th>Prazo</th>
+              <th>1ª parcela</th>
+              <th>Demais parcelas</th>
+              <th>Link de indicação</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${produtos
+              .map((p) => {
+                const link = `${base}/consorcio?i=${req.session.indicadorId}&p=${p.id}`;
+                return `
+                  <tr>
+                    <td>${p.nome}</td>
+                    <td>${p.codigo || "-"}</td>
+                    <td>${p.credito || "-"}</td>
+                    <td>${p.prazo || "-"}</td>
+                    <td>${p.primeira_parcela || "-"}</td>
+                    <td>${p.demais_parcelas || "-"}</td>
+                    <td style="max-width:260px; font-size:11px; word-break:break-all;">
+                      <code>${link}</code>
+                    </td>
+                    <td style="white-space:nowrap;">
+                      <button type="button" class="btn btn-secondary" onclick="copyLink('${link.replace(/'/g, "\\'")}')">
+                        Copiar link
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              })
+              .join("")}
+          </tbody>
+        </table>
+      </div>`
+      }
+    </div>
+
+    <script>
+      function copyLink(text) {
+        if (!navigator.clipboard) {
+          const tempInput = document.createElement('input');
+          tempInput.value = text;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+          alert('Link copiado.');
+          return;
+        }
+
+        navigator.clipboard.writeText(text)
+          .then(function() {
+            const msg = document.createElement('div');
+            msg.textContent = 'Link copiado!';
+            msg.style.position = 'fixed';
+            msg.style.bottom = '16px';
+            msg.style.right = '16px';
+            msg.style.background = '#0ea5e9';
+            msg.style.color = 'white';
+            msg.style.padding = '8px 14px';
+            msg.style.borderRadius = '999px';
+            msg.style.fontSize = '13px';
+            msg.style.boxShadow = '0 4px 12px rgba(15,23,42,0.25)';
+            document.body.appendChild(msg);
+            setTimeout(function(){ document.body.removeChild(msg); }, 1800);
+          })
+          .catch(function() {
+            alert('Não foi possível copiar o link. Copie manualmente.');
+          });
+      }
+    </script>
+  `;
 
   res.send(
     layout(
       "Links Indicador",
-      `
-      <div class="card">
-        <h2>Meus links de indicação</h2>
-        <p class="muted">Copie e envie os links para seus contatos por WhatsApp, redes sociais ou e-mail.</p>
-      </div>
-      <div class="card">
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>Descrição</th>
-                <th>Link de indicação</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${produtos
-                .map((p) => {
-                  const link = `${base}/consorcio?i=${req.session.indicadorId}&p=${p.id}`;
-                  return `
-                    <tr>
-                      <td>${p.nome}</td>
-                      <td>${p.descricao}</td>
-                      <td>
-                        <code style="font-size:11px;">${link}</code><br>
-                        <span class="muted" style="font-size:11px;">Compartilhe este endereço com seus clientes.</span>
-                      </td>
-                    </tr>
-                  `;
-                })
-                .join("")}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      `,
+      content,
       `Indicador: ${req.session.indicadorNome} | <a href="/logout">Sair</a>`
     )
   );
 });
 
 // =============================================================
-// CLIENTE – PRÉ-ADESÃO (mais didático)
+// CLIENTE – PRÉ-ADESÃO
 // =============================================================
 app.get("/consorcio", async (req, res) => {
   const { i, p } = req.query;
@@ -1069,8 +1154,12 @@ app.get("/consorcio", async (req, res) => {
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
           <div>
-            <h2>${prod.nome}</h2>
-            <p class="muted">${prod.descricao}</p>
+            <h2>${prod.nome} – Cód. ${prod.codigo || ""}</h2>
+            <p class="muted">${prod.descricao || ""}</p>
+            <p class="muted">
+              Crédito: <strong>${prod.credito || "-"}</strong> · Prazo: <strong>${prod.prazo || "-"}</strong><br>
+              1ª parcela: <strong>${prod.primeira_parcela || "-"}</strong> · Demais parcelas: <strong>${prod.demais_parcelas || "-"}</strong>
+            </p>
           </div>
           <div class="tag-small">
             Indicação de ${ind.nome}
@@ -1295,7 +1384,7 @@ app.get("/parceiro/pre-vendas", requireParceiro, async (req, res) => {
   );
 });
 
-// Atualização de status com histórico e proteção comissão duplicada
+// Atualização de status com histórico e proteção de comissão duplicada
 app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) => {
   const { status, valor_venda, observacao } = req.body;
   const id = req.params.id;
