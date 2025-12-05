@@ -1,8 +1,6 @@
 // =============================================================
-// INDICONS – Sistema completo + SQLite + Painel Comercial
-// + Histórico de status + Layout profissional com tabelas
-// + Produtos AUTOS (códigos 8749–8730) com botão "Copiar link"
-// (sem landing page /lp)
+// INDICONS – Sistema completo + SQLite + LP + Painel Comercial
+// + Tabela de produtos com botão "Copiar link"
 // =============================================================
 const express = require("express");
 const session = require("express-session");
@@ -17,14 +15,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "indicons-secret",
+    secret: "indicons-secret",
     resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax",
-      // secure: true // habilitar quando estiver usando HTTPS
-    },
+    saveUninitialized: true,
   })
 );
 
@@ -49,10 +42,7 @@ db.serialize(() => {
       nome TEXT NOT NULL,
       descricao TEXT,
       codigo TEXT,
-      credito TEXT,
-      prazo TEXT,
-      primeira_parcela TEXT,
-      demais_parcelas TEXT
+      credito_referencia TEXT
     )
   `);
 
@@ -83,53 +73,17 @@ db.serialize(() => {
     )
   `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS historico_pre_vendas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      pre_venda_id INTEGER NOT NULL,
-      usuario_tipo TEXT NOT NULL,
-      usuario_nome TEXT,
-      status_anterior TEXT,
-      status_novo TEXT,
-      observacao TEXT,
-      criado_em DATETIME DEFAULT (datetime('now','localtime')),
-      FOREIGN KEY(pre_venda_id) REFERENCES pre_vendas(id)
-    )
-  `);
-
-  // Seed de produtos AUTOS (apenas se tabela estiver vazia)
+  // Produtos iniciais (exemplo genérico). Você pode apagar e cadastrar só os planos da tabela depois.
   db.get("SELECT COUNT(*) AS c FROM produtos", (err, row) => {
     if (row && row.c === 0) {
-      const stmt = db.prepare(`
-        INSERT INTO produtos
-          (nome, descricao, codigo, credito, prazo, primeira_parcela, demais_parcelas)
-        VALUES (?,?,?,?,?,?,?)
-      `);
-
-      const autos = [
-        ["Autos", "Plano Autos 8749", "8749", "R$ 180.000,00", "100 meses", "R$ 5.706,00", "R$ 2.106,00"],
-        ["Autos", "Plano Autos 8748", "8748", "R$ 170.000,00", "101 meses", "R$ 5.389,00", "R$ 1.989,00"],
-        ["Autos", "Plano Autos 8747", "8747", "R$ 160.000,00", "102 meses", "R$ 5.072,00", "R$ 1.872,00"],
-        ["Autos", "Plano Autos 8746", "8746", "R$ 150.000,00", "103 meses", "R$ 4.755,00", "R$ 1.755,00"],
-        ["Autos", "Plano Autos 8745", "8745", "R$ 140.000,00", "104 meses", "R$ 4.438,00", "R$ 1.638,00"],
-        ["Autos", "Plano Autos 8744", "8744", "R$ 130.000,00", "105 meses", "R$ 4.121,00", "R$ 1.521,00"],
-        ["Autos", "Plano Autos 8743", "8743", "R$ 120.000,00", "106 meses", "R$ 3.804,00", "R$ 1.404,00"],
-        ["Autos", "Plano Autos 8742", "8742", "R$ 110.000,00", "107 meses", "R$ 3.487,00", "R$ 1.287,00"],
-        ["Autos", "Plano Autos 8741", "8741", "R$ 100.000,00", "108 meses", "R$ 3.170,00", "R$ 1.170,00"],
-        ["Autos", "Plano Autos 8739", "8739", "R$ 90.000,00", "109 meses", "R$ 2.853,00", "R$ 1.053,00"],
-        ["Autos", "Plano Autos 8738", "8738", "R$ 85.000,00", "110 meses", "R$ 2.694,50", "R$ 994,50"],
-        ["Autos", "Plano Autos 8737", "8737", "R$ 80.000,00", "111 meses", "R$ 2.536,00", "R$ 936,00"],
-        ["Autos", "Plano Autos 8736", "8736", "R$ 75.000,00", "112 meses", "R$ 2.377,50", "R$ 877,50"],
-        ["Autos", "Plano Autos 8735", "8735", "R$ 70.000,00", "113 meses", "R$ 2.219,00", "R$ 819,00"],
-        ["Autos", "Plano Autos 8734", "8734", "R$ 65.000,00", "114 meses", "R$ 2.060,50", "R$ 760,50"],
-        ["Autos", "Plano Autos 8733", "8733", "R$ 60.000,00", "115 meses", "R$ 1.902,00", "R$ 702,00"],
-        ["Autos", "Plano Autos 8732", "8732", "R$ 55.000,00", "116 meses", "R$ 1.743,50", "R$ 643,50"],
-        ["Autos", "Plano Autos 8731", "8731", "R$ 50.000,00", "117 meses", "R$ 1.585,00", "R$ 585,00"],
-        ["Autos", "Plano Autos 8730", "8730", "R$ 45.000,00", "118 meses", "R$ 1.426,50", "R$ 526,50"],
-      ];
-
-      autos.forEach((p) => stmt.run(p));
-      stmt.finalize();
+      db.run(
+        `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
+        ["Consórcio Imobiliário", "Crédito para imóveis residenciais e comerciais", null, null]
+      );
+      db.run(
+        `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
+        ["Consórcio Automóvel", "Crédito para veículos leves e pesados", null, null]
+      );
     }
   });
 });
@@ -177,7 +131,7 @@ function layout(title, content, userNav = "") {
     }
 
     .header-inner {
-      max-width:1200px;
+      max-width:1100px;
       margin:auto;
       padding:10px 18px;
       display:flex;
@@ -203,20 +157,20 @@ function layout(title, content, userNav = "") {
     }
     nav a:hover { color:#0ea5e9; }
 
-    main { max-width:1200px; margin:auto; padding:18px; }
+    main { max-width:1100px; margin:auto; padding:18px; }
 
     .card {
       background:#ffffff;
       border:1px solid #cbd5e1;
       border-radius:14px;
-      padding:18px 18px 20px 18px;
+      padding:22px;
       margin-bottom:18px;
-      box-shadow:0 3px 10px rgba(15,23,42,0.06);
+      box-shadow:0 4px 12px rgba(0,0,0,0.05);
     }
 
     .btn {
       background:#0ea5e9; color:white;
-      padding:9px 16px; border-radius:999px;
+      padding:10px 18px; border-radius:999px;
       border:none; cursor:pointer; font-weight:600; font-size:14px;
       text-decoration:none; display:inline-block;
     }
@@ -241,21 +195,6 @@ function layout(title, content, userNav = "") {
     form label { font-weight:600; margin-top:10px; display:block; }
 
     .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-
-    .dashboard-grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:14px;
-    }
-    .stat-card {
-      background:#f8fafc;
-      border-radius:12px;
-      padding:12px 14px;
-      border:1px solid #e2e8f0;
-    }
-    .stat-label { font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#94a3b8; }
-    .stat-value { font-size:22px; font-weight:700; margin-top:4px; }
-    .stat-description { font-size:12px; color:#64748b; margin-top:3px; }
 
     .table-wrapper {
       overflow-x:auto;
@@ -286,56 +225,8 @@ function layout(title, content, userNav = "") {
       background:#f9fafb;
     }
 
-    .status-badge {
-      display:inline-block;
-      padding:2px 8px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:600;
-    }
-    .status-PRE_ADESAO { background:#e5e7eb; color:#4b5563; }
-    .status-EM_ATENDIMENTO { background:#dbeafe; color:#1d4ed8; }
-    .status-BOLETO_EMITIDO { background:#fef3c7; color:#b45309; }
-    .status-APROVADA { background:#dcfce7; color:#15803d; }
-    .status-NAO_FECHOU { background:#fee2e2; color:#b91c1c; }
-
-    .hist-meta { color:#9ca3af; font-size:11px; }
-
-    .tag-small {
-      display:inline-flex;
-      align-items:center;
-      padding:2px 6px;
-      border-radius:999px;
-      background:#eff6ff;
-      color:#1d4ed8;
-      font-size:11px;
-      font-weight:500;
-    }
-
-    .form-steps {
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-bottom:10px;
-      font-size:12px;
-      color:#64748b;
-    }
-    .form-step {
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-    .form-step-number {
-      width:18px; height:18px;
-      border-radius:999px;
-      background:#e0f2fe;
-      color:#0369a1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:10px;
-      font-weight:700;
-    }
+    .pill { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px;
+            border:1px solid #cbd5e1; font-size:11px; color:#64748b; }
   </style>
 </head>
 
@@ -349,7 +240,7 @@ function layout(title, content, userNav = "") {
 
     <nav>
       <a href="/">Home</a>
-      <a href="/indicador/registrar">Seja Indicador</a>
+      <a href="/lp">Seja Indicador</a>
       <a href="/indicador/login">Indicador</a>
       <a href="/parceiro/login">Parceiro</a>
       <a href="/admin/login">Admin</a>
@@ -366,7 +257,7 @@ function layout(title, content, userNav = "") {
 }
 
 // =============================================================
-// HOME SIMPLES
+// HOME SIMPLES (tela de boas-vindas)
 // =============================================================
 app.get("/", (req, res) => {
   res.send(
@@ -375,12 +266,378 @@ app.get("/", (req, res) => {
       `
       <div class="card">
         <h1>Bem-vindo ao INDICONS</h1>
-        <p class="muted">Plataforma de indicação de consórcios com painel para indicador, parceiro e admin.</p>
+        <p class="muted">
+          Plataforma de indicação de consórcios com painel para indicador, parceiro e admin.
+        </p>
         <a class="btn" href="/indicador/registrar">Quero ser indicador</a>
       </div>
       `
     )
   );
+});
+
+// =============================================================
+// LANDING PAGE PREMIUM /lp (versão original)
+// =============================================================
+app.get("/lp", (req, res) => {
+  const content = `
+  <style>
+    .lp-hero {
+      background: linear-gradient(135deg, #e0f2fe, #f9fafb);
+      border-radius: 18px;
+      padding: 40px 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
+      gap: 24px;
+      align-items: center;
+      border: 1px solid #bfdbfe;
+      box-shadow: 0 10px 40px rgba(15,23,42,0.12);
+      animation: lpFadeIn 0.7s ease-out;
+    }
+    @media (max-width: 768px) {
+      .lp-hero { grid-template-columns: 1fr; }
+    }
+    .lp-hero-title {
+      font-size: 32px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 10px;
+    }
+    .lp-hero-sub {
+      font-size: 16px;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+    .lp-hero-badge {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:#e0f2fe;
+      color:#0369a1;
+      font-size:12px;
+      font-weight:600;
+      margin-bottom:10px;
+    }
+    .lp-hero-img-wrapper {
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      background:#0f172a;
+      animation: lpSlideUp 0.8s ease-out;
+    }
+    .lp-hero-img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      max-height: 260px;
+      filter: saturate(1.1);
+      transform: scale(1.02);
+    }
+    .lp-hero-tag {
+      position:absolute;
+      bottom:10px;
+      left:10px;
+      background:rgba(15,23,42,0.9);
+      color:#e5e7eb;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+    }
+
+    .lp-cta-main {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background:#0ea5e9;
+      color:white;
+      padding:12px 22px;
+      border-radius:999px;
+      font-weight:700;
+      text-decoration:none;
+      font-size:15px;
+      box-shadow:0 10px 25px rgba(14,165,233,0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .lp-cta-main:hover {
+      transform: translateY(-1px);
+      background:#0369a1;
+      box-shadow:0 16px 32px rgba(15,23,42,0.45);
+    }
+    .lp-cta-note {
+      font-size: 13px;
+      color:#64748b;
+      margin-top:6px;
+    }
+
+    .lp-section {
+      background:#ffffff;
+      border-radius:18px;
+      padding:24px 20px;
+      margin-top:20px;
+      border:1px solid #e2e8f0;
+      box-shadow:0 8px 24px rgba(15,23,42,0.06);
+      animation: lpFadeIn 0.7s ease-out;
+    }
+    .lp-section h2 {
+      margin-top:0;
+      font-size:22px;
+      color:#0f172a;
+    }
+    .lp-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:16px;
+      margin-top:14px;
+    }
+    .lp-card {
+      background:#f8fafc;
+      border-radius:14px;
+      padding:14px 12px;
+      border:1px solid #e2e8f0;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .lp-card:hover {
+      transform: translateY(-3px);
+      box-shadow:0 12px 30px rgba(15,23,42,0.12);
+    }
+    .lp-card h3 {
+      margin-top:0;
+      font-size:16px;
+      color:#0f172a;
+      margin-bottom:6px;
+    }
+    .lp-card p {
+      margin:0;
+      font-size:14px;
+      color:#64748b;
+    }
+
+    .lp-table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:12px;
+      font-size:14px;
+    }
+    .lp-table th, .lp-table td {
+      border:1px solid #e2e8f0;
+      padding:8px;
+      text-align:center;
+    }
+    .lp-table th {
+      background:#eff6ff;
+      color:#1e293b;
+    }
+
+    .lp-testimonials {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:14px;
+      margin-top:14px;
+    }
+    .lp-testimonial {
+      border-radius:14px;
+      padding:14px;
+      background:#f9fafb;
+      border:1px solid #e2e8f0;
+      font-size:14px;
+      color:#475569;
+    }
+    .lp-testimonial-header {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .lp-testimonial-avatar {
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      object-fit:cover;
+    }
+    .lp-testimonial-name {
+      font-weight:600;
+    }
+    .lp-testimonial-role {
+      font-size:12px;
+      color:#9ca3af;
+    }
+
+    .lp-footer-cta { text-align:center; margin-top:10px; }
+
+    @keyframes lpFadeIn {
+      from { opacity:0; transform:translateY(6px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    @keyframes lpSlideUp {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+  </style>
+
+  <section class="lp-hero">
+    <div>
+      <div class="lp-hero-badge">🔑 Renda extra com indicação de consórcios</div>
+      <h1 class="lp-hero-title">
+        Ganhe até R$ 5.000 por mês<br>apenas indicando consórcios
+      </h1>
+      <p class="lp-hero-sub">
+        Você não precisa vender, negociar ou explicar o produto. Apenas envia um link.  
+        A equipe parceira faz o restante e você recebe <strong>5% de comissão</strong>
+        nas vendas aprovadas.
+      </p>
+      <a href="/indicador/registrar" class="lp-cta-main">
+        Quero ser Indicador agora
+      </a>
+      <div class="lp-cta-note">
+        Cadastro gratuito · Sem meta mínima · Sem necessidade de CNPJ
+      </div>
+    </div>
+
+    <div class="lp-hero-img-wrapper">
+      <img
+        class="lp-hero-img"
+        src="https://images.pexels.com/photos/1181555/pexels-photo-1181555.jpeg?auto=compress&cs=tinysrgb&w=800"
+        alt="Pessoa usando notebook para trabalhar com indicações"
+      />
+      <div class="lp-hero-tag">
+        Plataforma INDICONS em funcionamento real
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <h2>Por que trabalhar com indicação via INDICONS?</h2>
+    <div class="lp-grid">
+      <div class="lp-card">
+        <h3>5% de comissão real</h3>
+        <p>Venda de R$ 100.000 gera R$ 5.000 de comissão para você. Uma única venda já faz diferença.</p>
+      </div>
+      <div class="lp-card">
+        <h3>Você só indica</h3>
+        <p>O parceiro autorizado faz contato, explica o produto, tira dúvidas e fecha a venda.</p>
+      </div>
+      <div class="lp-card">
+        <h3>Links prontos para compartilhar</h3>
+        <p>Você gera links personalizados e envia por WhatsApp, redes sociais ou e-mail.</p>
+      </div>
+      <div class="lp-card">
+        <h3>Plataforma com registro de tudo</h3>
+        <p>Cada pré-adesão fica registrada com data, cliente, produto e indicador.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <h2>Como funciona na prática?</h2>
+    <div class="lp-grid">
+      <div class="lp-card"><h3>1. Cadastre-se</h3><p>Crie sua conta gratuita e acesse sua área de indicador.</p></div>
+      <div class="lp-card"><h3>2. Compartilhe seus links</h3><p>Envie para contatos, grupos e redes sociais.</p></div>
+      <div class="lp-card"><h3>3. Parceiro fecha a venda</h3><p>Ele registra no sistema da administradora.</p></div>
+      <div class="lp-card"><h3>4. Você recebe a comissão</h3><p>O sistema registra e calcula seus 5%.</p></div>
+    </div>
+
+    <h3 style="margin-top:24px;">Cenário realista de ganhos mensais</h3>
+    <p class="muted">Simulação simples apenas para ilustrar o potencial:</p>
+    <div style="max-width:480px; margin-top:10px;">
+      <canvas id="lpChart" height="180"></canvas>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <h2>Exemplos de ganhos por indicação</h2>
+    <table class="lp-table">
+      <thead>
+        <tr>
+          <th>Quantidade de vendas</th>
+          <th>Ticket médio</th>
+          <th>Comissão (5%) estimada</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>2 vendas / mês</td><td>R$ 80.000</td><td>R$ 8.000</td></tr>
+        <tr><td>4 vendas / mês</td><td>R$ 60.000</td><td>R$ 12.000</td></tr>
+        <tr><td>8 vendas / mês</td><td>R$ 50.000</td><td>R$ 20.000</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:8px;">Valores meramente ilustrativos.</p>
+  </section>
+
+  <section class="lp-section">
+    <h2>Depoimentos de indicadoras e indicadores</h2>
+    <div class="lp-testimonials">
+      <div class="lp-testimonial">
+        <div class="lp-testimonial-header">
+          <img class="lp-testimonial-avatar" src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Depoimento 1">
+          <div>
+            <div class="lp-testimonial-name">Carla, 32 anos</div>
+            <div class="lp-testimonial-role">Indicadora há 6 meses</div>
+          </div>
+        </div>
+        <p>"Eu só compartilho os links. O parceiro faz todo o atendimento e eu acompanho tudo no painel."</p>
+      </div>
+
+      <div class="lp-testimonial">
+        <div class="lp-testimonial-header">
+          <img class="lp-testimonial-avatar" src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Depoimento 2">
+          <div>
+            <div class="lp-testimonial-name">Marcos, 41 anos</div>
+            <div class="lp-testimonial-role">Autônomo</div>
+          </div>
+        </div>
+        <p>"Eu tinha muitos contatos, mas não vendia consórcio. Agora só indico e recebo comissão nas vendas."</p>
+      </div>
+
+      <div class="lp-testimonial">
+        <div class="lp-testimonial-header">
+          <img class="lp-testimonial-avatar" src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Depoimento 3">
+          <div>
+            <div class="lp-testimonial-name">Ana Paula, 27 anos</div>
+            <div class="lp-testimonial-role">Criadora de conteúdo</div>
+          </div>
+        </div>
+        <p>"Uso as minhas redes para falar de finanças e direciono os interessados para meus links do INDICONS."</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section lp-footer-cta">
+    <h2>Pronto para começar a indicar?</h2>
+    <p>Crie sua conta de indicador gratuitamente e teste o modelo com seus próprios contatos.</p>
+    <a href="/indicador/registrar" class="lp-cta-main">Criar minha conta de indicador</a>
+    <p class="lp-cta-note">Logo após o cadastro você já terá acesso aos seus links e ao painel.</p>
+  </section>
+
+  <!-- Script do gráfico da LP -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      var ctx = document.getElementById('lpChart');
+      if (!ctx) return;
+      ctx = ctx.getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['2 vendas', '4 vendas', '8 vendas'],
+          datasets: [{
+            label: 'Comissão estimada (R$)',
+            data: [8000, 12000, 20000],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    });
+  </script>
+  `;
+
+  res.send(layout("Seja Indicador – INDICONS", content));
 });
 
 // =============================================================
@@ -409,11 +666,10 @@ app.get("/indicador/registrar", (req, res) => {
       `
       <div class="card">
         <h2>Cadastrar Indicador</h2>
-        <p class="muted">Crie sua conta para gerar links de indicação de consórcios e acompanhar suas comissões.</p>
         <form method="POST">
-          <label>Nome completo</label><input required name="nome" placeholder="Ex: Ana Silva">
-          <label>Email</label><input required type="email" name="email" placeholder="seuemail@exemplo.com">
-          <label>Senha</label><input required type="password" name="senha" placeholder="Mínimo 6 caracteres">
+          <label>Nome</label><input required name="nome">
+          <label>Email</label><input required type="email" name="email">
+          <label>Senha</label><input required type="password" name="senha">
           <button class="btn" style="margin-top:12px;">Registrar</button>
         </form>
       </div>
@@ -431,12 +687,7 @@ app.post("/indicador/registrar", async (req, res) => {
     );
     res.redirect("/indicador/login");
   } catch (e) {
-    res.send(
-      layout(
-        "Erro ao cadastrar",
-        `<div class="card"><h2>Não foi possível concluir o cadastro</h2><p class="muted">O email informado já está em uso. Tente fazer login ou cadastre outro email.</p><a href="/indicador/registrar" class="btn btn-secondary">Voltar</a></div>`
-      )
-    );
+    res.send("Erro ao cadastrar (email já existe).");
   }
 });
 
@@ -447,10 +698,9 @@ app.get("/indicador/login", (req, res) => {
       `
       <div class="card">
         <h2>Login do Indicador</h2>
-        <p class="muted">Acesse seu painel para ver pré-vendas, vendas aprovadas e comissões.</p>
         <form method="POST">
-          <label>Email</label><input name="email" placeholder="seuemail@exemplo.com">
-          <label>Senha</label><input type="password" name="senha" placeholder="••••••••">
+          <label>Email</label><input name="email">
+          <label>Senha</label><input type="password" name="senha">
           <button class="btn" style="margin-top:10px;">Entrar</button>
         </form>
         <p class="muted" style="margin-top:8px;">Ainda não tem conta? <a href="/indicador/registrar">Cadastre-se aqui</a>.</p>
@@ -465,13 +715,7 @@ app.post("/indicador/login", async (req, res) => {
     "SELECT * FROM indicadores WHERE email=? AND senha=?",
     [req.body.email, req.body.senha]
   );
-  if (!ind)
-    return res.send(
-      layout(
-        "Login inválido",
-        `<div class="card"><h2>Login inválido</h2><p class="muted">Verifique email e senha e tente novamente.</p><a href="/indicador/login" class="btn btn-secondary">Voltar</a></div>`
-      )
-    );
+  if (!ind) return res.send("Login inválido");
 
   req.session.indicadorId = ind.id;
   req.session.indicadorNome = ind.nome;
@@ -479,7 +723,7 @@ app.post("/indicador/login", async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – DASHBOARD COMERCIAL + GRÁFICO
+// INDICADOR – DASHBOARD COMERCIAL + GRÁFICO (como original)
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -499,9 +743,9 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   );
 
   const totalPre = pre.length;
-  const totalAprovadas = pre.filter((v) => v.status === "APROVADA").length;
+  const totalAprovadas = pre.filter(v => v.status === "APROVADA").length;
   const valorVendasAprovadas = pre
-    .filter((v) => v.status === "APROVADA" && v.valor_venda)
+    .filter(v => v.status === "APROVADA" && v.valor_venda)
     .reduce((s, v) => s + Number(v.valor_venda || 0), 0);
   const totalComissao = coms.reduce(
     (s, c) => s + Number(c.valor_comissao || 0),
@@ -509,102 +753,75 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   );
 
   function countStatus(st) {
-    return pre.filter((v) => v.status === st).length;
+    return pre.filter(v => v.status === st).length;
   }
-  const statusPreAdesao = countStatus("PRE_ADESAO");
-  const statusEmAtend = countStatus("EM_ATENDIMENTO");
-  const statusBoleto = countStatus("BOLETO_EMITIDO");
-  const statusAprovada = countStatus("APROVADA");
-  const statusNaoFechou = countStatus("NAO_FECHOU");
+  const statusPreAdesao   = countStatus("PRE_ADESAO");
+  const statusEmAtend     = countStatus("EM_ATENDIMENTO");
+  const statusBoleto      = countStatus("BOLETO_EMITIDO");
+  const statusAprovada    = countStatus("APROVADA");
+  const statusNaoFechou   = countStatus("NAO_FECHOU");
 
   const content = `
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-        <div>
-          <h2>Painel comercial – ${req.session.indicadorNome}</h2>
-          <p class="muted">Acompanhe suas indicações, status de cada cliente e comissões geradas.</p>
-        </div>
-        <div>
-          <a href="/indicador/links" class="btn">Ver meus links de indicação</a>
-        </div>
-      </div>
+      <h2>Painel comercial – ${req.session.indicadorNome}</h2>
+      <p class="muted">Resumo das suas indicações, vendas e comissões.</p>
+      <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
     </div>
 
     <div class="card">
-      <h3>Visão geral</h3>
-      <div class="dashboard-grid">
-        <div class="stat-card">
-          <div class="stat-label">Pré-vendas recebidas</div>
-          <div class="stat-value">${totalPre}</div>
-          <div class="stat-description">Clientes que clicaram nos seus links e preencheram a pré-adesão.</div>
+      <h3>Resumo rápido</h3>
+      <div class="grid">
+        <div class="card">
+          <strong>Total de pré-vendas</strong>
+          <p style="font-size:24px; margin:6px 0;">${totalPre}</p>
+          <p class="muted">Clientes que chegaram pelos seus links.</p>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Vendas aprovadas</div>
-          <div class="stat-value">${totalAprovadas}</div>
-          <div class="stat-description">Pré-vendas que viraram contrato de consórcio.</div>
+        <div class="card">
+          <strong>Vendas aprovadas</strong>
+          <p style="font-size:24px; margin:6px 0;">${totalAprovadas}</p>
+          <p class="muted">Pré-vendas que viraram contrato.</p>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Valor vendido (aprovado)</div>
-          <div class="stat-value">R$ ${valorVendasAprovadas.toFixed(2)}</div>
-          <div class="stat-description">Somente vendas com status "APROVADA".</div>
+        <div class="card">
+          <strong>Valor vendido (aprovadas)</strong>
+          <p style="font-size:24px; margin:6px 0;">R$ ${valorVendasAprovadas.toFixed(2)}</p>
+          <p class="muted">Somente vendas com status "APROVADA".</p>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Comissões estimadas</div>
-          <div class="stat-value">R$ ${totalComissao.toFixed(2)}</div>
-          <div class="stat-description">Baseado nos registros de comissão lançados pelo parceiro.</div>
+        <div class="card">
+          <strong>Comissões acumuladas</strong>
+          <p style="font-size:24px; margin:6px 0;">R$ ${totalComissao.toFixed(2)}</p>
+          <p class="muted">Baseado em registros de comissão.</p>
         </div>
       </div>
     </div>
 
     <div class="card">
       <h3>Funil de atendimento das suas indicações</h3>
-      <p class="muted">Veja em que etapa estão os clientes que você indicou.</p>
+      <p class="muted">Visualização por status de cada pré-venda.</p>
       <div style="max-width:520px; margin-top:10px;">
         <canvas id="indicadorChart" height="180"></canvas>
       </div>
     </div>
 
     <div class="card">
-      <h3>Lista de clientes indicados</h3>
-      <p class="muted">Tabela com todas as pré-vendas geradas pelos seus links.</p>
+      <h3>Minhas pré-vendas (detalhado)</h3>
       ${
         pre.length === 0
-          ? `<p class="muted" style="margin-top:8px;">Nenhuma pré-venda ainda. Compartilhe seus links para começar.</p>`
-          : `
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Produto</th>
-              <th>Status</th>
-              <th>Valor da venda</th>
-              <th>Contato</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${pre
+          ? `<p class="muted">Nenhuma pré-venda ainda.</p>`
+          : pre
               .map(
                 (v) => `
-              <tr>
-                <td>${v.nome_cliente}</td>
-                <td>${v.produto_nome}</td>
-                <td><span class="status-badge status-${v.status}">${v.status}</span></td>
-                <td>${
-                  v.valor_venda
-                    ? "R$ " + Number(v.valor_venda).toFixed(2)
-                    : "-"
-                }</td>
-                <td>
-                  <div>${v.telefone_cliente}</div>
-                  <div class="muted">${v.email_cliente}</div>
-                </td>
-              </tr>`
+        <div class="card" style="margin-top:8px;">
+          <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
+          <span class="muted">Status: ${v.status}</span><br>
+          <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
+          ${
+            v.valor_venda
+              ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span>`
+              : ""
+          }
+        </div>`
               )
-              .join("")}
-          </tbody>
-        </table>
-      </div>`
+              .join("")
       }
     </div>
 
@@ -626,7 +843,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               'Não fechou'
             ],
             datasets: [{
-              label: 'Quantidade de clientes',
+              label: 'Pré-vendas',
               data: [
                 ${statusPreAdesao},
                 ${statusEmAtend},
@@ -657,18 +874,18 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – LINKS (TABELA + BOTÃO COPIAR)
+// INDICADOR – LINKS (VERSÃO QUE VOCÊ PEDIU PARA MANTER)
 // =============================================================
 app.get("/indicador/links", requireIndicador, async (req, res) => {
-  const produtos = await dbAll("SELECT * FROM produtos ORDER BY nome, codigo");
+  const produtos = await dbAll("SELECT * FROM produtos");
   const base = process.env.BASE_URL || "https://indicons.onrender.com";
 
   const content = `
     <div class="card">
       <h2>Produtos de consórcio para indicação</h2>
       <p class="muted">
-        Use a tabela abaixo para gerar e copiar os links de indicação. Cada linha representa um plano de consórcio.
-        Clique em <strong>Copiar link</strong> ao lado do plano que deseja enviar para seu cliente.
+        Use a tabela abaixo para gerar e copiar os links de indicação. Cada linha representa um plano/valor
+        da administradora. Clique em <strong>Copiar link</strong> ao lado do plano que deseja enviar.
       </p>
     </div>
 
@@ -681,12 +898,9 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
         <table class="data-table">
           <thead>
             <tr>
-              <th>Produto</th>
-              <th>Código</th>
-              <th>Crédito</th>
-              <th>Prazo</th>
-              <th>1ª parcela</th>
-              <th>Demais parcelas</th>
+              <th>Cód.</th>
+              <th>Produto / Plano</th>
+              <th>Crédito / Detalhes</th>
               <th>Link de indicação</th>
               <th></th>
             </tr>
@@ -697,12 +911,9 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
                 const link = `${base}/consorcio?i=${req.session.indicadorId}&p=${p.id}`;
                 return `
                   <tr>
-                    <td>${p.nome}</td>
                     <td>${p.codigo || "-"}</td>
-                    <td>${p.credito || "-"}</td>
-                    <td>${p.prazo || "-"}</td>
-                    <td>${p.primeira_parcela || "-"}</td>
-                    <td>${p.demais_parcelas || "-"}</td>
+                    <td>${p.nome}</td>
+                    <td>${p.credito_referencia || p.descricao || "-"}</td>
                     <td style="max-width:260px; font-size:11px; word-break:break-all;">
                       <code>${link}</code>
                     </td>
@@ -724,6 +935,7 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
     <script>
       function copyLink(text) {
         if (!navigator.clipboard) {
+          // fallback simples
           const tempInput = document.createElement('input');
           tempInput.value = text;
           document.body.appendChild(tempInput);
@@ -774,64 +986,34 @@ app.get("/consorcio", async (req, res) => {
   const ind = await dbGet("SELECT * FROM indicadores WHERE id=?", [i]);
   const prod = await dbGet("SELECT * FROM produtos WHERE id=?", [p]);
 
-  if (!ind || !prod)
-    return res.send(
-      layout(
-        "Link inválido",
-        `<div class="card"><h2>Link de consórcio inválido</h2><p class="muted">Verifique com a pessoa que enviou o link ou tente novamente mais tarde.</p></div>`
-      )
-    );
+  if (!ind || !prod) return res.send("Link inválido.");
 
   res.send(
     layout(
       "Pré-adesão",
       `
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-          <div>
-            <h2>${prod.nome} – Cód. ${prod.codigo || ""}</h2>
-            <p class="muted">${prod.descricao || ""}</p>
-            <p class="muted">
-              Crédito: <strong>${prod.credito || "-"}</strong> · Prazo: <strong>${prod.prazo || "-"}</strong><br>
-              1ª parcela: <strong>${prod.primeira_parcela || "-"}</strong> · Demais parcelas: <strong>${prod.demais_parcelas || "-"}</strong>
-            </p>
-          </div>
-          <div class="tag-small">
-            Indicação de ${ind.nome}
-          </div>
-        </div>
-
-        <div class="form-steps">
-          <div class="form-step">
-            <div class="form-step-number">1</div> <span>Você preenche seus dados de interesse.</span>
-          </div>
-          <div class="form-step">
-            <div class="form-step-number">2</div> <span>Um especialista entra em contato para tirar dúvidas.</span>
-          </div>
-          <div class="form-step">
-            <div class="form-step-number">3</div> <span>Se fizer sentido para você, a adesão é concluída.</span>
-          </div>
-        </div>
+        <h2>${prod.nome}</h2>
+        <p class="muted">${prod.descricao || ""}</p>
+        ${
+          prod.codigo || prod.credito_referencia
+            ? `<p class="muted">Código: <strong>${prod.codigo || "-"}</strong> · Crédito: <strong>${prod.credito_referencia || "-"}</strong></p>`
+            : ""
+        }
+        <p>Indicação de <strong>${ind.nome}</strong></p>
 
         <form method="POST" action="/consorcio">
           <input type="hidden" name="indicador_id" value="${ind.id}">
           <input type="hidden" name="produto_id" value="${prod.id}">
 
-          <label>Nome completo</label>
-          <input name="nome" required placeholder="Como está no seu documento">
+          <label>Nome completo</label><input name="nome" required>
+          <label>Telefone / WhatsApp</label><input name="telefone" required>
+          <label>E-mail</label><input name="email" type="email" required>
 
-          <label>Telefone / WhatsApp</label>
-          <input name="telefone" required placeholder="(DDD) 9 9999-9999">
-
-          <label>E-mail</label>
-          <input name="email" type="email" required placeholder="seuemail@exemplo.com">
-
-          <button class="btn" style="margin-top:12px;">Quero receber contato sobre este consórcio</button>
+          <button class="btn" style="margin-top:12px;">Confirmar pré-adesão</button>
         </form>
 
-        <p class="muted" style="margin-top:8px; font-size:12px;">
-          Seus dados serão usados apenas para contato sobre este consórcio. Não realizamos cobrança automática sem sua autorização.
-        </p>
+        <p class="muted" style="margin-top:8px;">Um parceiro autorizado entrará em contato para finalizar a venda.</p>
       </div>
       `
     )
@@ -849,10 +1031,7 @@ app.post("/consorcio", async (req, res) => {
   res.send(
     layout(
       "Pré-adesão enviada",
-      `<div class="card">
-        <h2>Pré-adesão registrada com sucesso</h2>
-        <p class="muted">Um parceiro autorizado entrará em contato em breve para explicar o consórcio e tirar suas dúvidas, sem compromisso.</p>
-      </div>`
+      `<div class="card"><h2>Pré-adesão registrada!</h2><p>O parceiro entrará em contato em breve.</p></div>`
     )
   );
 });
@@ -870,7 +1049,6 @@ app.get("/parceiro/login", (req, res) => {
       `
       <div class="card">
         <h2>Login do Parceiro</h2>
-        <p class="muted">Acesse a fila de pré-vendas geradas pelos indicadores e atualize o status de cada cliente.</p>
         <form method="POST">
           <label>Email</label><input name="email">
           <label>Senha</label><input type="password" name="senha">
@@ -890,15 +1068,9 @@ app.post("/parceiro/login", (req, res) => {
     req.session.parceiroNome = "Parceiro";
     return res.redirect("/parceiro/pre-vendas");
   }
-  res.send(
-    layout(
-      "Login inválido",
-      `<div class="card"><h2>Login inválido</h2><p class="muted">Verifique usuário e senha e tente novamente.</p><a href="/parceiro/login" class="btn btn-secondary">Voltar</a></div>`
-    )
-  );
+  res.send("Login inválido");
 });
 
-// Lista de pré-vendas em tabela + histórico resumido
 app.get("/parceiro/pre-vendas", requireParceiro, async (req, res) => {
   const pv = await dbAll(
     `SELECT pv.*, p.nome produto_nome, i.nome indicador_nome
@@ -908,189 +1080,67 @@ app.get("/parceiro/pre-vendas", requireParceiro, async (req, res) => {
      ORDER BY pv.id DESC`
   );
 
-  const historico = await dbAll(
-    `SELECT * FROM historico_pre_vendas ORDER BY criado_em DESC`
-  );
-
   res.send(
     layout(
-      "Pré-vendas para atendimento",
+      "Pré-vendas",
       `
       <div class="card">
         <h2>Pré-vendas para atendimento</h2>
-        <p class="muted">Use a tabela abaixo para controlar o andamento de cada cliente indicado.</p>
       </div>
-
+      ${
+        pv.length === 0
+          ? `<div class="card"><p class="muted">Nenhuma pré-venda ainda.</p></div>`
+          : pv
+              .map(
+                (v) => `
       <div class="card">
-        ${
-          pv.length === 0
-            ? `<p class="muted">Nenhuma pré-venda registrada até o momento.</p>`
-            : `
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Produto / Indicador</th>
-                <th>Status atual</th>
-                <th>Valor venda</th>
-                <th>Última observação</th>
-                <th>Atualizar</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${pv
-                .map((v) => {
-                  const histPv = historico.filter((h) => h.pre_venda_id === v.id);
-                  const ultimo = histPv[0];
-                  const ultimaObs =
-                    ultimo && ultimo.observacao
-                      ? ultimo.observacao
-                      : "Sem observações registradas.";
+        <h3>${v.nome_cliente}</h3>
+        <p class="muted">${v.produto_nome}</p>
+        <p class="muted">Indicador: ${v.indicador_nome}</p>
+        <p class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</p>
 
-                  return `
-                    <tr>
-                      <td>
-                        <strong>${v.nome_cliente}</strong><br>
-                        <span class="muted">${v.telefone_cliente}</span><br>
-                        <span class="muted">${v.email_cliente}</span>
-                      </td>
-                      <td>
-                        ${v.produto_nome}<br>
-                        <span class="muted" style="font-size:11px;">Indicador: ${v.indicador_nome}</span>
-                      </td>
-                      <td>
-                        <span class="status-badge status-${v.status}">${v.status}</span><br>
-                        ${
-                          ultimo
-                            ? `<span class="hist-meta">Atualizado por ${ultimo.usuario_nome || ultimo.usuario_tipo} em ${ultimo.criado_em}</span>`
-                            : ""
-                        }
-                      </td>
-                      <td>
-                        ${
-                          v.valor_venda
-                            ? "R$ " + Number(v.valor_venda).toFixed(2)
-                            : "-"
-                        }
-                      </td>
-                      <td style="max-width:220px;">
-                        <span class="muted" style="font-size:12px;">${ultimaObs}</span>
-                      </td>
-                      <td>
-                        <form method="POST" action="/parceiro/pre-vendas/${v.id}/status">
-                          <label style="font-size:11px;">Novo status</label>
-                          <select name="status">
-                            <option value="EM_ATENDIMENTO" ${
-                              v.status === "EM_ATENDIMENTO" ? "selected" : ""
-                            }>Em atendimento</option>
-                            <option value="BOLETO_EMITIDO" ${
-                              v.status === "BOLETO_EMITIDO" ? "selected" : ""
-                            }>Boleto emitido</option>
-                            <option value="APROVADA" ${
-                              v.status === "APROVADA" ? "selected" : ""
-                            }>Aprovada</option>
-                            <option value="NAO_FECHOU" ${
-                              v.status === "NAO_FECHOU" ? "selected" : ""
-                            }>Não fechou</option>
-                          </select>
+        <form method="POST" action="/parceiro/pre-vendas/${v.id}/status">
+          <label>Status</label>
+          <select name="status">
+            <option value="EM_ATENDIMENTO">Em atendimento</option>
+            <option value="BOLETO_EMITIDO">Boleto emitido</option>
+            <option value="APROVADA">Aprovada</option>
+            <option value="NAO_FECHOU">Não fechou</option>
+          </select>
 
-                          <label style="font-size:11px;">Valor venda (se aprovada)</label>
-                          <input name="valor_venda" placeholder="Ex: 80000,00">
+          <label>Valor da venda (se aprovada)</label>
+          <input name="valor_venda">
 
-                          <label style="font-size:11px;">Observação</label>
-                          <textarea name="observacao" placeholder="Ex: Cliente pediu proposta, aguardando retorno."></textarea>
-
-                          <button class="btn" style="margin-top:6px; width:100%;">Salvar</button>
-                        </form>
-                      </td>
-                    </tr>
-                  `;
-                })
-                .join("")}
-            </tbody>
-          </table>
-        </div>`
-        }
-      </div>
+          <button class="btn" style="margin-top:8px;">Atualizar</button>
+        </form>
+      </div>`
+              )
+              .join("")
+      }
       `,
       `Parceiro: ${req.session.parceiroNome} | <a href="/logout">Sair</a>`
     )
   );
 });
 
-// Atualização de status com histórico e proteção de comissão duplicada
 app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) => {
-  const { status, valor_venda, observacao } = req.body;
+  const { status, valor_venda } = req.body;
   const id = req.params.id;
 
-  const pv = await dbGet("SELECT * FROM pre_vendas WHERE id=?", [id]);
-  if (!pv) {
-    return res.redirect("/parceiro/pre-vendas");
-  }
+  await dbRun(`UPDATE pre_vendas SET status=?, valor_venda=? WHERE id=?`, [
+    status,
+    valor_venda || null,
+    id,
+  ]);
 
-  const updates = ["status = ?"];
-  const params = [status];
-
-  let novoValorVenda = null;
-
-  if (valor_venda && valor_venda.toString().trim() !== "") {
-    const parsed = parseFloat(
-      valor_venda.toString().replace(".", "").replace(",", ".")
-    );
-    if (!isNaN(parsed) && parsed > 0) {
-      updates.push("valor_venda = ?");
-      params.push(parsed);
-      novoValorVenda = parsed;
-    }
-  }
-
-  params.push(id);
-  await dbRun(`UPDATE pre_vendas SET ${updates.join(", ")} WHERE id=?`, params);
-
-  await dbRun(
-    `
-    INSERT INTO historico_pre_vendas
-      (pre_venda_id, usuario_tipo, usuario_nome, status_anterior, status_novo, observacao)
-    VALUES (?,?,?,?,?,?)
-  `,
-    [
-      id,
-      "PARCEIRO",
-      req.session.parceiroNome || "Parceiro",
-      pv.status,
-      status,
-      observacao && observacao.trim() !== "" ? observacao.trim() : null,
-    ]
-  );
-
-  const pvAtual = await dbGet("SELECT * FROM pre_vendas WHERE id=?", [id]);
-
-  if (status === "APROVADA") {
-    let valorComissaoBase = novoValorVenda;
-
-    if (valorComissaoBase === null && pvAtual && pvAtual.valor_venda) {
-      valorComissaoBase = Number(pvAtual.valor_venda);
-    }
-
-    if (valorComissaoBase && valorComissaoBase > 0) {
-      const jaTem = await dbGet(
-        "SELECT id FROM comissoes WHERE pre_venda_id = ?",
-        [id]
+  if (status === "APROVADA" && valor_venda) {
+    const pv = await dbGet("SELECT * FROM pre_vendas WHERE id=?", [id]);
+    if (pv) {
+      await dbRun(
+        `INSERT INTO comissoes (indicador_id,pre_venda_id,valor_venda,valor_comissao)
+         VALUES (?,?,?,?)`,
+        [pv.indicador_id, pv.id, valor_venda, valor_venda * 0.05]
       );
-
-      if (!jaTem) {
-        await dbRun(
-          `INSERT INTO comissoes (indicador_id,pre_venda_id,valor_venda,valor_comissao)
-           VALUES (?,?,?,?)`,
-          [
-            pvAtual.indicador_id,
-            id,
-            valorComissaoBase,
-            valorComissaoBase * 0.05,
-          ]
-        );
-      }
     }
   }
 
@@ -1110,7 +1160,6 @@ app.get("/admin/login", (req, res) => {
       `
       <div class="card">
         <h2>Login Admin</h2>
-        <p class="muted">Área administrativa para acompanhar as comissões dos indicadores.</p>
         <form method="POST">
           <label>Email</label><input name="email">
           <label>Senha</label><input type="password" name="senha">
@@ -1129,12 +1178,7 @@ app.post("/admin/login", (req, res) => {
     req.session.adminNome = "Admin";
     return res.redirect("/admin/dashboard");
   }
-  res.send(
-    layout(
-      "Login inválido",
-      `<div class="card"><h2>Login inválido</h2><p class="muted">Verifique usuário e senha e tente novamente.</p><a href="/admin/login" class="btn btn-secondary">Voltar</a></div>`
-    )
-  );
+  res.send("Login inválido");
 });
 
 app.get("/admin/dashboard", requireAdmin, async (req, res) => {
@@ -1150,41 +1194,20 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
       "Dashboard Admin",
       `
       <div class="card">
-        <h2>Comissões geradas pelos indicadores</h2>
-        <p class="muted">Tabela com todas as comissões lançadas a partir das vendas aprovadas.</p>
-      </div>
-      <div class="card">
+        <h2>Comissões</h2>
         ${
           coms.length === 0
             ? "<p class='muted'>Nenhuma comissão registrada ainda.</p>"
-            : `
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Indicador</th>
-                <th>Pré-venda</th>
-                <th>Valor venda</th>
-                <th>Comissão (5%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${coms
+            : coms
                 .map(
-                  (c) => `
-                <tr>
-                  <td>#${c.id}</td>
-                  <td>${c.indicador_nome}</td>
-                  <td>${c.pre_venda_id}</td>
-                  <td>R$ ${Number(c.valor_venda).toFixed(2)}</td>
-                  <td><strong>R$ ${Number(c.valor_comissao).toFixed(2)}</strong></td>
-                </tr>`
+                  (c) =>
+                    `<div class="card" style="margin-top:8px;">
+                      Indicador: <strong>${c.indicador_nome}</strong><br>
+                      Valor venda: R$ ${c.valor_venda}<br>
+                      Comissão: <strong>R$ ${c.valor_comissao}</strong>
+                    </div>`
                 )
-                .join("")}
-            </tbody>
-          </table>
-        </div>`
+                .join("")
         }
       </div>
       `,
@@ -1214,12 +1237,7 @@ app.post("/api/ia-demo", (req, res) => {
 
 app.post("/api/whatsapp-demo", (req, res) => {
   const { telefone, mensagem } = req.body;
-  console.log(
-    "Simulando envio de WhatsApp para:",
-    telefone,
-    "mensagem:",
-    mensagem
-  );
+  console.log("Simulando envio de WhatsApp para:", telefone, "mensagem:", mensagem);
   res.json({
     ok: true,
     detalhe:
