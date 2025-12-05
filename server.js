@@ -1,5 +1,5 @@
 // =============================================================
-// INDICONS – Sistema completo + SQLite + LP + Painel Comercial
+// INDICONS – Sistema completo + SQLite + Home = Landing Indicador
 // + Tabela de produtos com botão "Copiar link"
 // =============================================================
 const express = require("express");
@@ -73,16 +73,16 @@ db.serialize(() => {
     )
   `);
 
-  // Produtos iniciais (exemplo genérico). Você pode apagar e cadastrar só os planos da tabela depois.
+  // Seed simples (pode apagar depois e cadastrar seus planos reais)
   db.get("SELECT COUNT(*) AS c FROM produtos", (err, row) => {
     if (row && row.c === 0) {
       db.run(
         `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
-        ["Consórcio Imobiliário", "Crédito para imóveis residenciais e comerciais", null, null]
+        ["Consórcio Imobiliário", "Crédito para imóveis residenciais e comerciais", "IMO01", "R$ 200.000,00"]
       );
       db.run(
         `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
-        ["Consórcio Automóvel", "Crédito para veículos leves e pesados", null, null]
+        ["Consórcio Automóvel", "Crédito para veículos leves e pesados", "AUT01", "R$ 80.000,00"]
       );
     }
   });
@@ -240,7 +240,6 @@ function layout(title, content, userNav = "") {
 
     <nav>
       <a href="/">Home</a>
-      <a href="/lp">Seja Indicador</a>
       <a href="/indicador/login">Indicador</a>
       <a href="/parceiro/login">Parceiro</a>
       <a href="/admin/login">Admin</a>
@@ -257,29 +256,9 @@ function layout(title, content, userNav = "") {
 }
 
 // =============================================================
-// HOME SIMPLES (tela de boas-vindas)
+// HOME = TELA "SEJA INDICADOR"
 // =============================================================
 app.get("/", (req, res) => {
-  res.send(
-    layout(
-      "INDICONS - Home",
-      `
-      <div class="card">
-        <h1>Bem-vindo ao INDICONS</h1>
-        <p class="muted">
-          Plataforma de indicação de consórcios com painel para indicador, parceiro e admin.
-        </p>
-        <a class="btn" href="/indicador/registrar">Quero ser indicador</a>
-      </div>
-      `
-    )
-  );
-});
-
-// =============================================================
-// LANDING PAGE PREMIUM /lp (versão original)
-// =============================================================
-app.get("/lp", (req, res) => {
   const content = `
   <style>
     .lp-hero {
@@ -610,7 +589,7 @@ app.get("/lp", (req, res) => {
     <p class="lp-cta-note">Logo após o cadastro você já terá acesso aos seus links e ao painel.</p>
   </section>
 
-  <!-- Script do gráfico da LP -->
+  <!-- Script do gráfico da HOME -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function () {
@@ -637,7 +616,14 @@ app.get("/lp", (req, res) => {
   </script>
   `;
 
-  res.send(layout("Seja Indicador – INDICONS", content));
+  res.send(layout("Home – INDICONS", content));
+});
+
+// =============================================================
+// /lp (antigo) redireciona para a HOME
+// =============================================================
+app.get("/lp", (req, res) => {
+  res.redirect("/");
 });
 
 // =============================================================
@@ -723,7 +709,7 @@ app.post("/indicador/login", async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – DASHBOARD COMERCIAL + GRÁFICO (como original)
+// INDICADOR – DASHBOARD
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -874,7 +860,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – LINKS (VERSÃO QUE VOCÊ PEDIU PARA MANTER)
+// INDICADOR – LINKS (VERSÃO QUE VOCÊ PEDIU)
 // =============================================================
 app.get("/indicador/links", requireIndicador, async (req, res) => {
   const produtos = await dbAll("SELECT * FROM produtos");
