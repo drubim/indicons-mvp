@@ -1,6 +1,6 @@
 // =============================================================
-// INDICONS – Sistema completo + SQLite + Home = Landing Indicador
-// + Tabela de produtos com botão "Copiar link"
+// INDICONS – Sistema completo + SQLite
+// Home = Landing Indicador + Tabela Autos com botão copiar link
 // =============================================================
 const express = require("express");
 const session = require("express-session");
@@ -73,17 +73,76 @@ db.serialize(() => {
     )
   `);
 
-  // Seed simples (pode apagar depois e cadastrar seus planos reais)
+  // Seed com os planos reais de AUTOS (tabela enviada)
   db.get("SELECT COUNT(*) AS c FROM produtos", (err, row) => {
     if (row && row.c === 0) {
-      db.run(
-        `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
-        ["Consórcio Imobiliário", "Crédito para imóveis residenciais e comerciais", "IMO01", "R$ 200.000,00"]
-      );
-      db.run(
-        `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
-        ["Consórcio Automóvel", "Crédito para veículos leves e pesados", "AUT01", "R$ 80.000,00"]
-      );
+      const planosAutos = [
+        { produto: "Autos", codigo: "8749", credito: "R$ 180.000,00", prazo: "100 meses", primeira: "R$ 5.706,00", demais: "R$ 2.106,00" },
+        { produto: "Autos", codigo: "8749", credito: "R$ 180.000,00", prazo: "90 meses",  primeira: "R$ 5.920,00", demais: "R$ 2.320,00" },
+
+        { produto: "Autos", codigo: "8748", credito: "R$ 170.000,00", prazo: "100 meses", primeira: "R$ 5.389,00", demais: "R$ 1.989,00" },
+        { produto: "Autos", codigo: "8748", credito: "R$ 170.000,00", prazo: "90 meses",  primeira: "R$ 5.591,11", demais: "R$ 2.191,11" },
+
+        { produto: "Autos", codigo: "8747", credito: "R$ 160.000,00", prazo: "100 meses", primeira: "R$ 5.072,00", demais: "R$ 1.872,00" },
+        { produto: "Autos", codigo: "8747", credito: "R$ 160.000,00", prazo: "90 meses",  primeira: "R$ 5.262,22", demais: "R$ 2.062,22" },
+
+        { produto: "Autos", codigo: "8746", credito: "R$ 150.000,00", prazo: "100 meses", primeira: "R$ 4.755,00", demais: "R$ 1.755,00" },
+        { produto: "Autos", codigo: "8746", credito: "R$ 150.000,00", prazo: "90 meses",  primeira: "R$ 4.933,33", demais: "R$ 1.933,33" },
+
+        { produto: "Autos", codigo: "8745", credito: "R$ 140.000,00", prazo: "100 meses", primeira: "R$ 4.438,00", demais: "R$ 1.638,00" },
+        { produto: "Autos", codigo: "8745", credito: "R$ 140.000,00", prazo: "90 meses",  primeira: "R$ 4.604,44", demais: "R$ 1.804,44" },
+
+        { produto: "Autos", codigo: "8744", credito: "R$ 130.000,00", prazo: "100 meses", primeira: "R$ 4.121,00", demais: "R$ 1.521,00" },
+        { produto: "Autos", codigo: "8744", credito: "R$ 130.000,00", prazo: "90 meses",  primeira: "R$ 4.275,56", demais: "R$ 1.675,56" },
+
+        { produto: "Autos", codigo: "8743", credito: "R$ 120.000,00", prazo: "100 meses", primeira: "R$ 3.804,00", demais: "R$ 1.404,00" },
+        { produto: "Autos", codigo: "8743", credito: "R$ 120.000,00", prazo: "90 meses",  primeira: "R$ 3.946,67", demais: "R$ 1.546,67" },
+
+        { produto: "Autos", codigo: "8742", credito: "R$ 110.000,00", prazo: "100 meses", primeira: "R$ 3.487,00", demais: "R$ 1.287,00" },
+        { produto: "Autos", codigo: "8742", credito: "R$ 110.000,00", prazo: "90 meses",  primeira: "R$ 3.617,78", demais: "R$ 1.417,78" },
+
+        { produto: "Autos", codigo: "8741", credito: "R$ 100.000,00", prazo: "100 meses", primeira: "R$ 3.170,00", demais: "R$ 1.170,00" },
+        { produto: "Autos", codigo: "8741", credito: "R$ 100.000,00", prazo: "90 meses",  primeira: "R$ 3.288,89", demais: "R$ 1.288,89" },
+
+        { produto: "Autos", codigo: "8739", credito: "R$ 90.000,00", prazo: "100 meses", primeira: "R$ 2.853,00", demais: "R$ 1.053,00" },
+        { produto: "Autos", codigo: "8739", credito: "R$ 90.000,00", prazo: "90 meses",  primeira: "R$ 2.960,00", demais: "R$ 1.160,00" },
+
+        { produto: "Autos", codigo: "8738", credito: "R$ 85.000,00", prazo: "100 meses", primeira: "R$ 2.694,50", demais: "R$ 994,50" },
+        { produto: "Autos", codigo: "8738", credito: "R$ 85.000,00", prazo: "90 meses",  primeira: "R$ 2.795,56", demais: "R$ 1.095,56" },
+
+        { produto: "Autos", codigo: "8737", credito: "R$ 80.000,00", prazo: "100 meses", primeira: "R$ 2.536,00", demais: "R$ 936,00" },
+        { produto: "Autos", codigo: "8737", credito: "R$ 80.000,00", prazo: "90 meses",  primeira: "R$ 2.631,11", demais: "R$ 1.031,11" },
+
+        { produto: "Autos", codigo: "8736", credito: "R$ 75.000,00", prazo: "100 meses", primeira: "R$ 2.377,50", demais: "R$ 877,50" },
+        { produto: "Autos", codigo: "8736", credito: "R$ 75.000,00", prazo: "90 meses",  primeira: "R$ 2.466,67", demais: "R$ 966,67" },
+
+        { produto: "Autos", codigo: "8735", credito: "R$ 70.000,00", prazo: "100 meses", primeira: "R$ 2.219,00", demais: "R$ 819,00" },
+        { produto: "Autos", codigo: "8735", credito: "R$ 70.000,00", prazo: "90 meses",  primeira: "R$ 2.302,22", demais: "R$ 902,22" },
+
+        { produto: "Autos", codigo: "8734", credito: "R$ 65.000,00", prazo: "100 meses", primeira: "R$ 2.060,50", demais: "R$ 760,50" },
+        { produto: "Autos", codigo: "8734", credito: "R$ 65.000,00", prazo: "90 meses",  primeira: "R$ 2.137,78", demais: "R$ 837,78" },
+
+        { produto: "Autos", codigo: "8733", credito: "R$ 60.000,00", prazo: "100 meses", primeira: "R$ 1.902,00", demais: "R$ 702,00" },
+        { produto: "Autos", codigo: "8733", credito: "R$ 60.000,00", prazo: "90 meses",  primeira: "R$ 1.973,33", demais: "R$ 773,33" },
+
+        { produto: "Autos", codigo: "8732", credito: "R$ 55.000,00", prazo: "100 meses", primeira: "R$ 1.743,50", demais: "R$ 643,50" },
+        { produto: "Autos", codigo: "8732", credito: "R$ 55.000,00", prazo: "90 meses",  primeira: "R$ 1.808,89", demais: "R$ 708,89" },
+
+        { produto: "Autos", codigo: "8731", credito: "R$ 50.000,00", prazo: "100 meses", primeira: "R$ 1.585,00", demais: "R$ 585,00" },
+        { produto: "Autos", codigo: "8731", credito: "R$ 50.000,00", prazo: "90 meses",  primeira: "R$ 1.644,44", demais: "R$ 644,44" },
+
+        { produto: "Autos", codigo: "8730", credito: "R$ 45.000,00", prazo: "100 meses", primeira: "R$ 1.426,50", demais: "R$ 526,50" },
+        { produto: "Autos", codigo: "8730", credito: "R$ 45.000,00", prazo: "90 meses",  primeira: "R$ 1.480,00", demais: "R$ 580,00" },
+      ];
+
+      planosAutos.forEach((p) => {
+        const nome = `${p.produto} ${p.codigo} – ${p.prazo}`;
+        const detalhes = `${p.credito} · 1ª Parcela ${p.primeira} · Demais ${p.demais}`;
+        db.run(
+          `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
+          [nome, null, p.codigo, detalhes]
+        );
+      });
     }
   });
 });
@@ -109,7 +168,7 @@ function dbRun(sql, params = []) {
 }
 
 // -------------------------------------------------------------
-// LAYOUT GLOBAL (tema claro, reaproveitado para tudo)
+// LAYOUT GLOBAL
 // -------------------------------------------------------------
 function layout(title, content, userNav = "") {
   return `
@@ -224,9 +283,6 @@ function layout(title, content, userNav = "") {
     table.data-table tbody tr:hover {
       background:#f9fafb;
     }
-
-    .pill { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px;
-            border:1px solid #cbd5e1; font-size:11px; color:#64748b; }
   </style>
 </head>
 
@@ -305,7 +361,6 @@ app.get("/", (req, res) => {
       overflow: hidden;
       position: relative;
       background:#0f172a;
-      animation: lpSlideUp 0.8s ease-out;
     }
     .lp-hero-img {
       width: 100%;
@@ -338,12 +393,9 @@ app.get("/", (req, res) => {
       text-decoration:none;
       font-size:15px;
       box-shadow:0 10px 25px rgba(14,165,233,0.4);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     }
     .lp-cta-main:hover {
-      transform: translateY(-1px);
       background:#0369a1;
-      box-shadow:0 16px 32px rgba(15,23,42,0.45);
     }
     .lp-cta-note {
       font-size: 13px;
@@ -358,7 +410,6 @@ app.get("/", (req, res) => {
       margin-top:20px;
       border:1px solid #e2e8f0;
       box-shadow:0 8px 24px rgba(15,23,42,0.06);
-      animation: lpFadeIn 0.7s ease-out;
     }
     .lp-section h2 {
       margin-top:0;
@@ -376,11 +427,6 @@ app.get("/", (req, res) => {
       border-radius:14px;
       padding:14px 12px;
       border:1px solid #e2e8f0;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .lp-card:hover {
-      transform: translateY(-3px);
-      box-shadow:0 12px 30px rgba(15,23,42,0.12);
     }
     .lp-card h3 {
       margin-top:0;
@@ -443,17 +489,6 @@ app.get("/", (req, res) => {
       font-size:12px;
       color:#9ca3af;
     }
-
-    .lp-footer-cta { text-align:center; margin-top:10px; }
-
-    @keyframes lpFadeIn {
-      from { opacity:0; transform:translateY(6px); }
-      to { opacity:1; transform:translateY(0); }
-    }
-    @keyframes lpSlideUp {
-      from { opacity:0; transform:translateY(20px); }
-      to { opacity:1; transform:translateY(0); }
-    }
   </style>
 
   <section class="lp-hero">
@@ -510,22 +545,6 @@ app.get("/", (req, res) => {
   </section>
 
   <section class="lp-section">
-    <h2>Como funciona na prática?</h2>
-    <div class="lp-grid">
-      <div class="lp-card"><h3>1. Cadastre-se</h3><p>Crie sua conta gratuita e acesse sua área de indicador.</p></div>
-      <div class="lp-card"><h3>2. Compartilhe seus links</h3><p>Envie para contatos, grupos e redes sociais.</p></div>
-      <div class="lp-card"><h3>3. Parceiro fecha a venda</h3><p>Ele registra no sistema da administradora.</p></div>
-      <div class="lp-card"><h3>4. Você recebe a comissão</h3><p>O sistema registra e calcula seus 5%.</p></div>
-    </div>
-
-    <h3 style="margin-top:24px;">Cenário realista de ganhos mensais</h3>
-    <p class="muted">Simulação simples apenas para ilustrar o potencial:</p>
-    <div style="max-width:480px; margin-top:10px;">
-      <canvas id="lpChart" height="180"></canvas>
-    </div>
-  </section>
-
-  <section class="lp-section">
     <h2>Exemplos de ganhos por indicação</h2>
     <table class="lp-table">
       <thead>
@@ -543,87 +562,9 @@ app.get("/", (req, res) => {
     </table>
     <p class="muted" style="margin-top:8px;">Valores meramente ilustrativos.</p>
   </section>
-
-  <section class="lp-section">
-    <h2>Depoimentos de indicadoras e indicadores</h2>
-    <div class="lp-testimonials">
-      <div class="lp-testimonial">
-        <div class="lp-testimonial-header">
-          <img class="lp-testimonial-avatar" src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Depoimento 1">
-          <div>
-            <div class="lp-testimonial-name">Carla, 32 anos</div>
-            <div class="lp-testimonial-role">Indicadora há 6 meses</div>
-          </div>
-        </div>
-        <p>"Eu só compartilho os links. O parceiro faz todo o atendimento e eu acompanho tudo no painel."</p>
-      </div>
-
-      <div class="lp-testimonial">
-        <div class="lp-testimonial-header">
-          <img class="lp-testimonial-avatar" src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Depoimento 2">
-          <div>
-            <div class="lp-testimonial-name">Marcos, 41 anos</div>
-            <div class="lp-testimonial-role">Autônomo</div>
-          </div>
-        </div>
-        <p>"Eu tinha muitos contatos, mas não vendia consórcio. Agora só indico e recebo comissão nas vendas."</p>
-      </div>
-
-      <div class="lp-testimonial">
-        <div class="lp-testimonial-header">
-          <img class="lp-testimonial-avatar" src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Depoimento 3">
-          <div>
-            <div class="lp-testimonial-name">Ana Paula, 27 anos</div>
-            <div class="lp-testimonial-role">Criadora de conteúdo</div>
-          </div>
-        </div>
-        <p>"Uso as minhas redes para falar de finanças e direciono os interessados para meus links do INDICONS."</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="lp-section lp-footer-cta">
-    <h2>Pronto para começar a indicar?</h2>
-    <p>Crie sua conta de indicador gratuitamente e teste o modelo com seus próprios contatos.</p>
-    <a href="/indicador/registrar" class="lp-cta-main">Criar minha conta de indicador</a>
-    <p class="lp-cta-note">Logo após o cadastro você já terá acesso aos seus links e ao painel.</p>
-  </section>
-
-  <!-- Script do gráfico da HOME -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    window.addEventListener('DOMContentLoaded', function () {
-      var ctx = document.getElementById('lpChart');
-      if (!ctx) return;
-      ctx = ctx.getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['2 vendas', '4 vendas', '8 vendas'],
-          datasets: [{
-            label: 'Comissão estimada (R$)',
-            data: [8000, 12000, 20000],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    });
-  </script>
   `;
 
   res.send(layout("Home – INDICONS", content));
-});
-
-// =============================================================
-// /lp (antigo) redireciona para a HOME
-// =============================================================
-app.get("/lp", (req, res) => {
-  res.redirect("/");
 });
 
 // =============================================================
@@ -860,7 +801,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – LINKS (VERSÃO QUE VOCÊ PEDIU)
+// INDICADOR – LINKS (tabela + copiar link)
 // =============================================================
 app.get("/indicador/links", requireIndicador, async (req, res) => {
   const produtos = await dbAll("SELECT * FROM produtos");
@@ -921,7 +862,6 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
     <script>
       function copyLink(text) {
         if (!navigator.clipboard) {
-          // fallback simples
           const tempInput = document.createElement('input');
           tempInput.value = text;
           document.body.appendChild(tempInput);
@@ -980,10 +920,9 @@ app.get("/consorcio", async (req, res) => {
       `
       <div class="card">
         <h2>${prod.nome}</h2>
-        <p class="muted">${prod.descricao || ""}</p>
         ${
           prod.codigo || prod.credito_referencia
-            ? `<p class="muted">Código: <strong>${prod.codigo || "-"}</strong> · Crédito: <strong>${prod.credito_referencia || "-"}</strong></p>`
+            ? `<p class="muted">Código: <strong>${prod.codigo || "-"}</strong> · ${prod.credito_referencia || ""}</p>`
             : ""
         }
         <p>Indicação de <strong>${ind.nome}</strong></p>
@@ -1210,7 +1149,7 @@ app.get("/logout", (req, res) => {
 });
 
 // =============================================================
-// IA DEMO E WHATSAPP DEMO (somente estrutura, sem API real)
+// IA DEMO E WHATSAPP DEMO (somente estrutura)
 // =============================================================
 app.post("/api/ia-demo", (req, res) => {
   const pergunta = req.body.pergunta || "";
