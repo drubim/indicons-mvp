@@ -1,6 +1,6 @@
 // =============================================================
 // INDICONS – Sistema completo + SQLite + LP Premium + Painel Comercial
-// + Histórico de status + Proteção de comissões duplicadas
+// + Histórico de status + Layout profissional com tabelas
 // =============================================================
 const express = require("express");
 const session = require("express-session");
@@ -22,7 +22,7 @@ app.use(
       httpOnly: true,
       sameSite: "lax",
       // secure: true // habilitar quando estiver usando HTTPS
-    }
+    },
   })
 );
 
@@ -76,12 +76,11 @@ db.serialize(() => {
     )
   `);
 
-  // NOVA TABELA: histórico de status das pré-vendas
   db.run(`
     CREATE TABLE IF NOT EXISTS historico_pre_vendas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       pre_venda_id INTEGER NOT NULL,
-      usuario_tipo TEXT NOT NULL,        -- 'PARCEIRO' ou 'ADMIN'
+      usuario_tipo TEXT NOT NULL,
       usuario_nome TEXT,
       status_anterior TEXT,
       status_novo TEXT,
@@ -91,12 +90,14 @@ db.serialize(() => {
     )
   `);
 
-  // seed de produtos
   db.get("SELECT COUNT(*) AS c FROM produtos", (err, row) => {
     if (row && row.c === 0) {
       db.run(
         `INSERT INTO produtos (nome, descricao) VALUES (?, ?)`,
-        ["Consórcio Imobiliário", "Crédito para imóveis residenciais e comerciais"]
+        [
+          "Consórcio Imobiliário",
+          "Crédito para imóveis residenciais e comerciais",
+        ]
       );
       db.run(
         `INSERT INTO produtos (nome, descricao) VALUES (?, ?)`,
@@ -149,7 +150,7 @@ function layout(title, content, userNav = "") {
     }
 
     .header-inner {
-      max-width:1100px;
+      max-width:1200px;
       margin:auto;
       padding:10px 18px;
       display:flex;
@@ -175,26 +176,35 @@ function layout(title, content, userNav = "") {
     }
     nav a:hover { color:#0ea5e9; }
 
-    main { max-width:1100px; margin:auto; padding:18px; }
+    main { max-width:1200px; margin:auto; padding:18px; }
 
     .card {
       background:#ffffff;
       border:1px solid #cbd5e1;
       border-radius:14px;
-      padding:22px;
+      padding:18px 18px 20px 18px;
       margin-bottom:18px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.05);
+      box-shadow:0 3px 10px rgba(15,23,42,0.06);
     }
 
     .btn {
       background:#0ea5e9; color:white;
-      padding:10px 18px; border-radius:999px;
+      padding:9px 16px; border-radius:999px;
       border:none; cursor:pointer; font-weight:600; font-size:14px;
       text-decoration:none; display:inline-block;
     }
     .btn:hover { background:#0369a1; }
 
+    .btn-secondary {
+      background:#e2e8f0;
+      color:#1e293b;
+    }
+    .btn-secondary:hover {
+      background:#cbd5e1;
+    }
+
     .muted { color:#64748b; }
+
     input,select,textarea {
       width:100%; padding:9px; margin-top:5px;
       border-radius:8px; border:1px solid #cbd5e1;
@@ -205,7 +215,49 @@ function layout(title, content, userNav = "") {
 
     .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
 
-    code { font-size:12px; background:#e5e7eb; padding:2px 4px; border-radius:4px; }
+    .dashboard-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+    }
+    .stat-card {
+      background:#f8fafc;
+      border-radius:12px;
+      padding:12px 14px;
+      border:1px solid #e2e8f0;
+    }
+    .stat-label { font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#94a3b8; }
+    .stat-value { font-size:22px; font-weight:700; margin-top:4px; }
+    .stat-description { font-size:12px; color:#64748b; margin-top:3px; }
+
+    .table-wrapper {
+      overflow-x:auto;
+      margin-top:8px;
+    }
+    table.data-table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      min-width:720px;
+    }
+    table.data-table th,
+    table.data-table td {
+      padding:8px 10px;
+      border-bottom:1px solid #e2e8f0;
+      text-align:left;
+      vertical-align:top;
+    }
+    table.data-table thead th {
+      background:#f8fafc;
+      font-size:12px;
+      font-weight:600;
+      color:#6b7280;
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+    }
+    table.data-table tbody tr:hover {
+      background:#f9fafb;
+    }
 
     .pill { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px;
             border:1px solid #cbd5e1; font-size:11px; color:#64748b; }
@@ -222,8 +274,44 @@ function layout(title, content, userNav = "") {
     .status-BOLETO_EMITIDO { background:#fef3c7; color:#b45309; }
     .status-APROVADA { background:#dcfce7; color:#15803d; }
     .status-NAO_FECHOU { background:#fee2e2; color:#b91c1c; }
-    .hist-item { font-size:12px; border-left:2px solid #e5e7eb; padding-left:8px; margin-bottom:6px; }
+
     .hist-meta { color:#9ca3af; font-size:11px; }
+
+    .tag-small {
+      display:inline-flex;
+      align-items:center;
+      padding:2px 6px;
+      border-radius:999px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      font-size:11px;
+      font-weight:500;
+    }
+
+    .form-steps {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:10px;
+      font-size:12px;
+      color:#64748b;
+    }
+    .form-step {
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .form-step-number {
+      width:18px; height:18px;
+      border-radius:999px;
+      background:#e0f2fe;
+      color:#0369a1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      font-weight:700;
+    }
   </style>
 </head>
 
@@ -272,7 +360,7 @@ app.get("/", (req, res) => {
 });
 
 // =============================================================
-// LANDING PAGE PREMIUM /lp
+// LANDING PAGE PREMIUM /lp (mantida, já é bem didática)
 // =============================================================
 app.get("/lp", (req, res) => {
   const content = `
@@ -605,7 +693,6 @@ app.get("/lp", (req, res) => {
     <p class="lp-cta-note">Logo após o cadastro você já terá acesso aos seus links e ao painel.</p>
   </section>
 
-  <!-- Script do gráfico da LP -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function () {
@@ -661,10 +748,11 @@ app.get("/indicador/registrar", (req, res) => {
       `
       <div class="card">
         <h2>Cadastrar Indicador</h2>
+        <p class="muted">Crie sua conta para gerar links de indicação de consórcios e acompanhar suas comissões.</p>
         <form method="POST">
-          <label>Nome</label><input required name="nome">
-          <label>Email</label><input required type="email" name="email">
-          <label>Senha</label><input required type="password" name="senha">
+          <label>Nome completo</label><input required name="nome" placeholder="Ex: Ana Silva">
+          <label>Email</label><input required type="email" name="email" placeholder="seuemail@exemplo.com">
+          <label>Senha</label><input required type="password" name="senha" placeholder="Mínimo 6 caracteres">
           <button class="btn" style="margin-top:12px;">Registrar</button>
         </form>
       </div>
@@ -682,7 +770,12 @@ app.post("/indicador/registrar", async (req, res) => {
     );
     res.redirect("/indicador/login");
   } catch (e) {
-    res.send("Erro ao cadastrar (email já existe).");
+    res.send(
+      layout(
+        "Erro ao cadastrar",
+        `<div class="card"><h2>Não foi possível concluir o cadastro</h2><p class="muted">O email informado já está em uso. Tente fazer login ou cadastre outro email.</p><a href="/indicador/registrar" class="btn btn-secondary">Voltar</a></div>`
+      )
+    );
   }
 });
 
@@ -693,9 +786,10 @@ app.get("/indicador/login", (req, res) => {
       `
       <div class="card">
         <h2>Login do Indicador</h2>
+        <p class="muted">Acesse seu painel para ver pré-vendas, vendas aprovadas e comissões.</p>
         <form method="POST">
-          <label>Email</label><input name="email">
-          <label>Senha</label><input type="password" name="senha">
+          <label>Email</label><input name="email" placeholder="seuemail@exemplo.com">
+          <label>Senha</label><input type="password" name="senha" placeholder="••••••••">
           <button class="btn" style="margin-top:10px;">Entrar</button>
         </form>
         <p class="muted" style="margin-top:8px;">Ainda não tem conta? <a href="/indicador/registrar">Cadastre-se aqui</a>.</p>
@@ -710,7 +804,13 @@ app.post("/indicador/login", async (req, res) => {
     "SELECT * FROM indicadores WHERE email=? AND senha=?",
     [req.body.email, req.body.senha]
   );
-  if (!ind) return res.send("Login inválido");
+  if (!ind)
+    return res.send(
+      layout(
+        "Login inválido",
+        `<div class="card"><h2>Login inválido</h2><p class="muted">Verifique email e senha e tente novamente.</p><a href="/indicador/login" class="btn btn-secondary">Voltar</a></div>`
+      )
+    );
 
   req.session.indicadorId = ind.id;
   req.session.indicadorNome = ind.nome;
@@ -718,7 +818,7 @@ app.post("/indicador/login", async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – DASHBOARD COMERCIAL + GRÁFICO
+// INDICADOR – DASHBOARD COMERCIAL + GRÁFICO (tabelas)
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -738,9 +838,9 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   );
 
   const totalPre = pre.length;
-  const totalAprovadas = pre.filter(v => v.status === "APROVADA").length;
+  const totalAprovadas = pre.filter((v) => v.status === "APROVADA").length;
   const valorVendasAprovadas = pre
-    .filter(v => v.status === "APROVADA" && v.valor_venda)
+    .filter((v) => v.status === "APROVADA" && v.valor_venda)
     .reduce((s, v) => s + Number(v.valor_venda || 0), 0);
   const totalComissao = coms.reduce(
     (s, c) => s + Number(c.valor_comissao || 0),
@@ -748,75 +848,102 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   );
 
   function countStatus(st) {
-    return pre.filter(v => v.status === st).length;
+    return pre.filter((v) => v.status === st).length;
   }
-  const statusPreAdesao   = countStatus("PRE_ADESAO");
-  const statusEmAtend     = countStatus("EM_ATENDIMENTO");
-  const statusBoleto      = countStatus("BOLETO_EMITIDO");
-  const statusAprovada    = countStatus("APROVADA");
-  const statusNaoFechou   = countStatus("NAO_FECHOU");
+  const statusPreAdesao = countStatus("PRE_ADESAO");
+  const statusEmAtend = countStatus("EM_ATENDIMENTO");
+  const statusBoleto = countStatus("BOLETO_EMITIDO");
+  const statusAprovada = countStatus("APROVADA");
+  const statusNaoFechou = countStatus("NAO_FECHOU");
 
   const content = `
     <div class="card">
-      <h2>Painel comercial – ${req.session.indicadorNome}</h2>
-      <p class="muted">Resumo das suas indicações, vendas e comissões.</p>
-      <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div>
+          <h2>Painel comercial – ${req.session.indicadorNome}</h2>
+          <p class="muted">Acompanhe suas indicações, status de cada cliente e comissões geradas.</p>
+        </div>
+        <div>
+          <a href="/indicador/links" class="btn">Ver meus links de indicação</a>
+        </div>
+      </div>
     </div>
 
     <div class="card">
-      <h3>Resumo rápido</h3>
-      <div class="grid">
-        <div class="card">
-          <strong>Total de pré-vendas</strong>
-          <p style="font-size:24px; margin:6px 0;">${totalPre}</p>
-          <p class="muted">Clientes que chegaram pelos seus links.</p>
+      <h3>Visão geral</h3>
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-label">Pré-vendas recebidas</div>
+          <div class="stat-value">${totalPre}</div>
+          <div class="stat-description">Clientes que clicaram nos seus links e preencheram a pré-adesão.</div>
         </div>
-        <div class="card">
-          <strong>Vendas aprovadas</strong>
-          <p style="font-size:24px; margin:6px 0;">${totalAprovadas}</p>
-          <p class="muted">Pré-vendas que viraram contrato.</p>
+        <div class="stat-card">
+          <div class="stat-label">Vendas aprovadas</div>
+          <div class="stat-value">${totalAprovadas}</div>
+          <div class="stat-description">Pré-vendas que viraram contrato de consórcio.</div>
         </div>
-        <div class="card">
-          <strong>Valor vendido (aprovadas)</strong>
-          <p style="font-size:24px; margin:6px 0;">R$ ${valorVendasAprovadas.toFixed(2)}</p>
-          <p class="muted">Somente vendas com status "APROVADA".</p>
+        <div class="stat-card">
+          <div class="stat-label">Valor vendido (aprovado)</div>
+          <div class="stat-value">R$ ${valorVendasAprovadas.toFixed(2)}</div>
+          <div class="stat-description">Somente vendas com status "APROVADA".</div>
         </div>
-        <div class="card">
-          <strong>Comissões acumuladas</strong>
-          <p style="font-size:24px; margin:6px 0;">R$ ${totalComissao.toFixed(2)}</p>
-          <p class="muted">Baseado em registros de comissão.</p>
+        <div class="stat-card">
+          <div class="stat-label">Comissões estimadas</div>
+          <div class="stat-value">R$ ${totalComissao.toFixed(2)}</div>
+          <div class="stat-description">Baseado nos registros de comissão lançados pelo parceiro.</div>
         </div>
       </div>
     </div>
 
     <div class="card">
       <h3>Funil de atendimento das suas indicações</h3>
-      <p class="muted">Visualização por status de cada pré-venda.</p>
+      <p class="muted">Veja em que etapa estão os clientes que você indicou.</p>
       <div style="max-width:520px; margin-top:10px;">
         <canvas id="indicadorChart" height="180"></canvas>
       </div>
     </div>
 
     <div class="card">
-      <h3>Minhas pré-vendas (detalhado)</h3>
+      <h3>Lista de clientes indicados</h3>
+      <p class="muted">Tabela com todas as pré-vendas geradas pelos seus links.</p>
       ${
         pre.length === 0
-          ? `<p class="muted">Nenhuma pré-venda ainda.</p>`
-          : pre
+          ? `<p class="muted" style="margin-top:8px;">Nenhuma pré-venda ainda. Compartilhe seus links para começar.</p>`
+          : `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Produto</th>
+              <th>Status</th>
+              <th>Valor da venda</th>
+              <th>Contato</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pre
               .map(
                 (v) => `
-        <div class="card" style="margin-top:8px;">
-          <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
-          <span class="status-badge status-${v.status}">${v.status}</span><br>
-          <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
-          ${
-            v.valor_venda
-              ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span>`
-              : ""
-          }
-        </div>`
+              <tr>
+                <td>${v.nome_cliente}</td>
+                <td>${v.produto_nome}</td>
+                <td><span class="status-badge status-${v.status}">${v.status}</span></td>
+                <td>${
+                  v.valor_venda
+                    ? "R$ " + Number(v.valor_venda).toFixed(2)
+                    : "-"
+                }</td>
+                <td>
+                  <div>${v.telefone_cliente}</div>
+                  <div class="muted">${v.email_cliente}</div>
+                </td>
+              </tr>`
               )
-              .join("")
+              .join("")}
+          </tbody>
+        </table>
+      </div>`
       }
     </div>
 
@@ -838,7 +965,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               'Não fechou'
             ],
             datasets: [{
-              label: 'Pré-vendas',
+              label: 'Quantidade de clientes',
               data: [
                 ${statusPreAdesao},
                 ${statusEmAtend},
@@ -881,19 +1008,37 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
       `
       <div class="card">
         <h2>Meus links de indicação</h2>
-        <p class="muted">Copie e envie os links para seus contatos.</p>
+        <p class="muted">Copie e envie os links para seus contatos por WhatsApp, redes sociais ou e-mail.</p>
       </div>
-      <div class="grid">
-        ${produtos
-          .map((p) => {
-            const link = `${base}/consorcio?i=${req.session.indicadorId}&p=${p.id}`;
-            return `<div class="card">
-              <h3>${p.nome}</h3>
-              <p class="muted">${p.descricao}</p>
-              <p style="font-size:12px;"><strong>Link:</strong><br><code>${link}</code></p>
-            </div>`;
-          })
-          .join("")}
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Descrição</th>
+                <th>Link de indicação</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${produtos
+                .map((p) => {
+                  const link = `${base}/consorcio?i=${req.session.indicadorId}&p=${p.id}`;
+                  return `
+                    <tr>
+                      <td>${p.nome}</td>
+                      <td>${p.descricao}</td>
+                      <td>
+                        <code style="font-size:11px;">${link}</code><br>
+                        <span class="muted" style="font-size:11px;">Compartilhe este endereço com seus clientes.</span>
+                      </td>
+                    </tr>
+                  `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </div>
       </div>
       `,
       `Indicador: ${req.session.indicadorNome} | <a href="/logout">Sair</a>`
@@ -902,36 +1047,67 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
 });
 
 // =============================================================
-// CLIENTE – PRÉ-ADESÃO
+// CLIENTE – PRÉ-ADESÃO (mais didático)
 // =============================================================
 app.get("/consorcio", async (req, res) => {
   const { i, p } = req.query;
   const ind = await dbGet("SELECT * FROM indicadores WHERE id=?", [i]);
   const prod = await dbGet("SELECT * FROM produtos WHERE id=?", [p]);
 
-  if (!ind || !prod) return res.send("Link inválido.");
+  if (!ind || !prod)
+    return res.send(
+      layout(
+        "Link inválido",
+        `<div class="card"><h2>Link de consórcio inválido</h2><p class="muted">Verifique com a pessoa que enviou o link ou tente novamente mais tarde.</p></div>`
+      )
+    );
 
   res.send(
     layout(
       "Pré-adesão",
       `
       <div class="card">
-        <h2>${prod.nome}</h2>
-        <p class="muted">${prod.descricao}</p>
-        <p>Indicação de <strong>${ind.nome}</strong></p>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div>
+            <h2>${prod.nome}</h2>
+            <p class="muted">${prod.descricao}</p>
+          </div>
+          <div class="tag-small">
+            Indicação de ${ind.nome}
+          </div>
+        </div>
+
+        <div class="form-steps">
+          <div class="form-step">
+            <div class="form-step-number">1</div> <span>Você preenche seus dados de interesse.</span>
+          </div>
+          <div class="form-step">
+            <div class="form-step-number">2</div> <span>Um especialista entra em contato para tirar dúvidas.</span>
+          </div>
+          <div class="form-step">
+            <div class="form-step-number">3</div> <span>Se fizer sentido para você, a adesão é concluída.</span>
+          </div>
+        </div>
 
         <form method="POST" action="/consorcio">
           <input type="hidden" name="indicador_id" value="${ind.id}">
           <input type="hidden" name="produto_id" value="${prod.id}">
 
-          <label>Nome completo</label><input name="nome" required>
-          <label>Telefone / WhatsApp</label><input name="telefone" required>
-          <label>E-mail</label><input name="email" type="email" required>
+          <label>Nome completo</label>
+          <input name="nome" required placeholder="Como está no seu documento">
 
-          <button class="btn" style="margin-top:12px;">Confirmar pré-adesão</button>
+          <label>Telefone / WhatsApp</label>
+          <input name="telefone" required placeholder="(DDD) 9 9999-9999">
+
+          <label>E-mail</label>
+          <input name="email" type="email" required placeholder="seuemail@exemplo.com">
+
+          <button class="btn" style="margin-top:12px;">Quero receber contato sobre este consórcio</button>
         </form>
 
-        <p class="muted" style="margin-top:8px;">Um parceiro autorizado entrará em contato para finalizar a venda.</p>
+        <p class="muted" style="margin-top:8px; font-size:12px;">
+          Seus dados serão usados apenas para contato sobre este consórcio. Não realizamos cobrança automática sem sua autorização.
+        </p>
       </div>
       `
     )
@@ -949,7 +1125,10 @@ app.post("/consorcio", async (req, res) => {
   res.send(
     layout(
       "Pré-adesão enviada",
-      `<div class="card"><h2>Pré-adesão registrada!</h2><p>O parceiro entrará em contato em breve.</p></div>`
+      `<div class="card">
+        <h2>Pré-adesão registrada com sucesso</h2>
+        <p class="muted">Um parceiro autorizado entrará em contato em breve para explicar o consórcio e tirar suas dúvidas, sem compromisso.</p>
+      </div>`
     )
   );
 });
@@ -967,6 +1146,7 @@ app.get("/parceiro/login", (req, res) => {
       `
       <div class="card">
         <h2>Login do Parceiro</h2>
+        <p class="muted">Acesse a fila de pré-vendas geradas pelos indicadores e atualize o status de cada cliente.</p>
         <form method="POST">
           <label>Email</label><input name="email">
           <label>Senha</label><input type="password" name="senha">
@@ -986,10 +1166,15 @@ app.post("/parceiro/login", (req, res) => {
     req.session.parceiroNome = "Parceiro";
     return res.redirect("/parceiro/pre-vendas");
   }
-  res.send("Login inválido");
+  res.send(
+    layout(
+      "Login inválido",
+      `<div class="card"><h2>Login inválido</h2><p class="muted">Verifique usuário e senha e tente novamente.</p><a href="/parceiro/login" class="btn btn-secondary">Voltar</a></div>`
+    )
+  );
 });
 
-// NOVO FLUXO: mostrar pré-vendas + histórico de status
+// Lista de pré-vendas em tabela + histórico resumido
 app.get("/parceiro/pre-vendas", requireParceiro, async (req, res) => {
   const pv = await dbAll(
     `SELECT pv.*, p.nome produto_nome, i.nome indicador_nome
@@ -999,109 +1184,133 @@ app.get("/parceiro/pre-vendas", requireParceiro, async (req, res) => {
      ORDER BY pv.id DESC`
   );
 
-  // carrega todo histórico, agrupamos no JS (simples e suficiente para volumes pequenos)
   const historico = await dbAll(
     `SELECT * FROM historico_pre_vendas ORDER BY criado_em DESC`
   );
 
   res.send(
     layout(
-      "Pré-vendas",
+      "Pré-vendas para atendimento",
       `
       <div class="card">
         <h2>Pré-vendas para atendimento</h2>
-        <p class="muted">Atualize o status, registre observações e valor de venda quando aprovado.</p>
+        <p class="muted">Use a tabela abaixo para controlar o andamento de cada cliente indicado.</p>
       </div>
-      ${
-        pv.length === 0
-          ? `<div class="card"><p class="muted">Nenhuma pré-venda ainda.</p></div>`
-          : pv
-              .map((v) => {
-                const histPv = historico.filter(h => h.pre_venda_id === v.id);
-                const histHtml =
-                  histPv.length === 0
-                    ? `<p class="muted" style="font-size:12px;">Nenhum histórico ainda.</p>`
-                    : histPv
-                        .map(
-                          (h) => `
-                      <div class="hist-item">
-                        <div class="hist-meta">
-                          ${h.criado_em || ""} · ${h.usuario_tipo || ""} ${h.usuario_nome ? " - " + h.usuario_nome : ""}
-                        </div>
-                        <div>Status: ${h.status_anterior || "-"} → <strong>${h.status_novo || "-"}</strong></div>
+
+      <div class="card">
+        ${
+          pv.length === 0
+            ? `<p class="muted">Nenhuma pré-venda registrada até o momento.</p>`
+            : `
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Produto / Indicador</th>
+                <th>Status atual</th>
+                <th>Valor venda</th>
+                <th>Última observação</th>
+                <th>Atualizar</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pv
+                .map((v) => {
+                  const histPv = historico.filter((h) => h.pre_venda_id === v.id);
+                  const ultimo = histPv[0];
+                  const ultimaObs =
+                    ultimo && ultimo.observacao
+                      ? ultimo.observacao
+                      : "Sem observações registradas.";
+
+                  return `
+                    <tr>
+                      <td>
+                        <strong>${v.nome_cliente}</strong><br>
+                        <span class="muted">${v.telefone_cliente}</span><br>
+                        <span class="muted">${v.email_cliente}</span>
+                      </td>
+                      <td>
+                        ${v.produto_nome}<br>
+                        <span class="muted" style="font-size:11px;">Indicador: ${v.indicador_nome}</span>
+                      </td>
+                      <td>
+                        <span class="status-badge status-${v.status}">${v.status}</span><br>
                         ${
-                          h.observacao
-                            ? `<div>${h.observacao}</div>`
+                          ultimo
+                            ? `<span class="hist-meta">Atualizado por ${ultimo.usuario_nome || ultimo.usuario_tipo} em ${ultimo.criado_em}</span>`
                             : ""
                         }
-                      </div>
-                    `
-                        )
-                        .join("");
+                      </td>
+                      <td>
+                        ${
+                          v.valor_venda
+                            ? "R$ " + Number(v.valor_venda).toFixed(2)
+                            : "-"
+                        }
+                      </td>
+                      <td style="max-width:220px;">
+                        <span class="muted" style="font-size:12px;">${ultimaObs}</span>
+                      </td>
+                      <td>
+                        <form method="POST" action="/parceiro/pre-vendas/${v.id}/status">
+                          <label style="font-size:11px;">Novo status</label>
+                          <select name="status">
+                            <option value="EM_ATENDIMENTO" ${
+                              v.status === "EM_ATENDIMENTO" ? "selected" : ""
+                            }>Em atendimento</option>
+                            <option value="BOLETO_EMITIDO" ${
+                              v.status === "BOLETO_EMITIDO" ? "selected" : ""
+                            }>Boleto emitido</option>
+                            <option value="APROVADA" ${
+                              v.status === "APROVADA" ? "selected" : ""
+                            }>Aprovada</option>
+                            <option value="NAO_FECHOU" ${
+                              v.status === "NAO_FECHOU" ? "selected" : ""
+                            }>Não fechou</option>
+                          </select>
 
-                return `
-      <div class="card">
-        <h3>${v.nome_cliente}</h3>
-        <p class="muted">${v.produto_nome}</p>
-        <p class="muted">Indicador: ${v.indicador_nome}</p>
-        <p class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</p>
-        ${
-          v.valor_venda
-            ? `<p class="muted">Valor atual da venda: R$ ${Number(v.valor_venda).toFixed(2)}</p>`
-            : ""
+                          <label style="font-size:11px;">Valor venda (se aprovada)</label>
+                          <input name="valor_venda" placeholder="Ex: 80000,00">
+
+                          <label style="font-size:11px;">Observação</label>
+                          <textarea name="observacao" placeholder="Ex: Cliente pediu proposta, aguardando retorno."></textarea>
+
+                          <button class="btn" style="margin-top:6px; width:100%;">Salvar</button>
+                        </form>
+                      </td>
+                    </tr>
+                  `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </div>`
         }
-
-        <form method="POST" action="/parceiro/pre-vendas/${v.id}/status">
-          <label>Status</label>
-          <select name="status">
-            <option value="EM_ATENDIMENTO" ${v.status === "EM_ATENDIMENTO" ? "selected" : ""}>Em atendimento</option>
-            <option value="BOLETO_EMITIDO" ${v.status === "BOLETO_EMITIDO" ? "selected" : ""}>Boleto emitido</option>
-            <option value="APROVADA" ${v.status === "APROVADA" ? "selected" : ""}>Aprovada</option>
-            <option value="NAO_FECHOU" ${v.status === "NAO_FECHOU" ? "selected" : ""}>Não fechou</option>
-          </select>
-
-          <label>Valor da venda (se aprovada)</label>
-          <input name="valor_venda" placeholder="Ex: 80000,00">
-
-          <label>Observação (histórico)</label>
-          <textarea name="observacao" placeholder="Ex: Cliente retornou, enviamos proposta, aguardando aprovação."></textarea>
-
-          <button class="btn" style="margin-top:8px;">Atualizar</button>
-        </form>
-
-        <div style="margin-top:12px;">
-          <strong>Histórico desta pré-venda</strong>
-          ${histHtml}
-        </div>
-      </div>`;
-              })
-              .join("")
-      }
+      </div>
       `,
       `Parceiro: ${req.session.parceiroNome} | <a href="/logout">Sair</a>`
     )
   );
 });
 
-// NOVO FLUXO: atualização de status com histórico e proteção de comissão duplicada
+// Atualização de status com histórico e proteção comissão duplicada
 app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) => {
   const { status, valor_venda, observacao } = req.body;
   const id = req.params.id;
 
-  // Busca pré-venda atual para registrar histórico
   const pv = await dbGet("SELECT * FROM pre_vendas WHERE id=?", [id]);
   if (!pv) {
     return res.redirect("/parceiro/pre-vendas");
   }
 
-  // Monta update dinâmico: sempre atualiza status, valor_venda só se informado e válido
   const updates = ["status = ?"];
   const params = [status];
 
   let novoValorVenda = null;
 
   if (valor_venda && valor_venda.toString().trim() !== "") {
-    // aceita vírgula ou ponto
     const parsed = parseFloat(
       valor_venda.toString().replace(".", "").replace(",", ".")
     );
@@ -1115,7 +1324,6 @@ app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) =>
   params.push(id);
   await dbRun(`UPDATE pre_vendas SET ${updates.join(", ")} WHERE id=?`, params);
 
-  // Registra histórico da mudança de status
   await dbRun(
     `
     INSERT INTO historico_pre_vendas
@@ -1128,14 +1336,12 @@ app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) =>
       req.session.parceiroNome || "Parceiro",
       pv.status,
       status,
-      observacao && observacao.trim() !== "" ? observacao.trim() : null
+      observacao && observacao.trim() !== "" ? observacao.trim() : null,
     ]
   );
 
-  // Busca a pré-venda atualizada para saber valor_venda caso não tenha vindo no formulário
   const pvAtual = await dbGet("SELECT * FROM pre_vendas WHERE id=?", [id]);
 
-  // Se status final é APROVADA, gera comissão uma única vez
   if (status === "APROVADA") {
     let valorComissaoBase = novoValorVenda;
 
@@ -1153,11 +1359,14 @@ app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) =>
         await dbRun(
           `INSERT INTO comissoes (indicador_id,pre_venda_id,valor_venda,valor_comissao)
            VALUES (?,?,?,?)`,
-          [pvAtual.indicador_id, id, valorComissaoBase, valorComissaoBase * 0.05]
+          [
+            pvAtual.indicador_id,
+            id,
+            valorComissaoBase,
+            valorComissaoBase * 0.05,
+          ]
         );
       }
-      // se já existir comissão, mantemos como está para evitar duplicidade;
-      // caso queira atualizar valor da comissão, aqui poderia ser feito um UPDATE.
     }
   }
 
@@ -1177,6 +1386,7 @@ app.get("/admin/login", (req, res) => {
       `
       <div class="card">
         <h2>Login Admin</h2>
+        <p class="muted">Área administrativa para acompanhar as comissões dos indicadores.</p>
         <form method="POST">
           <label>Email</label><input name="email">
           <label>Senha</label><input type="password" name="senha">
@@ -1195,7 +1405,12 @@ app.post("/admin/login", (req, res) => {
     req.session.adminNome = "Admin";
     return res.redirect("/admin/dashboard");
   }
-  res.send("Login inválido");
+  res.send(
+    layout(
+      "Login inválido",
+      `<div class="card"><h2>Login inválido</h2><p class="muted">Verifique usuário e senha e tente novamente.</p><a href="/admin/login" class="btn btn-secondary">Voltar</a></div>`
+    )
+  );
 });
 
 app.get("/admin/dashboard", requireAdmin, async (req, res) => {
@@ -1211,20 +1426,41 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
       "Dashboard Admin",
       `
       <div class="card">
-        <h2>Comissões</h2>
+        <h2>Comissões geradas pelos indicadores</h2>
+        <p class="muted">Tabela com todas as comissões lançadas a partir das vendas aprovadas.</p>
+      </div>
+      <div class="card">
         ${
           coms.length === 0
             ? "<p class='muted'>Nenhuma comissão registrada ainda.</p>"
-            : coms
+            : `
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Indicador</th>
+                <th>Pré-venda</th>
+                <th>Valor venda</th>
+                <th>Comissão (5%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${coms
                 .map(
-                  (c) =>
-                    `<div class="card" style="margin-top:8px;">
-                      Indicador: <strong>${c.indicador_nome}</strong><br>
-                      Valor venda: R$ ${Number(c.valor_venda).toFixed(2)}<br>
-                      Comissão: <strong>R$ ${Number(c.valor_comissao).toFixed(2)}</strong>
-                    </div>`
+                  (c) => `
+                <tr>
+                  <td>#${c.id}</td>
+                  <td>${c.indicador_nome}</td>
+                  <td>${c.pre_venda_id}</td>
+                  <td>R$ ${Number(c.valor_venda).toFixed(2)}</td>
+                  <td><strong>R$ ${Number(c.valor_comissao).toFixed(2)}</strong></td>
+                </tr>`
                 )
-                .join("")
+                .join("")}
+            </tbody>
+          </table>
+        </div>`
         }
       </div>
       `,
@@ -1243,8 +1479,6 @@ app.get("/logout", (req, res) => {
 // =============================================================
 // IA DEMO E WHATSAPP DEMO (somente estrutura, sem API real)
 // =============================================================
-
-// Exemplo de endpoint de IA DEMO (responde fixo; depois dá para trocar por API real)
 app.post("/api/ia-demo", (req, res) => {
   const pergunta = req.body.pergunta || "";
   res.json({
@@ -1254,10 +1488,14 @@ app.post("/api/ia-demo", (req, res) => {
   });
 });
 
-// Exemplo de endpoint de WhatsApp DEMO (apenas registra o payload)
 app.post("/api/whatsapp-demo", (req, res) => {
   const { telefone, mensagem } = req.body;
-  console.log("Simulando envio de WhatsApp para:", telefone, "mensagem:", mensagem);
+  console.log(
+    "Simulando envio de WhatsApp para:",
+    telefone,
+    "mensagem:",
+    mensagem
+  );
   res.json({
     ok: true,
     detalhe:
