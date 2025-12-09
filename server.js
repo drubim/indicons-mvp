@@ -1,5 +1,5 @@
 // =============================================================
-// INDICONS – Sistema completo + SQLite + Layout Médio + WhatsApp + IA + PWA
+// INDICONS – Sistema completo + SQLite + Layout Claro + WhatsApp + IA + PWA
 // =============================================================
 require("dotenv").config();
 
@@ -26,7 +26,7 @@ app.use(
 // -----------------------------------------------
 // CONFIG – COMISSÃO
 // -----------------------------------------------
-const COMMISSION_RATE = 0.015; // até 1,5% (total)
+const COMMISSION_RATE = 0.015; // até 1,5% (total, sobre o valor da venda)
 
 // esquema descritivo de parcelas (não armazenado em tabela, apenas informativo)
 const COMMISSION_SCHEME = [
@@ -249,7 +249,7 @@ async function askAI(message, context = []) {
 }
 
 // -------------------------------------------------------------
-// LAYOUT GLOBAL – TEMA INTERMEDIÁRIO + FOOTER + CONTATO
+// LAYOUT GLOBAL – TEMA CLARO EM TELA CHEIA
 // -------------------------------------------------------------
 function layout(title, content, userNav = "") {
   return `
@@ -267,15 +267,15 @@ function layout(title, content, userNav = "") {
 
   <style>
     :root {
-      --bg-body: #e2e8f0;            /* mais escuro que antes */
-      --bg-main: #e5e7eb;
-      --header-bg: rgba(248,250,252,0.96);
-      --header-border: #cbd5e1;
-      --card-bg: #f9fafb;
+      --bg-body: #e5e7eb;
+      --bg-main: #f3f4f6;
+      --header-bg: rgba(255,255,255,0.95);
+      --header-border: #e5e7eb;
+      --card-bg: #ffffff;
       --card-border: #d4d4d8;
-      --card-shadow: 0 8px 24px rgba(15,23,42,0.12);
+      --card-shadow: 0 10px 30px rgba(15,23,42,0.12);
       --text-main: #0f172a;
-      --text-muted: #64748b;
+      --text-muted: #6b7280;
       --accent: #16a34a;
       --accent-soft: #dcfce7;
       --accent-strong: #15803d;
@@ -309,7 +309,7 @@ function layout(title, content, userNav = "") {
     }
 
     .header-inner {
-      max-width: 1120px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 10px 18px;
       display: flex;
@@ -379,9 +379,12 @@ function layout(title, content, userNav = "") {
     }
 
     main {
-      max-width: 1120px;
+      width: 100%;
+      padding: 24px 18px 32px;
+    }
+    .page-inner {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 20px 18px 32px;
     }
 
     .card {
@@ -393,9 +396,10 @@ function layout(title, content, userNav = "") {
       box-shadow: var(--card-shadow);
     }
 
-    /* Cartões menores para login/cadastro */
-    .auth-card {
-      max-width: 420px;
+    /* Cartões menores para login/cadastro/termos */
+    .auth-card,
+    .terms-card {
+      max-width: 720px;
       margin: 0 auto 18px;
       padding: 18px 16px;
     }
@@ -421,19 +425,19 @@ function layout(title, content, userNav = "") {
       align-items: center;
       gap: 6px;
       transition: all 0.18s ease-out;
-      box-shadow: 0 8px 20px rgba(22,163,74,0.35);
+      box-shadow: 0 8px 20px rgba(22,163,74,0.25);
     }
     .btn:hover {
       background: var(--accent-strong);
       transform: translateY(-1px);
-      box-shadow: 0 10px 26px rgba(22,163,74,0.45);
+      box-shadow: 0 10px 26px rgba(22,163,74,0.35);
     }
 
     .btn-secondary {
       background: #f9fafb;
       color: #0f172a;
       border: 1px solid #cbd5e1;
-      box-shadow: 0 4px 14px rgba(15,23,42,0.10);
+      box-shadow: 0 4px 14px rgba(15,23,42,0.08);
     }
     .btn-secondary:hover {
       background: #e5e7eb;
@@ -448,7 +452,7 @@ function layout(title, content, userNav = "") {
       padding:3px 9px;
       font-size:11px;
       border:1px solid #e2e8f0;
-      background:#f8fafc;
+      background:#f9fafb;
       color:#0f172a;
     }
     .badge-status-dot {
@@ -488,7 +492,7 @@ function layout(title, content, userNav = "") {
     select:focus,
     textarea:focus {
       border-color: var(--accent-alt);
-      box-shadow: 0 0 0 1px rgba(56,189,248,0.4);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.3);
       background:#ffffff;
     }
 
@@ -511,7 +515,7 @@ function layout(title, content, userNav = "") {
       font-size: 13px;
       min-width: 720px;
       color: #0f172a;
-      background:#f9fafb;
+      background:#ffffff;
     }
     table.data-table th,
     table.data-table td {
@@ -521,7 +525,7 @@ function layout(title, content, userNav = "") {
       vertical-align: top;
     }
     table.data-table thead th {
-      background: #e5e7eb;
+      background: #f3f4f6;
       font-size: 11px;
       font-weight: 600;
       color: #374151;
@@ -529,7 +533,7 @@ function layout(title, content, userNav = "") {
       letter-spacing: 0.08em;
     }
     table.data-table tbody tr:nth-child(even) {
-      background: #f3f4f6;
+      background: #f9fafb;
     }
     table.data-table tbody tr:hover {
       background: #dbeafe;
@@ -547,12 +551,12 @@ function layout(title, content, userNav = "") {
 
     /* Footer */
     .site-footer {
-      border-top:1px solid #cbd5e1;
-      background:#111827;
+      border-top:1px solid #e5e7eb;
+      background:#0b1120;
       color:#9ca3af;
     }
     .site-footer-inner {
-      max-width:1120px;
+      max-width:1200px;
       margin:0 auto;
       padding:10px 18px 16px;
       display:flex;
@@ -588,10 +592,10 @@ function layout(title, content, userNav = "") {
         justify-content: center;
       }
       main {
-        padding: 16px 14px 28px;
+        padding: 18px 12px 26px;
       }
       .card {
-        padding: 16px 14px;
+        padding: 16px 12px;
       }
       .site-footer-inner {
         align-items:flex-start;
@@ -620,7 +624,7 @@ function layout(title, content, userNav = "") {
   </div>
 </header>
 
-<main>${content}</main>
+<main><div class="page-inner">${content}</div></main>
 
 <footer class="site-footer">
   <div class="site-footer-inner">
@@ -629,7 +633,7 @@ function layout(title, content, userNav = "") {
       <div>Plataforma de indicações de consórcio com parceiros homologados.</div>
     </div>
     <div class="footer-right">
-      <span>Comissões de até 1,5% pagas em até 6 parcelas, conforme contrato de parceria.</span>
+      <span>Comissões de até 1,5% pagas em até 6 parcelas, conforme termo de adesão e contrato de parceria.</span>
       <a href="/contato" class="footer-contact-btn">Falar com um especialista</a>
     </div>
   </div>
@@ -651,7 +655,7 @@ app.get("/manifest.json", (req, res) => {
     short_name: "INDICONS",
     start_url: "/",
     display: "standalone",
-    background_color: "#111827",
+    background_color: "#e5e7eb",
     theme_color: "#16a34a",
     icons: [],
   });
@@ -670,25 +674,25 @@ self.addEventListener('fetch', function(event) {
 });
 
 // =============================================================
-// HOME – LANDING PAGE
+// HOME – LANDING PAGE (CLARA)
 // =============================================================
 app.get("/", (req, res) => {
   const content = `
   <style>
     .lp-hero {
       background:
-        radial-gradient(circle at top left, rgba(56,189,248,0.28), transparent 60%),
-        radial-gradient(circle at bottom right, rgba(34,197,94,0.25), transparent 55%),
-        #111827;
+        radial-gradient(circle at top left, rgba(59,130,246,0.30), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(45,212,191,0.25), transparent 55%),
+        #ffffff;
       border-radius: 22px;
       padding: 32px 24px;
       display: grid;
       grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.7fr);
       gap: 26px;
       align-items: center;
-      border: 1px solid #1f2937;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
-      color:#e5e7eb;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 20px 50px rgba(15,23,42,0.14);
+      color:#0f172a;
     }
     @media (max-width: 900px) {
       .lp-hero {
@@ -699,16 +703,16 @@ app.get("/", (req, res) => {
       font-size: 32px;
       line-height: 1.15;
       font-weight: 800;
-      color: #f9fafb;
+      color: #0f172a;
       margin-bottom: 10px;
     }
     .lp-hero-sub {
       font-size: 15px;
-      color: #cbd5f5;
+      color: #4b5563;
       margin-bottom: 16px;
     }
     .lp-hero-sub strong {
-      color: #4ade80;
+      color: #16a34a;
     }
     .lp-hero-badge {
       display:inline-flex;
@@ -716,12 +720,12 @@ app.get("/", (req, res) => {
       gap:8px;
       padding:5px 12px;
       border-radius:999px;
-      background: #065f46;
-      color:#bbf7d0;
+      background: #ecfdf5;
+      color:#166534;
       font-size:11px;
       font-weight:600;
       margin-bottom:10px;
-      border: 1px solid #16a34a;
+      border: 1px solid #bbf7d0;
     }
     .lp-hero-badge::before {
       content: "●";
@@ -738,19 +742,20 @@ app.get("/", (req, res) => {
     .lp-hero-metric {
       border-radius:14px;
       padding:10px 12px;
-      background:#020617;
-      border:1px solid #1f2937;
+      background:#ffffff;
+      border:1px solid #e5e7eb;
       min-width:130px;
+      box-shadow:0 8px 18px rgba(15,23,42,0.05);
     }
     .lp-hero-metric strong {
       display:block;
       font-size:18px;
-      color:#f9fafb;
+      color:#0f172a;
     }
     .lp-hero-metric span {
       display:block;
       font-size:11px;
-      color:#9ca3af;
+      color:#6b7280;
     }
 
     .lp-hero-img-wrapper {
@@ -758,21 +763,21 @@ app.get("/", (req, res) => {
       overflow: hidden;
       position: relative;
       background:#020617;
-      border: 1px solid #1f2937;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.75);
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 18px 40px rgba(15,23,42,0.25);
     }
     .lp-hero-img {
       width: 100%;
       display: block;
       object-fit: cover;
       max-height: 300px;
-      filter: saturate(1.02) contrast(1.06);
+      filter: saturate(1.02) contrast(1.04);
     }
     .lp-hero-tag {
       position:absolute;
       bottom:10px;
       left:10px;
-      background:rgba(15,23,42,0.95);
+      background:rgba(15,23,42,0.92);
       color:#e5e7eb;
       padding:6px 10px;
       border-radius:999px;
@@ -784,14 +789,14 @@ app.get("/", (req, res) => {
       display:inline-flex;
       align-items:center;
       gap:8px;
-      background:#22c55e;
-      color:#022c22;
+      background:#16a34a;
+      color:#f9fafb;
       padding:11px 22px;
       border-radius:999px;
       font-weight:700;
       text-decoration:none;
       font-size:14px;
-      box-shadow:0 16px 40px rgba(34,197,94,0.65);
+      box-shadow:0 16px 40px rgba(22,163,74,0.30);
       border: none;
       transition: all .18s ease-out;
     }
@@ -799,27 +804,27 @@ app.get("/", (req, res) => {
       background:#15803d;
       color:#f9fafb;
       transform: translateY(-1px);
-      box-shadow:0 20px 48px rgba(22,163,74,0.85);
+      box-shadow:0 20px 48px rgba(22,163,74,0.40);
     }
     .lp-cta-note {
       font-size: 12px;
-      color:#bfdbfe;
+      color:#6b7280;
       margin-top:8px;
     }
 
     .lp-section {
-      background: #0f172a;
+      background: #ffffff;
       border-radius:20px;
       padding:22px 18px;
       margin-top:20px;
-      border:1px solid #1f2937;
-      box-shadow:0 14px 40px rgba(0,0,0,0.6);
-      color:#e5e7eb;
+      border:1px solid #e5e7eb;
+      box-shadow:0 14px 40px rgba(15,23,42,0.08);
+      color:#0f172a;
     }
     .lp-section h2 {
       margin-top:0;
       font-size:20px;
-      color:#f9fafb;
+      color:#0f172a;
     }
     .lp-grid {
       display:grid;
@@ -828,21 +833,21 @@ app.get("/", (req, res) => {
       margin-top:14px;
     }
     .lp-card {
-      background:#020617;
+      background:#f9fafb;
       border-radius:14px;
       padding:14px 12px;
-      border:1px solid #1f2937;
+      border:1px solid #e5e7eb;
     }
     .lp-card h3 {
       margin-top:0;
       font-size:15px;
-      color:#f9fafb;
+      color:#0f172a;
       margin-bottom:6px;
     }
     .lp-card p {
       margin:0;
       font-size:13px;
-      color:#9ca3af;
+      color:#4b5563;
     }
 
     .lp-table {
@@ -850,23 +855,23 @@ app.get("/", (req, res) => {
       border-collapse:collapse;
       margin-top:12px;
       font-size:13px;
-      color:#e5e7eb;
-      background:#020617;
+      color:#0f172a;
+      background:#ffffff;
     }
     .lp-table th, .lp-table td {
-      border:1px solid #1f2937;
+      border:1px solid #e5e7eb;
       padding:8px;
       text-align:center;
     }
     .lp-table th {
-      background:#111827;
-      color:#9ca3af;
+      background:#f3f4f6;
+      color:#4b5563;
       font-size:11px;
       text-transform:uppercase;
       letter-spacing:.08em;
     }
     .lp-table tbody tr:nth-child(even) {
-      background:#020617;
+      background:#f9fafb;
     }
 
     .lp-trust-strip {
@@ -876,7 +881,7 @@ app.get("/", (req, res) => {
       gap:10px;
       align-items:center;
       font-size:11px;
-      color:#9ca3af;
+      color:#4b5563;
     }
     .lp-trust-pill {
       display:inline-flex;
@@ -884,8 +889,8 @@ app.get("/", (req, res) => {
       gap:6px;
       padding:4px 10px;
       border-radius:999px;
-      background:#020617;
-      border:1px solid #1f2937;
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
     }
     .lp-trust-pill-icon {
       font-size:13px;
@@ -926,7 +931,6 @@ app.get("/", (req, res) => {
       </div>
 
       <div class="lp-trust-strip">
-        <!-- Removido CNPJ e HTTPS daqui, conforme pedido -->
         <div class="lp-trust-pill">
           <span class="lp-trust-pill-icon">✅</span>
           <span>Atuação com administradoras de consórcio reguladas pelo Bacen</span>
@@ -941,7 +945,7 @@ app.get("/", (req, res) => {
         alt="Indicador acompanhando comissões em um dashboard"
       />
       <div class="lp-hero-tag">
-        Painel de indicadores com funil e comissões em tempo real
+        Painel de indicadores com funil e comissões em tempo quase real
       </div>
     </div>
   </section>
@@ -963,7 +967,7 @@ app.get("/", (req, res) => {
       </div>
       <div class="lp-card">
         <h3>4. Você recebe comissão</h3>
-        <p>Ao marcar a venda como aprovada, o sistema calcula automaticamente sua comissão total de até 1,5%, paga em até 6 parcelas.</p>
+        <p>Após a aprovação da venda, o sistema calcula automaticamente a sua comissão total de até 1,5%, conforme termo de adesão e contrato de parceria.</p>
       </div>
     </div>
   </section>
@@ -984,10 +988,10 @@ app.get("/", (req, res) => {
         <tr><td>8 vendas / mês</td><td>R$ 50.000</td><td>R$ 6.000</td></tr>
       </tbody>
     </table>
-    <p class="muted" style="margin-top:8px; color:#9ca3af;">
-      Valores meramente ilustrativos, considerando comissão máxima de 1,5% sobre o valor do contrato.
-      A comissão ao indicador é paga em 6 parcelas (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%),
-      com possibilidade de estorno de 0,35% até a 6ª parcela em caso de inadimplência ou cancelamento do contrato.
+    <p class="muted" style="margin-top:8px;">
+      Valores meramente ilustrativos. A comissão efetivamente devida, prazos de pagamento
+      e hipóteses de estorno seguem o Termo de Adesão do Indicador e o contrato de parceria
+      firmado com a plataforma.
     </p>
   </section>
   `;
@@ -1025,6 +1029,227 @@ app.get("/contato", (req, res) => {
 });
 
 // =============================================================
+// TERMOS DE ADESÃO – INDICADOR
+// =============================================================
+app.get("/termo-indicador", (req, res) => {
+  const content = `
+    <div class="card terms-card">
+      <h2>Termo de Adesão do Indicador – INDICONS / Dhealth Ltda</h2>
+      <p class="muted" style="font-size:13px;">
+        Este termo regula a relação entre o INDICADOR (pessoa física ou jurídica) e a
+        Dhealth Ltda, responsável pela plataforma INDICONS, para fins de indicação de clientes
+        interessados em consórcios de administradoras parceiras.
+      </p>
+
+      <h3>1. Objeto</h3>
+      <p>
+        O presente termo tem por objeto a disponibilização, pela plataforma INDICONS,
+        de ambiente on-line para geração de links de indicação de consórcios, registro de
+        pré-adesões de clientes e acompanhamento de comissões, sem que isso caracterize
+        vínculo empregatício ou de representação exclusiva entre o INDICADOR e a Dhealth Ltda.
+      </p>
+
+      <h3>2. Atuação do Indicador</h3>
+      <ol>
+        <li>O INDICADOR atua de forma autônoma, indicando potenciais clientes interessados em consórcios, por meio de links gerados na plataforma.</li>
+        <li>O INDICADOR não está autorizado a:
+          <ul>
+            <li>Prestar informações divergentes dos materiais oficiais das administradoras;</li>
+            <li>Prometer rentabilidade, contemplação imediata ou qualquer benefício não previsto em contrato de consórcio;</li>
+            <li>Receber valores diretamente do cliente a título de parcelas, taxas ou qualquer outro pagamento relacionado ao consórcio.</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3>3. Comissões, forma de pagamento e estornos</h3>
+      <ol>
+        <li>
+          A remuneração do INDICADOR ocorrerá sob a forma de comissão de
+          <strong>até 1,5% (um vírgula cinco por cento)</strong> calculada sobre o valor do contrato de consórcio efetivamente aprovado e
+          confirmado pela administradora parceira, após pagamento do boleto inicial pelo cliente.
+        </li>
+        <li>
+          A comissão será paga pela Dhealth Ltda ao INDICADOR em até
+          <strong>6 (seis) parcelas</strong>, observada a seguinte distribuição percentual sobre o valor do contrato:
+          <ul>
+            <li>1ª parcela: 0,50% (zero vírgula cinquenta por cento);</li>
+            <li>2ª a 6ª parcelas: 0,20% (zero vírgula vinte por cento) cada parcela.</li>
+          </ul>
+        </li>
+        <li>
+          Poderá haver <strong>estorno de até 0,35% (zero vírgula trinta e cinco por cento)</strong> até a 6ª parcela, total ou parcial,
+          nos casos em que o cliente entrar em inadimplência relevante, cancelar o contrato ou houver chargeback,
+          conforme regras definidas em contrato de parceria e nas políticas da administradora.
+        </li>
+        <li>
+          A efetiva data de pagamento das parcelas de comissão poderá variar conforme o calendário operacional
+          da Dhealth Ltda e o repasse financeiro realizado pelas administradoras de consórcio parceiras.
+        </li>
+        <li>
+          A comissão somente será devida em vendas aprovadas, com contrato formalizado e primeiro pagamento
+          confirmado pela administradora de consórcios.
+        </li>
+      </ol>
+
+      <h3>4. Obrigações da Dhealth Ltda / INDICONS</h3>
+      <ol>
+        <li>Disponibilizar plataforma on-line para geração de links, registro de pré-adesões e acompanhamento de comissões.</li>
+        <li>Efetuar o cálculo das comissões com base nas informações de vendas aprovadas repassadas pelas administradoras parceiras.</li>
+        <li>Realizar o pagamento das comissões devidas ao INDICADOR, observados os percentuais, prazos e regras de estorno previstos neste termo e em contratos específicos.</li>
+        <li>Atuar em conformidade com a legislação aplicável, inclusive regulamentações do Banco Central do Brasil relativas a consórcios.</li>
+      </ol>
+
+      <h3>5. Tratamento de dados pessoais (LGPD)</h3>
+      <ol>
+        <li>
+          O INDICADOR declara estar ciente de que seus dados pessoais (como nome, CPF/CNPJ, e-mail,
+          telefone e dados bancários para pagamento de comissões) serão tratados pela Dhealth Ltda
+          para fins de cadastro, operação da plataforma, controle de indicações, apuração e pagamento
+          de comissões.
+        </li>
+        <li>
+          O INDICADOR autoriza, de forma livre, informada e inequívoca, o compartilhamento de seus dados
+          com administradoras de consórcio parceiras quando necessário para fins de conferência de operações,
+          auditoria, prevenção à fraude e cumprimento de obrigações legais.
+        </li>
+        <li>
+          O tratamento de dados pessoais seguirá a Lei Geral de Proteção de Dados Pessoais – LGPD
+          (Lei nº 13.709/2018) e demais normas aplicáveis, podendo o INDICADOR exercer seus direitos
+          de acesso, correção e demais previsto em lei por meio dos canais oficiais da Dhealth Ltda.
+        </li>
+      </ol>
+
+      <h3>6. Isenção de garantia de aprovação de crédito</h3>
+      <p>
+        O INDICONS e a Dhealth Ltda não garantem a aprovação do cliente indicado em consórcio, nem a
+        celebração do contrato, sendo a análise de crédito, aprovação e manutenção do contrato de
+        inteira responsabilidade da administradora de consórcios parceira.
+      </p>
+
+      <h3>7. Vigência e rescisão</h3>
+      <ol>
+        <li>Este termo entra em vigor na data em que o INDICADOR conclui seu cadastro na plataforma INDICONS e aceita eletronicamente suas condições.</li>
+        <li>O termo poderá ser rescindido por qualquer das partes, a qualquer tempo, mediante comunicação prévia ou simples inativação do cadastro na plataforma, sem ônus, preservados os direitos adquiridos relativos a comissões de vendas já aprovadas.</li>
+      </ol>
+
+      <h3>8. Concordância</h3>
+      <p>
+        Ao marcar a opção de aceite no formulário de cadastro, o INDICADOR declara ter lido,
+        compreendido e aceitado integralmente os termos acima, incluindo as regras de pagamento
+        de comissões, hipóteses de estorno e tratamento de dados pessoais.
+      </p>
+    </div>
+  `;
+  res.send(layout("Termo de Adesão do Indicador", content));
+});
+
+// =============================================================
+// TERMOS DE ADESÃO – CLIENTE
+// =============================================================
+app.get("/termo-cliente", (req, res) => {
+  const content = `
+    <div class="card terms-card">
+      <h2>Termo de Adesão do Cliente – Pré-adesão de Consórcio</h2>
+      <p class="muted" style="font-size:13px;">
+        Este termo esclarece como funciona a utilização da plataforma INDICONS para
+        registro de sua pré-adesão a consórcios de administradoras parceiras, bem como
+        o tratamento dos seus dados pessoais.
+      </p>
+
+      <h3>1. Natureza da pré-adesão</h3>
+      <ol>
+        <li>
+          A pré-adesão realizada nesta página não constitui, por si só, contratação de consórcio
+          nem garante a aprovação de crédito.
+        </li>
+        <li>
+          Os dados informados serão encaminhados a um parceiro autorizado, que entrará em contato
+          para apresentar propostas, esclarecer dúvidas e, se houver interesse, encaminhar a contratação
+          junto à administradora de consórcios.
+        </li>
+      </ol>
+
+      <h3>2. Intermediação via INDICONS / Dhealth Ltda</h3>
+      <ol>
+        <li>
+          A Dhealth Ltda, por meio da plataforma INDICONS, atua como facilitadora de indicações,
+          aproximando clientes interessados de administradoras de consórcios parceiras.
+        </li>
+        <li>
+          A análise de crédito, aprovação, emissão de contrato, cobrança de parcelas e demais obrigações
+          relativas ao consórcio são de responsabilidade exclusiva da administradora de consórcios contratada.
+        </li>
+      </ol>
+
+      <h3>3. Tratamento de dados pessoais (LGPD)</h3>
+      <ol>
+        <li>
+          Ao preencher o formulário de pré-adesão, você informa dados pessoais como nome,
+          telefone/WhatsApp e e-mail, que serão utilizados para:
+          <ul>
+            <li>Contato pelo parceiro autorizado para apresentação de propostas, esclarecimento de dúvidas e eventual formalização do consórcio;</li>
+            <li>Registro da indicação na plataforma INDICONS (vinculando o seu contato ao indicador que encaminhou o link);</li>
+            <li>Atendimento a obrigações legais e regulatórias, inclusive perante o Banco Central do Brasil, quando aplicável.</li>
+          </ul>
+        </li>
+        <li>
+          Você autoriza o contato por telefone, WhatsApp ou e-mail por parte da plataforma
+          INDICONS/Dhealth Ltda e das administradoras de consórcio parceiras, para fins de análise,
+          oferta, contratação e acompanhamento do consórcio.
+        </li>
+        <li>
+          O tratamento dos seus dados seguirá a Lei Geral de Proteção de Dados Pessoais – LGPD
+          (Lei nº 13.709/2018) e demais normas aplicáveis.
+        </li>
+      </ol>
+
+      <h3>4. Comissões ao indicador</h3>
+      <p class="muted" style="font-size:13px;">
+        Para transparência, informamos que o indicador que encaminhou o seu contato poderá
+        receber comissão da plataforma Dhealth Ltda caso você venha a contratar e manter
+        o consórcio ativo nas condições aprovadas.
+      </p>
+      <ol>
+        <li>
+          A comissão ao indicador é limitada a <strong>até 1,5% (um vírgula cinco por cento)</strong> sobre
+          o valor do contrato de consórcio aprovado, e será paga em até
+          <strong>6 (seis) parcelas</strong>, distribuídas internamente da seguinte forma:
+          <ul>
+            <li>1ª parcela: 0,50% do valor do contrato;</li>
+            <li>2ª a 6ª parcelas: 0,20% do valor do contrato em cada parcela.</li>
+          </ul>
+        </li>
+        <li>
+          Poderá ocorrer <strong>estorno de até 0,35% (zero vírgula trinta e cinco por cento)</strong> até a 6ª parcela,
+          total ou parcial, em situações como inadimplência relevante ou cancelamento do contrato,
+          conforme políticas da administradora e condições acordadas com o indicador.
+        </li>
+        <li>
+          Essa remuneração não impacta o valor final do seu contrato de consórcio, que é definido
+          pela administradora de acordo com sua tabela vigente.
+        </li>
+      </ol>
+
+      <h3>5. Ausência de garantia de aprovação</h3>
+      <p>
+        A pré-adesão registrada na plataforma INDICONS não garante a aprovação do consórcio.
+        A análise de crédito, definição de condições comerciais, contemplações e demais aspectos
+        do grupo de consórcio são conduzidos exclusivamente pela administradora contratada, nos
+        termos da legislação e regulamentação do Banco Central do Brasil.
+      </p>
+
+      <h3>6. Concordância</h3>
+      <p>
+        Ao marcar a opção de aceite no formulário de pré-adesão, você declara ter lido e compreendido
+        este Termo de Adesão do Cliente, autorizando o tratamento de seus dados pessoais e o contato
+        dos parceiros e administradoras para fins de análise e eventual contratação de consórcio.
+      </p>
+    </div>
+  `;
+  res.send(layout("Termo de Adesão do Cliente", content));
+});
+
+// =============================================================
 // MIDDLEWARES DE AUTENTICAÇÃO
 // =============================================================
 function requireIndicador(req, res, next) {
@@ -1041,7 +1266,7 @@ function requireAdmin(req, res, next) {
 }
 
 // =============================================================
-// INDICADOR – CADASTRO / LOGIN (com LGPD / autorização)
+// INDICADOR – CADASTRO / LOGIN (link para Termo de Adesão)
 // =============================================================
 app.get("/indicador/registrar", (req, res) => {
   res.send(
@@ -1059,11 +1284,13 @@ app.get("/indicador/registrar", (req, res) => {
             <label style="display:flex; align-items:flex-start; gap:6px;">
               <input type="checkbox" name="aceite_termos" required style="margin-top:2px;">
               <span>
-                Declaro que li e aceito os termos da plataforma INDICONS/Dhealth Ltda e
-                autorizo o contato por telefone, WhatsApp ou e-mail por parte da
-                plataforma e das administradoras de consórcio parceiras, para fins de
-                análise, oferta e acompanhamento de consórcios, em conformidade com a
-                LGPD (Lei nº 13.709/2018) e com a regulamentação do Banco Central do Brasil.
+                Declaro que li e aceito o
+                <a href="/termo-indicador" target="_blank" rel="noopener noreferrer">
+                  Termo de Adesão do Indicador
+                </a>,
+                bem como autorizo o contato por telefone, WhatsApp ou e-mail por parte da
+                plataforma INDICONS/Dhealth Ltda e das administradoras de consórcios parceiras,
+                em conformidade com a LGPD (Lei nº 13.709/2018) e com a regulamentação do Banco Central.
               </span>
             </label>
           </div>
@@ -1121,7 +1348,7 @@ app.post("/indicador/login", async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – DASHBOARD COM LINHA DO TEMPO + GRÁFICOS
+// INDICADOR – DASHBOARD (tema claro, sem cláusula longa)
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -1202,25 +1429,26 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
       .metric-card {
         border-radius:12px;
         padding:10px 12px;
-        background:#020617;
-        border:1px solid #1f2937;
-        color:#e5e7eb;
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        color:#0f172a;
+        box-shadow:0 8px 20px rgba(15,23,42,0.06);
       }
       .metric-label {
         font-size:11px;
         text-transform:uppercase;
         letter-spacing:.08em;
-        color:#9ca3af;
+        color:#6b7280;
       }
       .metric-value {
         font-size:20px;
         font-weight:700;
         margin-top:4px;
-        color:#f9fafb;
+        color:#0f172a;
       }
       .metric-helper {
         font-size:11px;
-        color:#9ca3af;
+        color:#6b7280;
       }
 
       .hero-img-panel {
@@ -1228,8 +1456,8 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         overflow:hidden;
         position:relative;
         background:#020617;
-        border:1px solid #1f2937;
-        box-shadow:0 16px 40px rgba(0,0,0,0.7);
+        border:1px solid #e5e7eb;
+        box-shadow:0 16px 40px rgba(15,23,42,0.25);
       }
       .hero-img {
         width:100%;
@@ -1241,7 +1469,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         position:absolute;
         bottom:10px;
         left:10px;
-        background:rgba(15,23,42,0.95);
+        background:rgba(15,23,42,0.92);
         color:#e5e7eb;
         padding:6px 10px;
         border-radius:999px;
@@ -1274,23 +1502,23 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         width: 36px;
         height: 36px;
         border-radius: 999px;
-        border: 3px solid #1f2937;
-        background: #020617;
+        border: 3px solid #e5e7eb;
+        background: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        color: #f9fafb;
+        color: #0f172a;
         z-index: 2;
       }
       .timeline-label {
         margin-top: 6px;
         font-weight: 600;
-        color: #e5e7eb;
+        color: #0f172a;
       }
       .timeline-caption {
         margin-top: 2px;
-        color: #9ca3af;
+        color: #6b7280;
         font-size: 11px;
         max-width: 160px;
       }
@@ -1301,7 +1529,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         left: 0;
         right: 0;
         height: 3px;
-        background: #1f2937;
+        background: #e5e7eb;
         z-index: 1;
       }
       .timeline-progress {
@@ -1327,36 +1555,36 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         font-size:11px;
         padding:4px 8px;
         border-radius:999px;
-        border:1px solid #1f2937;
-        background:#020617;
-        color:#9ca3af;
+        border:1px solid #e5e7eb;
+        background:#f9fafb;
+        color:#6b7280;
       }
       .stepper-mini-step-dot {
         width:8px;
         height:8px;
         border-radius:999px;
-        background:#4b5563;
+        background:#9ca3af;
       }
       .stepper-mini-step.done {
         border-color:#16a34a;
-        background:#022c22;
-        color:#bbf7d0;
+        background:#ecfdf5;
+        color:#166534;
       }
       .stepper-mini-step.done .stepper-mini-step-dot {
         background:#22c55e;
       }
       .stepper-mini-step.current {
         border-color:#0ea5e9;
-        background:#0b1120;
-        color:#e5e7eb;
+        background:#e0f2fe;
+        color:#0f172a;
       }
       .stepper-mini-step.current .stepper-mini-step-dot {
         background:#0ea5e9;
       }
       .stepper-mini-step.lost {
         border-color:#b91c1c;
-        background:#450a0a;
-        color:#fecaca;
+        background:#fee2e2;
+        color:#b91c1c;
       }
       .stepper-mini-step.lost .stepper-mini-step-dot {
         background:#ef4444;
@@ -1374,13 +1602,13 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
       }
     </style>
 
-    <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+    <div class="card">
       <div class="dashboard-hero">
         <div>
           <h2>Painel do Indicador</h2>
-          <p class="muted" style="color:#9ca3af;">
+          <p class="muted">
             Acompanhe todas as indicações, entenda em que etapa do funil cada cliente está
-            e visualize quanto você já gerou de vendas e comissões (até 1,5% por venda).
+            e visualize quanto você já gerou de vendas e comissões (até 1,5% por venda aprovada).
           </p>
           <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
 
@@ -1404,16 +1632,17 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               <div class="metric-label">Comissões acumuladas</div>
               <div class="metric-value">R$ ${totalComissao.toFixed(2)}</div>
               <div class="metric-helper">
-                Baseado em comissão total de até 1,5%, paga em 6 parcelas.
+                Valores estimados conforme termo de adesão e contrato de parceria.
               </div>
             </div>
           </div>
 
-          <p style="margin-top:10px; font-size:11px; color:#9ca3af;">
-            Modelo de pagamento da comissão ao indicador:
-            6 parcelas sobre o valor da venda (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%),
-            com possibilidade de estorno de 0,35% até a 6ª parcela em caso de inadimplência
-            ou cancelamento do contrato pelo cliente.
+          <p style="margin-top:10px; font-size:11px; color:#6b7280;">
+            Para detalhes completos sobre percentuais, parcelamento e hipóteses de estorno
+            das comissões, consulte o
+            <a href="/termo-indicador" target="_blank" rel="noopener noreferrer">
+              Termo de Adesão do Indicador
+            </a>.
           </p>
         </div>
 
@@ -1430,9 +1659,9 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
       </div>
     </div>
 
-    <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+    <div class="card">
       <h3>Etapas do funil de indicação</h3>
-      <p class="muted" style="color:#9ca3af;">
+      <p class="muted">
         Todo cliente caminha por estas etapas: do clique no link até a aprovação da venda.
       </p>
 
@@ -1480,25 +1709,25 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
       </div>
     </div>
 
-    <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+    <div class="card">
       <h3>Visão gráfica do funil</h3>
       <div class="charts-grid">
         <div>
-          <p class="muted" style="color:#9ca3af;">Quantidade de pré-vendas em cada etapa.</p>
+          <p class="muted">Quantidade de pré-vendas em cada etapa.</p>
           <canvas id="funilBarChart" height="180"></canvas>
         </div>
         <div>
-          <p class="muted" style="color:#9ca3af;">Distribuição percentual das suas indicações.</p>
+          <p class="muted">Distribuição percentual das suas indicações.</p>
           <canvas id="conversionChart" height="180"></canvas>
         </div>
       </div>
     </div>
 
-    <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+    <div class="card">
       <h3>Minhas pré-vendas (linha do tempo individual)</h3>
       ${
         pre.length === 0
-          ? `<p class="muted" style="color:#9ca3af;">Nenhuma pré-venda ainda. Gere seu primeiro link na área “Meus links de indicação”.</p>`
+          ? `<p class="muted">Nenhuma pré-venda ainda. Gere seu primeiro link na área “Meus links de indicação”.</p>`
           : pre
               .map((v) => {
                 const currentStageIndex = stageOrder.indexOf(v.status);
@@ -1514,14 +1743,14 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
                 }
 
                 return `
-        <div class="card" style="margin-top:10px; background:#020617; border-color:#1f2937; color:#e5e7eb;">
+        <div class="card" style="margin-top:10px;">
           <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
             <div>
               <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
-              <span class="muted" style="color:#9ca3af;">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
+              <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
               ${
                 v.valor_venda
-                  ? `<span class="muted" style="color:#9ca3af;">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span><br>`
+                  ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span><br>`
                   : ""
               }
             </div>
@@ -1589,10 +1818,10 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               responsive: true,
               plugins: { legend: { display: false } },
               scales: {
-                x: { ticks: { color: '#9ca3af', font: { size: 11 } } },
+                x: { ticks: { color: '#6b7280', font: { size: 11 } } },
                 y: {
                   beginAtZero: true,
-                  ticks: { color: '#9ca3af', font: { size: 11 } }
+                  ticks: { color: '#6b7280', font: { size: 11 } }
                 }
               }
             }
@@ -1627,7 +1856,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               plugins: {
                 legend: {
                   position: 'bottom',
-                  labels: { color: '#e5e7eb', font: { size: 11 } }
+                  labels: { color: '#374151', font: { size: 11 } }
                 }
               }
             }
@@ -1654,18 +1883,18 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
   const base = process.env.BASE_URL || "https://indicons.onrender.com";
 
   const content = `
-    <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+    <div class="card">
       <h2>Produtos de consórcio para indicação</h2>
-      <p class="muted" style="color:#9ca3af;">
+      <p class="muted">
         Use a tabela abaixo para gerar e copiar os links de indicação. Cada linha representa um plano/valor
         da administradora. Clique em <strong>Copiar link</strong> ao lado do plano que deseja enviar.
       </p>
     </div>
 
-    <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+    <div class="card">
       ${
         produtos.length === 0
-          ? `<p class="muted" style="color:#9ca3af;">Nenhum produto cadastrado. Cadastre os planos na tabela <code>produtos</code>.</p>`
+          ? `<p class="muted">Nenhum produto cadastrado. Cadastre os planos na tabela <code>produtos</code>.</p>`
           : `
       <div class="table-wrapper">
         <table class="data-table">
@@ -1725,12 +1954,12 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
             msg.style.position = 'fixed';
             msg.style.bottom = '16px';
             msg.style.right = '16px';
-            msg.style.background = '#22c55e';
+            msg.style.background = '#16a34a';
             msg.style.color = 'white';
             msg.style.padding = '8px 14px';
             msg.style.borderRadius = '999px';
             msg.style.fontSize = '13px';
-            msg.style.boxShadow = '0 4px 18px rgba(0,0,0,0.6)';
+            msg.style.boxShadow = '0 4px 18px rgba(15,23,42,0.3)';
             document.body.appendChild(msg);
             setTimeout(function(){ document.body.removeChild(msg); }, 1800);
           })
@@ -1751,7 +1980,7 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
 });
 
 // =============================================================
-// CLIENTE – PRÉ-ADESÃO (com LGPD / autorização)
+// CLIENTE – PRÉ-ADESÃO (checkbox + link para Termo do Cliente)
 // =============================================================
 app.get("/consorcio", async (req, res) => {
   const { i, p } = req.query;
@@ -1764,11 +1993,11 @@ app.get("/consorcio", async (req, res) => {
     layout(
       "Pré-adesão",
       `
-      <div class="card auth-card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+      <div class="card auth-card">
         <h2>${prod.nome}</h2>
         ${
           prod.codigo || prod.credito_referencia
-            ? `<p class="muted" style="color:#9ca3af;">Código: <strong>${prod.codigo || "-"}</strong> · ${prod.credito_referencia || ""}</p>`
+            ? `<p class="muted">Código: <strong>${prod.codigo || "-"}</strong> · ${prod.credito_referencia || ""}</p>`
             : ""
         }
         <p>Indicação de <strong>${ind.nome}</strong></p>
@@ -1781,15 +2010,17 @@ app.get("/consorcio", async (req, res) => {
           <label>Telefone / WhatsApp</label><input name="telefone" required>
           <label>E-mail</label><input name="email" type="email" required>
 
-          <div style="margin-top:10px; font-size:12px; color:#9ca3af;">
+          <div style="margin-top:10px; font-size:12px; color:#64748b;">
             <label style="display:flex; align-items:flex-start; gap:6px;">
               <input type="checkbox" name="aceite_termos" required style="margin-top:2px;">
               <span>
-                Autorizo o tratamento dos meus dados pessoais pela plataforma INDICONS/Dhealth Ltda
-                e pelas administradoras de consórcio parceiras, para fins de análise de perfil,
-                oferta, contratação e acompanhamento de consórcios, em conformidade com a LGPD
-                (Lei nº 13.709/2018) e com as normas do Banco Central do Brasil, bem como o contato
-                por telefone, WhatsApp ou e-mail para esclarecimento de dúvidas e envio de propostas.
+                Declaro que li e aceito o
+                <a href="/termo-cliente" target="_blank" rel="noopener noreferrer">
+                  Termo de Adesão do Cliente
+                </a>,
+                autorizando o tratamento dos meus dados pessoais e o contato da plataforma
+                INDICONS/Dhealth Ltda e das administradoras de consórcio parceiras por telefone,
+                WhatsApp ou e-mail, para fins de análise, oferta e eventual contratação de consórcio.
               </span>
             </label>
           </div>
@@ -1797,7 +2028,7 @@ app.get("/consorcio", async (req, res) => {
           <button class="btn" style="margin-top:12px;">Confirmar pré-adesão</button>
         </form>
 
-        <p class="muted" style="margin-top:8px; color:#9ca3af;">
+        <p class="muted" style="margin-top:8px;">
           Um parceiro autorizado entrará em contato para finalizar a venda. O envio desta pré-adesão
           não garante aprovação de crédito, que dependerá das políticas da administradora.
         </p>
@@ -1823,7 +2054,7 @@ app.post("/consorcio", async (req, res) => {
   res.send(
     layout(
       "Pré-adesão enviada",
-      `<div class="card auth-card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;"><h2>Pré-adesão registrada!</h2><p class="muted" style="color:#9ca3af;">O parceiro entrará em contato em breve para dar sequência na análise e eventual contratação do consórcio.</p></div>`
+      `<div class="card auth-card"><h2>Pré-adesão registrada!</h2><p class="muted">O parceiro entrará em contato em breve para dar sequência na análise e eventual contratação do consórcio.</p></div>`
     )
   );
 });
@@ -1839,14 +2070,14 @@ app.get("/parceiro/login", (req, res) => {
     layout(
       "Login Parceiro",
       `
-      <div class="card auth-card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+      <div class="card auth-card">
         <h2>Login do Parceiro</h2>
         <form method="POST">
           <label>Email</label><input name="email">
           <label>Senha</label><input type="password" name="senha">
           <button class="btn" style="margin-top:10px;">Entrar</button>
         </form>
-        <p class="muted" style="color:#9ca3af;">Usuário padrão: parceiro@indicons.com / 123456</p>
+        <p class="muted">Usuário padrão: parceiro@indicons.com / 123456</p>
       </div>
       `
     )
@@ -1876,24 +2107,24 @@ app.get("/parceiro/pre-vendas", requireParceiro, async (req, res) => {
     layout(
       "Pré-vendas",
       `
-      <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+      <div class="card">
         <h2>Pré-vendas para atendimento</h2>
-        <p class="muted" style="color:#9ca3af;">
+        <p class="muted">
           Utilize estes dados apenas para fins de atendimento e formalização do consórcio,
           em conformidade com a LGPD e com as políticas da administradora.
         </p>
       </div>
       ${
         pv.length === 0
-          ? `<div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;"><p class="muted" style="color:#9ca3af;">Nenhuma pré-venda ainda.</p></div>`
+          ? `<div class="card"><p class="muted">Nenhuma pré-venda ainda.</p></div>`
           : pv
               .map(
                 (v) => `
-      <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+      <div class="card">
         <h3>${v.nome_cliente}</h3>
-        <p class="muted" style="color:#9ca3af;">${v.produto_nome}</p>
-        <p class="muted" style="color:#9ca3af;">Indicador: ${v.indicador_nome}</p>
-        <p class="muted" style="color:#9ca3af;">Contato: ${v.telefone_cliente} · ${v.email_cliente}</p>
+        <p class="muted">${v.produto_nome}</p>
+        <p class="muted">Indicador: ${v.indicador_nome}</p>
+        <p class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</p>
 
         <form method="POST" action="/parceiro/pre-vendas/${v.id}/status">
           <label>Status</label>
@@ -1955,14 +2186,14 @@ app.get("/admin/login", (req, res) => {
     layout(
       "Admin Login",
       `
-      <div class="card auth-card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+      <div class="card auth-card">
         <h2>Login Admin</h2>
         <form method="POST">
           <label>Email</label><input name="email">
           <label>Senha</label><input type="password" name="senha">
           <button class="btn" style="margin-top:10px;">Entrar</button>
         </form>
-        <p class="muted" style="color:#9ca3af;">Usuário padrão: admin@indicons.com / 123456</p>
+        <p class="muted">Usuário padrão: admin@indicons.com / 123456</p>
       </div>
       `
     )
@@ -1987,20 +2218,20 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
   );
 
   const content = `
-      <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+      <div class="card">
         <h2>Comissões</h2>
-        <p class="muted" style="color:#9ca3af;">
+        <p class="muted">
           As comissões ao indicador são calculadas sobre o valor de venda aprovado, com
-          percentual total de até 1,5%. O pagamento é realizado em 6 parcelas (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%),
-          com possibilidade de estorno de 0,35% até a 6ª parcela em caso de inadimplência ou cancelamento do contrato.
+          percentual total de até 1,5%. Para detalhes de parcelamento e eventuais estornos,
+          prevalecem o Termo de Adesão do Indicador e os contratos de parceria vigentes.
         </p>
         ${
           coms.length === 0
-            ? "<p class='muted' style='color:#9ca3af;'>Nenhuma comissão registrada ainda.</p>"
+            ? "<p class='muted'>Nenhuma comissão registrada ainda.</p>"
             : coms
                 .map(
                   (c) =>
-                    `<div class="card" style="margin-top:8px; background:#020617; border-color:#1f2937; color:#e5e7eb;">
+                    `<div class="card" style="margin-top:8px;">
                       Indicador: <strong>${c.indicador_nome}</strong><br>
                       Valor venda: R$ ${c.valor_venda}<br>
                       Comissão total (até 1,5%): <strong>R$ ${c.valor_comissao}</strong>
@@ -2010,9 +2241,9 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
         }
       </div>
 
-      <div class="card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;">
+      <div class="card">
         <h3>Follow-up organizado</h3>
-        <p class="muted" style="color:#9ca3af;">
+        <p class="muted">
           Clique no botão abaixo para enviar mensagens de follow-up para todas as pré-vendas
           em status <strong>PRE_ADESAO</strong> ou <strong>EM_ATENDIMENTO</strong>.
         </p>
@@ -2044,7 +2275,7 @@ app.post("/admin/disparar-followup", requireAdmin, async (req, res) => {
   res.send(
     layout(
       "Follow-up disparado",
-      `<div class="card auth-card" style="background:#020617; border-color:#1f2937; color:#e5e7eb;"><h2>Follow-up enviado para ${abertas.length} pré-vendas abertas.</h2></div>`,
+      `<div class="card auth-card"><h2>Follow-up enviado para ${abertas.length} pré-vendas abertas.</h2></div>`,
       `Admin: ${req.session.adminNome} | <a href="/logout">Sair</a>`
     )
   );
