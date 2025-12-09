@@ -1,1177 +1,1123 @@
-// =============================================================
-// INDICONS – Sistema completo + SQLite
-// Home = Landing Indicador + Tabela Autos com botão copiar link
-// =============================================================
+// server.js - INDICONS com layout profissional (Bootstrap) e fluxo completo
 const express = require("express");
 const session = require("express-session");
-const sqlite3 = require("sqlite3").verbose();
-
 const app = express();
 
-// -----------------------------------------------
-// CONFIGURAÇÕES BÁSICAS
-// -----------------------------------------------
+// Configuração básica
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(
   session({
-    secret: "indicons-secret",
+    secret: "indicons-segredo-simples",
     resave: false,
     saveUninitialized: true,
   })
 );
 
-// -----------------------------------------------
-// BANCO DE DADOS SQLite
-// -----------------------------------------------
-const db = new sqlite3.Database("./indicons.db");
+// "Banco" em memória (MVP) - em produção trocar por banco real
+let indicadores = [];
+let parceiros = [];
+let admins = [];
+let produtos = [];
+let preVendas = [];
+let comissoes = [];
 
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS indicadores (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      senha TEXT NOT NULL
-    )
-  `);
+let nextIndicadorId = 1;
+let nextParceiroId = 1;
+let nextAdminId = 1;
+let nextProdutoId = 1;
+let nextPreVendaId = 1;
+let nextComissaoId = 1;
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS produtos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      descricao TEXT,
-      codigo TEXT,
-      credito_referencia TEXT
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS pre_vendas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      indicador_id INTEGER NOT NULL,
-      produto_id INTEGER NOT NULL,
-      nome_cliente TEXT NOT NULL,
-      telefone_cliente TEXT NOT NULL,
-      email_cliente TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'PRE_ADESAO',
-      valor_venda REAL,
-      FOREIGN KEY(indicador_id) REFERENCES indicadores(id),
-      FOREIGN KEY(produto_id) REFERENCES produtos(id)
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS comissoes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      indicador_id INTEGER NOT NULL,
-      pre_venda_id INTEGER NOT NULL,
-      valor_venda REAL NOT NULL,
-      valor_comissao REAL NOT NULL,
-      FOREIGN KEY(indicador_id) REFERENCES indicadores(id),
-      FOREIGN KEY(pre_venda_id) REFERENCES pre_vendas(id)
-    )
-  `);
-
-  // Seed com os planos reais de AUTOS (tabela enviada)
-  db.get("SELECT COUNT(*) AS c FROM produtos", (err, row) => {
-    if (row && row.c === 0) {
-      const planosAutos = [
-        { produto: "Autos", codigo: "8749", credito: "R$ 180.000,00", prazo: "100 meses", primeira: "R$ 5.706,00", demais: "R$ 2.106,00" },
-        { produto: "Autos", codigo: "8749", credito: "R$ 180.000,00", prazo: "90 meses",  primeira: "R$ 5.920,00", demais: "R$ 2.320,00" },
-
-        { produto: "Autos", codigo: "8748", credito: "R$ 170.000,00", prazo: "100 meses", primeira: "R$ 5.389,00", demais: "R$ 1.989,00" },
-        { produto: "Autos", codigo: "8748", credito: "R$ 170.000,00", prazo: "90 meses",  primeira: "R$ 5.591,11", demais: "R$ 2.191,11" },
-
-        { produto: "Autos", codigo: "8747", credito: "R$ 160.000,00", prazo: "100 meses", primeira: "R$ 5.072,00", demais: "R$ 1.872,00" },
-        { produto: "Autos", codigo: "8747", credito: "R$ 160.000,00", prazo: "90 meses",  primeira: "R$ 5.262,22", demais: "R$ 2.062,22" },
-
-        { produto: "Autos", codigo: "8746", credito: "R$ 150.000,00", prazo: "100 meses", primeira: "R$ 4.755,00", demais: "R$ 1.755,00" },
-        { produto: "Autos", codigo: "8746", credito: "R$ 150.000,00", prazo: "90 meses",  primeira: "R$ 4.933,33", demais: "R$ 1.933,33" },
-
-        { produto: "Autos", codigo: "8745", credito: "R$ 140.000,00", prazo: "100 meses", primeira: "R$ 4.438,00", demais: "R$ 1.638,00" },
-        { produto: "Autos", codigo: "8745", credito: "R$ 140.000,00", prazo: "90 meses",  primeira: "R$ 4.604,44", demais: "R$ 1.804,44" },
-
-        { produto: "Autos", codigo: "8744", credito: "R$ 130.000,00", prazo: "100 meses", primeira: "R$ 4.121,00", demais: "R$ 1.521,00" },
-        { produto: "Autos", codigo: "8744", credito: "R$ 130.000,00", prazo: "90 meses",  primeira: "R$ 4.275,56", demais: "R$ 1.675,56" },
-
-        { produto: "Autos", codigo: "8743", credito: "R$ 120.000,00", prazo: "100 meses", primeira: "R$ 3.804,00", demais: "R$ 1.404,00" },
-        { produto: "Autos", codigo: "8743", credito: "R$ 120.000,00", prazo: "90 meses",  primeira: "R$ 3.946,67", demais: "R$ 1.546,67" },
-
-        { produto: "Autos", codigo: "8742", credito: "R$ 110.000,00", prazo: "100 meses", primeira: "R$ 3.487,00", demais: "R$ 1.287,00" },
-        { produto: "Autos", codigo: "8742", credito: "R$ 110.000,00", prazo: "90 meses",  primeira: "R$ 3.617,78", demais: "R$ 1.417,78" },
-
-        { produto: "Autos", codigo: "8741", credito: "R$ 100.000,00", prazo: "100 meses", primeira: "R$ 3.170,00", demais: "R$ 1.170,00" },
-        { produto: "Autos", codigo: "8741", credito: "R$ 100.000,00", prazo: "90 meses",  primeira: "R$ 3.288,89", demais: "R$ 1.288,89" },
-
-        { produto: "Autos", codigo: "8739", credito: "R$ 90.000,00", prazo: "100 meses", primeira: "R$ 2.853,00", demais: "R$ 1.053,00" },
-        { produto: "Autos", codigo: "8739", credito: "R$ 90.000,00", prazo: "90 meses",  primeira: "R$ 2.960,00", demais: "R$ 1.160,00" },
-
-        { produto: "Autos", codigo: "8738", credito: "R$ 85.000,00", prazo: "100 meses", primeira: "R$ 2.694,50", demais: "R$ 994,50" },
-        { produto: "Autos", codigo: "8738", credito: "R$ 85.000,00", prazo: "90 meses",  primeira: "R$ 2.795,56", demais: "R$ 1.095,56" },
-
-        { produto: "Autos", codigo: "8737", credito: "R$ 80.000,00", prazo: "100 meses", primeira: "R$ 2.536,00", demais: "R$ 936,00" },
-        { produto: "Autos", codigo: "8737", credito: "R$ 80.000,00", prazo: "90 meses",  primeira: "R$ 2.631,11", demais: "R$ 1.031,11" },
-
-        { produto: "Autos", codigo: "8736", credito: "R$ 75.000,00", prazo: "100 meses", primeira: "R$ 2.377,50", demais: "R$ 877,50" },
-        { produto: "Autos", codigo: "8736", credito: "R$ 75.000,00", prazo: "90 meses",  primeira: "R$ 2.466,67", demais: "R$ 966,67" },
-
-        { produto: "Autos", codigo: "8735", credito: "R$ 70.000,00", prazo: "100 meses", primeira: "R$ 2.219,00", demais: "R$ 819,00" },
-        { produto: "Autos", codigo: "8735", credito: "R$ 70.000,00", prazo: "90 meses",  primeira: "R$ 2.302,22", demais: "R$ 902,22" },
-
-        { produto: "Autos", codigo: "8734", credito: "R$ 65.000,00", prazo: "100 meses", primeira: "R$ 2.060,50", demais: "R$ 760,50" },
-        { produto: "Autos", codigo: "8734", credito: "R$ 65.000,00", prazo: "90 meses",  primeira: "R$ 2.137,78", demais: "R$ 837,78" },
-
-        { produto: "Autos", codigo: "8733", credito: "R$ 60.000,00", prazo: "100 meses", primeira: "R$ 1.902,00", demais: "R$ 702,00" },
-        { produto: "Autos", codigo: "8733", credito: "R$ 60.000,00", prazo: "90 meses",  primeira: "R$ 1.973,33", demais: "R$ 773,33" },
-
-        { produto: "Autos", codigo: "8732", credito: "R$ 55.000,00", prazo: "100 meses", primeira: "R$ 1.743,50", demais: "R$ 643,50" },
-        { produto: "Autos", codigo: "8732", credito: "R$ 55.000,00", prazo: "90 meses",  primeira: "R$ 1.808,89", demais: "R$ 708,89" },
-
-        { produto: "Autos", codigo: "8731", credito: "R$ 50.000,00", prazo: "100 meses", primeira: "R$ 1.585,00", demais: "R$ 585,00" },
-        { produto: "Autos", codigo: "8731", credito: "R$ 50.000,00", prazo: "90 meses",  primeira: "R$ 1.644,44", demais: "R$ 644,44" },
-
-        { produto: "Autos", codigo: "8730", credito: "R$ 45.000,00", prazo: "100 meses", primeira: "R$ 1.426,50", demais: "R$ 526,50" },
-        { produto: "Autos", codigo: "8730", credito: "R$ 45.000,00", prazo: "90 meses",  primeira: "R$ 1.480,00", demais: "R$ 580,00" },
-      ];
-
-      planosAutos.forEach((p) => {
-        const nome = `${p.produto} ${p.codigo} – ${p.prazo}`;
-        const detalhes = `${p.credito} · 1ª Parcela ${p.primeira} · Demais ${p.demais}`;
-        db.run(
-          `INSERT INTO produtos (nome, descricao, codigo, credito_referencia) VALUES (?,?,?,?)`,
-          [nome, null, p.codigo, detalhes]
-        );
-      });
-    }
-  });
+// Usuários padrão para testes
+admins.push({
+  id: nextAdminId++,
+  nome: "Admin Padrão",
+  email: "admin@indicons.com",
+  senha: "123456",
 });
 
-// Helpers async
-function dbAll(sql, params = []) {
-  return new Promise((resolve, reject) =>
-    db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)))
-  );
-}
-function dbGet(sql, params = []) {
-  return new Promise((resolve, reject) =>
-    db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row)))
-  );
-}
-function dbRun(sql, params = []) {
-  return new Promise((resolve, reject) =>
-    db.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve(this);
-    })
-  );
+parceiros.push({
+  id: nextParceiroId++,
+  nome: "Parceiro Padrão",
+  email: "parceiro@indicons.com",
+  senha: "123456",
+});
+
+// Produtos exemplo
+produtos.push(
+  {
+    id: nextProdutoId++,
+    nome: "Consórcio Imóvel - Embracon",
+    codigo: "IMOVEL01",
+    administradora: "Embracon",
+    descricao:
+      "Cartas de crédito para aquisição de imóveis residenciais e comerciais.",
+  },
+  {
+    id: nextProdutoId++,
+    nome: "Consórcio Auto - Porto Seguro",
+    codigo: "AUTO01",
+    administradora: "Porto Seguro",
+    descricao: "Consórcio para veículos leves novos e seminovos.",
+  },
+  {
+    id: nextProdutoId++,
+    nome: "Consórcio Serviços - Embracon",
+    codigo: "SERVICO01",
+    administradora: "Embracon",
+    descricao:
+      "Consórcio para reformas, educação, cirurgias e outros serviços.",
+  }
+);
+
+// Middlewares de autenticação
+function requireIndicador(req, res, next) {
+  if (req.session && req.session.indicadorId) return next();
+  return res.redirect("/indicador/login");
 }
 
-// -------------------------------------------------------------
-// LAYOUT GLOBAL
-// -------------------------------------------------------------
-function layout(title, content, userNav = "") {
-  return `
-<!DOCTYPE html>
-<html lang="pt-br">
+function requireAdmin(req, res, next) {
+  if (req.session && req.session.adminId) return next();
+  return res.redirect("/admin/login");
+}
+
+function requireParceiro(req, res, next) {
+  if (req.session && req.session.parceiroId) return next();
+  return res.redirect("/parceiro/login");
+}
+
+// Layout com Bootstrap 5
+function layout(title, content, req) {
+  let userBadge = "";
+  if (req.session?.indicadorId) {
+    const ind = indicadores.find((i) => i.id === req.session.indicadorId);
+    if (ind) {
+      userBadge = `<span class="badge rounded-pill bg-primary-subtle text-primary me-2">Indicador</span><span class="me-3">${ind.nome}</span><a href="/logout" class="btn btn-outline-light btn-sm">Sair</a>`;
+    }
+  } else if (req.session?.parceiroId) {
+    const par = parceiros.find((p) => p.id === req.session.parceiroId);
+    if (par) {
+      userBadge = `<span class="badge rounded-pill bg-danger-subtle text-danger me-2">Parceiro</span><span class="me-3">${par.nome}</span><a href="/logout" class="btn btn-outline-light btn-sm">Sair</a>`;
+    }
+  } else if (req.session?.adminId) {
+    const adm = admins.find((a) => a.id === req.session.adminId);
+    if (adm) {
+      userBadge = `<span class="badge rounded-pill bg-success-subtle text-success me-2">Admin</span><span class="me-3">${adm.nome}</span><a href="/logout" class="btn btn-outline-light btn-sm">Sair</a>`;
+    }
+  } else {
+    userBadge = `<a href="/indicador/login" class="btn btn-outline-light btn-sm me-2">Indicador</a>
+                 <a href="/parceiro/login" class="btn btn-outline-light btn-sm me-2">Parceiro</a>
+                 <a href="/admin/login" class="btn btn-outline-light btn-sm">Admin</a>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <title>${title}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background:#f1f5f9; margin:0; font-family: Arial, system-ui; color:#1e293b; }
-
-    header {
-      background:#ffffff;
-      border-bottom:1px solid #cbd5e1;
-      position:sticky; top:0;
-      z-index:10;
+    body { background-color:#f3f4f6; }
+    .navbar-brand span.logo-mark {
+      display:inline-block;
+      width:26px;
+      height:26px;
+      border-radius:8px;
+      background:linear-gradient(135deg,#0f766e,#22c55e);
+      margin-right:8px;
+      position:relative;
+      overflow:hidden;
     }
-
-    .header-inner {
-      max-width:1100px;
-      margin:auto;
-      padding:10px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+    .navbar-brand span.logo-mark::after {
+      content:"›";
+      position:absolute;
+      color:white;
+      font-weight:bold;
+      font-size:18px;
+      top:1px;
+      left:7px;
     }
-
-    .logo { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:bold; }
-    .logo-mark {
-      width:34px; height:34px; border-radius:50%;
-      background:linear-gradient(135deg,#0ea5e9,#0369a1);
-      color:white; display:flex; align-items:center; justify-content:center;
-      font-size:18px; font-weight:700;
-    }
-
-    nav a {
-      margin-left: 12px;
-      text-decoration:none;
-      color:#475569;
-      font-weight:500;
-      font-size:14px;
-    }
-    nav a:hover { color:#0ea5e9; }
-
-    main { max-width:1100px; margin:auto; padding:18px; }
-
-    .card {
-      background:#ffffff;
-      border:1px solid #cbd5e1;
-      border-radius:14px;
-      padding:22px;
-      margin-bottom:18px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    .btn {
-      background:#0ea5e9; color:white;
-      padding:10px 18px; border-radius:999px;
-      border:none; cursor:pointer; font-weight:600; font-size:14px;
-      text-decoration:none; display:inline-block;
-    }
-    .btn:hover { background:#0369a1; }
-
-    .btn-secondary {
-      background:#e2e8f0;
-      color:#1e293b;
-    }
-    .btn-secondary:hover {
-      background:#cbd5e1;
-    }
-
-    .muted { color:#64748b; }
-
-    input,select,textarea {
-      width:100%; padding:9px; margin-top:5px;
-      border-radius:8px; border:1px solid #cbd5e1;
-      font-size:14px;
-    }
-    textarea { min-height:70px; }
-    form label { font-weight:600; margin-top:10px; display:block; }
-
-    .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-
-    .table-wrapper {
-      overflow-x:auto;
-      margin-top:8px;
-    }
-    table.data-table {
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-      min-width:720px;
-    }
-    table.data-table th,
-    table.data-table td {
-      padding:8px 10px;
-      border-bottom:1px solid #e2e8f0;
-      text-align:left;
-      vertical-align:top;
-    }
-    table.data-table thead th {
-      background:#f8fafc;
-      font-size:12px;
-      font-weight:600;
-      color:#6b7280;
-      text-transform:uppercase;
-      letter-spacing:0.05em;
-    }
-    table.data-table tbody tr:hover {
-      background:#f9fafb;
+    .card-shadow { box-shadow:0 4px 12px rgba(15,118,110,0.08); }
+    .status-badge {
+      font-size:0.75rem;
+      border-radius:999px;
+      padding:2px 8px;
     }
   </style>
 </head>
-
 <body>
-<header>
-  <div class="header-inner">
-    <div class="logo">
-      <div class="logo-mark">I</div>
-      <div>INDICONS</div>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-teal" style="background:#0f766e;">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand d-flex align-items-center" href="/">
+        <span class="logo-mark"></span>
+        <span class="fw-bold">INDICONS</span>
+        <span class="ms-2 small">indicação inteligente de consórcios</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="/">Início</a></li>
+          <li class="nav-item"><a class="nav-link" href="/indicador/login">Indicador</a></li>
+          <li class="nav-item"><a class="nav-link" href="/parceiro/login">Parceiro</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/login">Admin</a></li>
+        </ul>
+        <div class="d-flex align-items-center">
+          ${userBadge}
+        </div>
+      </div>
     </div>
+  </nav>
 
-    <nav>
-      <a href="/">Home</a>
-      <a href="/indicador/login">Indicador</a>
-      <a href="/parceiro/login">Parceiro</a>
-      <a href="/admin/login">Admin</a>
-    </nav>
+  <main class="container my-4">
+    ${content}
+  </main>
 
-    <div style="font-size:12px;">${userNav}</div>
-  </div>
-</header>
+  <footer class="text-center text-muted small py-3">
+    INDICONS © ${new Date().getFullYear()} • Plataforma de indicação e pré-venda de consórcios
+  </footer>
 
-<main>${content}</main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
-`;
+</html>`;
 }
 
-// =============================================================
-// HOME = TELA "SEJA INDICADOR"
-// =============================================================
+// ================= HOME ====================
 app.get("/", (req, res) => {
   const content = `
-  <style>
-    .lp-hero {
-      background: linear-gradient(135deg, #e0f2fe, #f9fafb);
-      border-radius: 18px;
-      padding: 40px 24px;
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
-      gap: 24px;
-      align-items: center;
-      border: 1px solid #bfdbfe;
-      box-shadow: 0 10px 40px rgba(15,23,42,0.12);
-      animation: lpFadeIn 0.7s ease-out;
-    }
-    @media (max-width: 768px) {
-      .lp-hero { grid-template-columns: 1fr; }
-    }
-    .lp-hero-title {
-      font-size: 32px;
-      line-height: 1.2;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 10px;
-    }
-    .lp-hero-sub {
-      font-size: 16px;
-      color: #64748b;
-      margin-bottom: 16px;
-    }
-    .lp-hero-badge {
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 10px;
-      border-radius:999px;
-      background:#e0f2fe;
-      color:#0369a1;
-      font-size:12px;
-      font-weight:600;
-      margin-bottom:10px;
-    }
-    .lp-hero-img-wrapper {
-      border-radius: 18px;
-      overflow: hidden;
-      position: relative;
-      background:#0f172a;
-    }
-    .lp-hero-img {
-      width: 100%;
-      display: block;
-      object-fit: cover;
-      max-height: 260px;
-      filter: saturate(1.1);
-      transform: scale(1.02);
-    }
-    .lp-hero-tag {
-      position:absolute;
-      bottom:10px;
-      left:10px;
-      background:rgba(15,23,42,0.9);
-      color:#e5e7eb;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-    }
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card card-shadow border-0">
+        <div class="card-body p-4">
+          <h1 class="h3 mb-3">Automatize indicações de consórcio com segurança e controle</h1>
+          <p class="text-muted mb-3">
+            O INDICONS permite que pessoas físicas e jurídicas indiquem clientes para consórcios
+            de administradoras parceiras. Cada indicação gera uma pré-venda, atendida por um parceiro autorizado,
+            e o indicador recebe <strong>5% de comissão</strong> sobre as vendas aprovadas.
+          </p>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <div class="border rounded-3 p-2 h-100">
+                <div class="fw-semibold small">Indicador</div>
+                <div class="small text-muted">Gera links, envia para contatos e acompanha comissões.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="border rounded-3 p-2 h-100">
+                <div class="fw-semibold small">Parceiro</div>
+                <div class="small text-muted">Atende pré-vendas e finaliza no sistema da administradora.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="border rounded-3 p-2 h-100">
+                <div class="fw-semibold small">Admin</div>
+                <div class="small text-muted">Gerencia produtos, indicadores, parceiros e comissões.</div>
+              </div>
+            </div>
+          </div>
 
-    .lp-cta-main {
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      background:#0ea5e9;
-      color:white;
-      padding:12px 22px;
-      border-radius:999px;
-      font-weight:700;
-      text-decoration:none;
-      font-size:15px;
-      box-shadow:0 10px 25px rgba(14,165,233,0.4);
-    }
-    .lp-cta-main:hover {
-      background:#0369a1;
-    }
-    .lp-cta-note {
-      font-size: 13px;
-      color:#64748b;
-      margin-top:6px;
-    }
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <a href="/indicador/registrar" class="btn btn-teal btn-lg" style="background:#0f766e;border:none;">
+              Quero ser indicador
+            </a>
+            <a href="/indicador/login" class="btn btn-outline-teal btn-lg" style="border-color:#0f766e;color:#0f766e;">
+              Já sou indicador
+            </a>
+          </div>
 
-    .lp-section {
-      background:#ffffff;
-      border-radius:18px;
-      padding:24px 20px;
-      margin-top:20px;
-      border:1px solid #e2e8f0;
-      box-shadow:0 8px 24px rgba(15,23,42,0.06);
-    }
-    .lp-section h2 {
-      margin-top:0;
-      font-size:22px;
-      color:#0f172a;
-    }
-    .lp-grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-      gap:16px;
-      margin-top:14px;
-    }
-    .lp-card {
-      background:#f8fafc;
-      border-radius:14px;
-      padding:14px 12px;
-      border:1px solid #e2e8f0;
-    }
-    .lp-card h3 {
-      margin-top:0;
-      font-size:16px;
-      color:#0f172a;
-      margin-bottom:6px;
-    }
-    .lp-card p {
-      margin:0;
-      font-size:14px;
-      color:#64748b;
-    }
-
-    .lp-table {
-      width:100%;
-      border-collapse:collapse;
-      margin-top:12px;
-      font-size:14px;
-    }
-    .lp-table th, .lp-table td {
-      border:1px solid #e2e8f0;
-      padding:8px;
-      text-align:center;
-    }
-    .lp-table th {
-      background:#eff6ff;
-      color:#1e293b;
-    }
-
-    .lp-testimonials {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:14px;
-      margin-top:14px;
-    }
-    .lp-testimonial {
-      border-radius:14px;
-      padding:14px;
-      background:#f9fafb;
-      border:1px solid #e2e8f0;
-      font-size:14px;
-      color:#475569;
-    }
-    .lp-testimonial-header {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-bottom:8px;
-    }
-    .lp-testimonial-avatar {
-      width:36px;
-      height:36px;
-      border-radius:50%;
-      object-fit:cover;
-    }
-    .lp-testimonial-name {
-      font-weight:600;
-    }
-    .lp-testimonial-role {
-      font-size:12px;
-      color:#9ca3af;
-    }
-  </style>
-
-  <section class="lp-hero">
-    <div>
-      <div class="lp-hero-badge">🔑 Renda extra com indicação de consórcios</div>
-      <h1 class="lp-hero-title">
-        Ganhe até R$ 5.000 por mês<br>apenas indicando consórcios
-      </h1>
-      <p class="lp-hero-sub">
-        Você não precisa vender, negociar ou explicar o produto. Apenas envia um link.  
-        A equipe parceira faz o restante e você recebe <strong>5% de comissão</strong>
-        nas vendas aprovadas.
-      </p>
-      <a href="/indicador/registrar" class="lp-cta-main">
-        Quero ser Indicador agora
-      </a>
-      <div class="lp-cta-note">
-        Cadastro gratuito · Sem meta mínima · Sem necessidade de CNPJ
+          <div class="alert alert-info small mb-0">
+            <strong>Fluxo completo:</strong> indicador gera link → cliente preenche pré-adesão →
+            parceiro finaliza no sistema da administradora → INDICONS registra a venda e calcula a comissão
+            de 5% para o indicador.
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="lp-hero-img-wrapper">
-      <img
-        class="lp-hero-img"
-        src="https://images.pexels.com/photos/1181555/pexels-photo-1181555.jpeg?auto=compress&cs=tinysrgb&w=800"
-        alt="Pessoa usando notebook para trabalhar com indicações"
-      />
-      <div class="lp-hero-tag">
-        Plataforma INDICONS em funcionamento real
+    <div class="col-lg-5">
+      <div class="card border-0 mb-3">
+        <div class="card-body p-4">
+          <h2 class="h5 mb-3">Acesso rápido</h2>
+          <div class="list-group small">
+            <a href="/indicador/login" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Área do Indicador
+              <span class="badge bg-primary-subtle text-primary rounded-pill">Indicação & comissão</span>
+            </a>
+            <a href="/parceiro/login" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Área do Parceiro
+              <span class="badge bg-danger-subtle text-danger rounded-pill">Atendimento & fechamento</span>
+            </a>
+            <a href="/admin/login" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Área Administrativa
+              <span class="badge bg-success-subtle text-success rounded-pill">Gestão & relatórios</span>
+            </a>
+          </div>
+          <hr class="my-3">
+          <p class="text-muted small mb-1">Logins de teste:</p>
+          <ul class="small text-muted mb-0">
+            <li>Admin: <code>admin@indicons.com</code> / <code>123456</code></li>
+            <li>Parceiro: <code>parceiro@indicons.com</code> / <code>123456</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card border-0 card-shadow">
+        <div class="card-body p-3">
+          <h2 class="h6 mb-2">Produtos de consórcio (exemplo)</h2>
+          <ul class="list-unstyled small mb-0">
+            ${produtos
+              .map(
+                (p) => `
+              <li class="mb-1">
+                <span class="fw-semibold">${p.nome}</span>
+                <span class="badge bg-light text-muted border ms-1">${p.administradora}</span><br>
+                <span class="text-muted">${p.descricao}</span>
+              </li>`
+              )
+              .join("")}
+          </ul>
+        </div>
       </div>
     </div>
-  </section>
-
-  <section class="lp-section">
-    <h2>Por que trabalhar com indicação via INDICONS?</h2>
-    <div class="lp-grid">
-      <div class="lp-card">
-        <h3>5% de comissão real</h3>
-        <p>Venda de R$ 100.000 gera R$ 5.000 de comissão para você. Uma única venda já faz diferença.</p>
-      </div>
-      <div class="lp-card">
-        <h3>Você só indica</h3>
-        <p>O parceiro autorizado faz contato, explica o produto, tira dúvidas e fecha a venda.</p>
-      </div>
-      <div class="lp-card">
-        <h3>Links prontos para compartilhar</h3>
-        <p>Você gera links personalizados e envia por WhatsApp, redes sociais ou e-mail.</p>
-      </div>
-      <div class="lp-card">
-        <h3>Plataforma com registro de tudo</h3>
-        <p>Cada pré-adesão fica registrada com data, cliente, produto e indicador.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="lp-section">
-    <h2>Exemplos de ganhos por indicação</h2>
-    <table class="lp-table">
-      <thead>
-        <tr>
-          <th>Quantidade de vendas</th>
-          <th>Ticket médio</th>
-          <th>Comissão (5%) estimada</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>2 vendas / mês</td><td>R$ 80.000</td><td>R$ 8.000</td></tr>
-        <tr><td>4 vendas / mês</td><td>R$ 60.000</td><td>R$ 12.000</td></tr>
-        <tr><td>8 vendas / mês</td><td>R$ 50.000</td><td>R$ 20.000</td></tr>
-      </tbody>
-    </table>
-    <p class="muted" style="margin-top:8px;">Valores meramente ilustrativos.</p>
-  </section>
+  </div>
   `;
-
-  res.send(layout("Home – INDICONS", content));
+  res.send(layout("INDICONS - Início", content, req));
 });
 
-// =============================================================
-// MIDDLEWARES DE AUTENTICAÇÃO
-// =============================================================
-function requireIndicador(req, res, next) {
-  if (!req.session.indicadorId) return res.redirect("/indicador/login");
-  next();
-}
-function requireParceiro(req, res, next) {
-  if (!req.session.parceiroId) return res.redirect("/parceiro/login");
-  next();
-}
-function requireAdmin(req, res, next) {
-  if (!req.session.adminId) return res.redirect("/admin/login");
-  next();
-}
+// ================= INDICADOR ====================
 
-// =============================================================
-// INDICADOR – CADASTRO / LOGIN
-// =============================================================
+// Cadastro
 app.get("/indicador/registrar", (req, res) => {
-  res.send(
-    layout(
-      "Registrar Indicador",
-      `
-      <div class="card">
-        <h2>Cadastrar Indicador</h2>
-        <form method="POST">
-          <label>Nome</label><input required name="nome">
-          <label>Email</label><input required type="email" name="email">
-          <label>Senha</label><input required type="password" name="senha">
-          <button class="btn" style="margin-top:12px;">Registrar</button>
-        </form>
+  const content = `
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card card-shadow border-0">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-3">Cadastro de Indicador</h1>
+          <p class="text-muted small">
+            Cadastre-se para gerar links de consórcios, indicar clientes e receber <strong>5% de comissão</strong> em cada venda aprovada.
+          </p>
+          <form method="POST" action="/indicador/registrar" class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Nome completo</label>
+              <input type="text" class="form-control" name="nome" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">CPF/CNPJ</label>
+              <input type="text" class="form-control" name="cpfCnpj" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Chave Pix (para pagamento da comissão)</label>
+              <input type="text" class="form-control" name="pix" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Senha</label>
+              <input type="password" class="form-control" name="senha" required>
+            </div>
+            <div class="col-12 d-flex justify-content-between align-items-center">
+              <button type="submit" class="btn" style="background:#0f766e;color:white;">Cadastrar</button>
+              <a href="/indicador/login" class="small">Já sou indicador</a>
+            </div>
+          </form>
+        </div>
       </div>
-      `
-    )
-  );
+    </div>
+  </div>`;
+  res.send(layout("Cadastro Indicador", content, req));
 });
 
-app.post("/indicador/registrar", async (req, res) => {
-  const { nome, email, senha } = req.body;
-  try {
-    await dbRun(
-      "INSERT INTO indicadores (nome,email,senha) VALUES (?,?,?)",
-      [nome, email, senha]
-    );
-    res.redirect("/indicador/login");
-  } catch (e) {
-    res.send("Erro ao cadastrar (email já existe).");
+app.post("/indicador/registrar", (req, res) => {
+  const { nome, email, cpfCnpj, pix, senha } = req.body;
+  if (indicadores.some((i) => i.email === email)) {
+    const content = `
+    <div class="alert alert-danger">Já existe um indicador com esse e-mail.</div>
+    <a href="/indicador/login" class="btn btn-sm btn-outline-secondary">Ir para login</a>`;
+    return res.send(layout("Erro", content, req));
   }
+  const ind = {
+    id: nextIndicadorId++,
+    nome,
+    email,
+    cpfCnpj,
+    pix,
+    senha,
+  };
+  indicadores.push(ind);
+  const content = `
+  <div class="alert alert-success">Cadastro realizado com sucesso. Agora você já pode acessar sua área de indicador.</div>
+  <a href="/indicador/login" class="btn btn-sm btn-success">Ir para login</a>`;
+  res.send(layout("Cadastro OK", content, req));
 });
 
+// Login indicador
 app.get("/indicador/login", (req, res) => {
-  res.send(
-    layout(
-      "Login Indicador",
-      `
-      <div class="card">
-        <h2>Login do Indicador</h2>
-        <form method="POST">
-          <label>Email</label><input name="email">
-          <label>Senha</label><input type="password" name="senha">
-          <button class="btn" style="margin-top:10px;">Entrar</button>
-        </form>
-        <p class="muted" style="margin-top:8px;">Ainda não tem conta? <a href="/indicador/registrar">Cadastre-se aqui</a>.</p>
+  const content = `
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card card-shadow border-0">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-3">Login do Indicador</h1>
+          <form method="POST" action="/indicador/login" class="row g-3">
+            <div class="col-12">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Senha</label>
+              <input type="password" class="form-control" name="senha" required>
+            </div>
+            <div class="col-12 d-flex justify-content-between align-items-center">
+              <button type="submit" class="btn btn-primary">Entrar</button>
+              <a href="/indicador/registrar" class="small">Quero me cadastrar</a>
+            </div>
+          </form>
+        </div>
       </div>
-      `
-    )
-  );
+    </div>
+  </div>`;
+  res.send(layout("Login Indicador", content, req));
 });
 
-app.post("/indicador/login", async (req, res) => {
-  const ind = await dbGet(
-    "SELECT * FROM indicadores WHERE email=? AND senha=?",
-    [req.body.email, req.body.senha]
-  );
-  if (!ind) return res.send("Login inválido");
-
+app.post("/indicador/login", (req, res) => {
+  const { email, senha } = req.body;
+  const ind = indicadores.find((i) => i.email === email && i.senha === senha);
+  if (!ind) {
+    const content = `
+    <div class="alert alert-danger">Credenciais inválidas.</div>
+    <a href="/indicador/login" class="btn btn-sm btn-outline-secondary">Tentar novamente</a>`;
+    return res.send(layout("Erro login", content, req));
+  }
   req.session.indicadorId = ind.id;
-  req.session.indicadorNome = ind.nome;
   res.redirect("/indicador/dashboard");
 });
 
-// =============================================================
-// INDICADOR – DASHBOARD
-// =============================================================
-app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
-  const indicadorId = req.session.indicadorId;
+// Dashboard indicador
+app.get("/indicador/dashboard", requireIndicador, (req, res) => {
+  const ind = indicadores.find((i) => i.id === req.session.indicadorId);
+  const minhasPreVendas = preVendas.filter((pv) => pv.indicadorId === ind.id);
+  const minhasComissoes = comissoes.filter((c) => c.indicadorId === ind.id);
 
-  const pre = await dbAll(
-    `SELECT pv.*, p.nome AS produto_nome 
-     FROM pre_vendas pv 
-     JOIN produtos p ON p.id = pv.produto_id 
-     WHERE pv.indicador_id = ? 
-     ORDER BY pv.id DESC`,
-    [indicadorId]
-  );
+  const totalAPagar = minhasComissoes
+    .filter((c) => c.status === "A_PAGAR")
+    .reduce((sum, c) => sum + c.valorComissao, 0);
 
-  const coms = await dbAll(
-    `SELECT * FROM comissoes WHERE indicador_id = ?`,
-    [indicadorId]
-  );
+  const totalPago = minhasComissoes
+    .filter((c) => c.status === "PAGA")
+    .reduce((sum, c) => sum + c.valorComissao, 0);
 
-  const totalPre = pre.length;
-  const totalAprovadas = pre.filter(v => v.status === "APROVADA").length;
-  const valorVendasAprovadas = pre
-    .filter(v => v.status === "APROVADA" && v.valor_venda)
-    .reduce((s, v) => s + Number(v.valor_venda || 0), 0);
-  const totalComissao = coms.reduce(
-    (s, c) => s + Number(c.valor_comissao || 0),
-    0
-  );
+  let linhasPreVendas = minhasPreVendas
+    .map((pv) => {
+      const prod = produtos.find((p) => p.id === pv.produtoId);
+      return `
+      <tr>
+        <td>${pv.id}</td>
+        <td>${pv.nomeCliente}</td>
+        <td>${prod ? prod.nome : "-"}</td>
+        <td><span class="status-badge bg-light border text-muted">${pv.status}</span></td>
+        <td>${pv.valorCarta ? "R$ " + pv.valorCarta.toFixed(2) : "-"}</td>
+        <td>${pv.valorVenda ? "R$ " + pv.valorVenda.toFixed(2) : "-"}</td>
+      </tr>`;
+    })
+    .join("");
 
-  function countStatus(st) {
-    return pre.filter(v => v.status === st).length;
+  if (!linhasPreVendas) {
+    linhasPreVendas = `<tr><td colspan="6" class="text-center text-muted">Nenhuma pré-venda gerada ainda.</td></tr>`;
   }
-  const statusPreAdesao   = countStatus("PRE_ADESAO");
-  const statusEmAtend     = countStatus("EM_ATENDIMENTO");
-  const statusBoleto      = countStatus("BOLETO_EMITIDO");
-  const statusAprovada    = countStatus("APROVADA");
-  const statusNaoFechou   = countStatus("NAO_FECHOU");
 
   const content = `
-    <div class="card">
-      <h2>Painel comercial – ${req.session.indicadorNome}</h2>
-      <p class="muted">Resumo das suas indicações, vendas e comissões.</p>
-      <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
-    </div>
+  <div class="mb-3 d-flex justify-content-between align-items-center">
+    <h1 class="h4 mb-0">Painel do Indicador</h1>
+    <a href="/indicador/links" class="btn btn-sm btn-success">Meus links de indicação</a>
+  </div>
 
-    <div class="card">
-      <h3>Resumo rápido</h3>
-      <div class="grid">
-        <div class="card">
-          <strong>Total de pré-vendas</strong>
-          <p style="font-size:24px; margin:6px 0;">${totalPre}</p>
-          <p class="muted">Clientes que chegaram pelos seus links.</p>
-        </div>
-        <div class="card">
-          <strong>Vendas aprovadas</strong>
-          <p style="font-size:24px; margin:6px 0;">${totalAprovadas}</p>
-          <p class="muted">Pré-vendas que viraram contrato.</p>
-        </div>
-        <div class="card">
-          <strong>Valor vendido (aprovadas)</strong>
-          <p style="font-size:24px; margin:6px 0;">R$ ${valorVendasAprovadas.toFixed(2)}</p>
-          <p class="muted">Somente vendas com status "APROVADA".</p>
-        </div>
-        <div class="card">
-          <strong>Comissões acumuladas</strong>
-          <p style="font-size:24px; margin:6px 0;">R$ ${totalComissao.toFixed(2)}</p>
-          <p class="muted">Baseado em registros de comissão.</p>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 card-shadow">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Comissão a receber</div>
+          <div class="h5 mb-0">R$ ${totalAPagar.toFixed(2)}</div>
         </div>
       </div>
     </div>
-
-    <div class="card">
-      <h3>Funil de atendimento das suas indicações</h3>
-      <p class="muted">Visualização por status de cada pré-venda.</p>
-      <div style="max-width:520px; margin-top:10px;">
-        <canvas id="indicadorChart" height="180"></canvas>
+    <div class="col-md-4">
+      <div class="card border-0 card-shadow">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Comissão já paga</div>
+          <div class="h5 mb-0">R$ ${totalPago.toFixed(2)}</div>
+        </div>
       </div>
     </div>
-
-    <div class="card">
-      <h3>Minhas pré-vendas (detalhado)</h3>
-      ${
-        pre.length === 0
-          ? `<p class="muted">Nenhuma pré-venda ainda.</p>`
-          : pre
-              .map(
-                (v) => `
-        <div class="card" style="margin-top:8px;">
-          <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
-          <span class="muted">Status: ${v.status}</span><br>
-          <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
-          ${
-            v.valor_venda
-              ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span>`
-              : ""
-          }
-        </div>`
-              )
-              .join("")
-      }
+    <div class="col-md-4">
+      <div class="card border-0 card-shadow">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total de pré-vendas</div>
+          <div class="h5 mb-0">${minhasPreVendas.length}</div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      window.addEventListener('DOMContentLoaded', function () {
-        var ctx = document.getElementById('indicadorChart');
-        if (!ctx) return;
-        ctx = ctx.getContext('2d');
-
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: [
-              'Pré-adesão',
-              'Em atendimento',
-              'Boleto emitido',
-              'Aprovada',
-              'Não fechou'
-            ],
-            datasets: [{
-              label: 'Pré-vendas',
-              data: [
-                ${statusPreAdesao},
-                ${statusEmAtend},
-                ${statusBoleto},
-                ${statusAprovada},
-                ${statusNaoFechou}
-              ],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-          }
-        });
-      });
-    </script>
-  `;
-
-  res.send(
-    layout(
-      "Dashboard Indicador",
-      content,
-      `Indicador: ${req.session.indicadorNome} | <a href="/logout">Sair</a>`
-    )
-  );
+  <h2 class="h5 mb-2">Minhas indicações / pré-vendas</h2>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Produto</th>
+          <th>Status</th>
+          <th>Valor carta</th>
+          <th>Valor venda</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhasPreVendas}
+      </tbody>
+    </table>
+  </div>`;
+  res.send(layout("Dashboard Indicador", content, req));
 });
 
-// =============================================================
-// INDICADOR – LINKS (tabela + copiar link)
-// =============================================================
-app.get("/indicador/links", requireIndicador, async (req, res) => {
-  const produtos = await dbAll("SELECT * FROM produtos");
-  const base = process.env.BASE_URL || "https://indicons.onrender.com";
+// Links de indicação
+app.get("/indicador/links", requireIndicador, (req, res) => {
+  const ind = indicadores.find((i) => i.id === req.session.indicadorId);
+
+  let linhas = produtos
+    .map((p) => {
+      const link = `https://app.indicons.com.br/consorcio?i=${ind.id}&p=${p.id}`;
+      // para ambiente local use: http://localhost:3000/consorcio?...
+      return `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.nome}</td>
+        <td>${p.administradora}</td>
+        <td>${p.descricao}</td>
+        <td><input type="text" class="form-control form-control-sm" value="${link}" readonly></td>
+      </tr>`;
+    })
+    .join("");
+
+  if (!linhas) {
+    linhas = `<tr><td colspan="5" class="text-center text-muted">Nenhum produto cadastrado.</td></tr>`;
+  }
 
   const content = `
-    <div class="card">
-      <h2>Produtos de consórcio para indicação</h2>
-      <p class="muted">
-        Use a tabela abaixo para gerar e copiar os links de indicação. Cada linha representa um plano/valor
-        da administradora. Clique em <strong>Copiar link</strong> ao lado do plano que deseja enviar.
-      </p>
-    </div>
-
-    <div class="card">
-      ${
-        produtos.length === 0
-          ? `<p class="muted">Nenhum produto cadastrado. Cadastre os planos na tabela <code>produtos</code>.</p>`
-          : `
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Cód.</th>
-              <th>Produto / Plano</th>
-              <th>Crédito / Detalhes</th>
-              <th>Link de indicação</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${produtos
-              .map((p) => {
-                const link = `${base}/consorcio?i=${req.session.indicadorId}&p=${p.id}`;
-                return `
-                  <tr>
-                    <td>${p.codigo || "-"}</td>
-                    <td>${p.nome}</td>
-                    <td>${p.credito_referencia || p.descricao || "-"}</td>
-                    <td style="max-width:260px; font-size:11px; word-break:break-all;">
-                      <code>${link}</code>
-                    </td>
-                    <td style="white-space:nowrap;">
-                      <button type="button" class="btn btn-secondary" onclick="copyLink('${link.replace(/'/g, "\\'")}')">
-                        Copiar link
-                      </button>
-                    </td>
-                  </tr>
-                `;
-              })
-              .join("")}
-          </tbody>
-        </table>
-      </div>`
-      }
-    </div>
-
-    <script>
-      function copyLink(text) {
-        if (!navigator.clipboard) {
-          const tempInput = document.createElement('input');
-          tempInput.value = text;
-          document.body.appendChild(tempInput);
-          tempInput.select();
-          document.execCommand('copy');
-          document.body.removeChild(tempInput);
-          alert('Link copiado.');
-          return;
-        }
-
-        navigator.clipboard.writeText(text)
-          .then(function() {
-            const msg = document.createElement('div');
-            msg.textContent = 'Link copiado!';
-            msg.style.position = 'fixed';
-            msg.style.bottom = '16px';
-            msg.style.right = '16px';
-            msg.style.background = '#0ea5e9';
-            msg.style.color = 'white';
-            msg.style.padding = '8px 14px';
-            msg.style.borderRadius = '999px';
-            msg.style.fontSize = '13px';
-            msg.style.boxShadow = '0 4px 12px rgba(15,23,42,0.25)';
-            document.body.appendChild(msg);
-            setTimeout(function(){ document.body.removeChild(msg); }, 1800);
-          })
-          .catch(function() {
-            alert('Não foi possível copiar o link. Copie manualmente.');
-          });
-      }
-    </script>
-  `;
-
-  res.send(
-    layout(
-      "Links Indicador",
-      content,
-      `Indicador: ${req.session.indicadorNome} | <a href="/logout">Sair</a>`
-    )
-  );
+  <div class="mb-3 d-flex justify-content-between align-items-center">
+    <h1 class="h5 mb-0">Meus links de indicação</h1>
+    <a href="/indicador/dashboard" class="btn btn-sm btn-outline-secondary">Voltar ao painel</a>
+  </div>
+  <p class="text-muted small">
+    Copie o link do produto e envie para seus contatos via WhatsApp, redes sociais ou e-mail.
+    Cada cliente que preencher a pré-adesão ficará automaticamente vinculado a você.
+  </p>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Produto</th>
+          <th>Administradora</th>
+          <th>Descrição</th>
+          <th>Link de indicação</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhas}
+      </tbody>
+    </table>
+  </div>`;
+  res.send(layout("Links Indicador", content, req));
 });
 
-// =============================================================
-// CLIENTE – PRÉ-ADESÃO
-// =============================================================
-app.get("/consorcio", async (req, res) => {
+// ================= FLUXO CLIENTE ====================
+
+app.get("/consorcio", (req, res) => {
   const { i, p } = req.query;
-  const ind = await dbGet("SELECT * FROM indicadores WHERE id=?", [i]);
-  const prod = await dbGet("SELECT * FROM produtos WHERE id=?", [p]);
+  const indicador = indicadores.find((ind) => ind.id === Number(i));
+  const produto = produtos.find((prod) => prod.id === Number(p));
 
-  if (!ind || !prod) return res.send("Link inválido.");
+  if (!indicador || !produto) {
+    const content = `<div class="alert alert-danger">Link inválido ou expirado.</div>`;
+    return res.send(layout("Erro link", content, req));
+  }
 
-  res.send(
-    layout(
-      "Pré-adesão",
-      `
-      <div class="card">
-        <h2>${prod.nome}</h2>
-        ${
-          prod.codigo || prod.credito_referencia
-            ? `<p class="muted">Código: <strong>${prod.codigo || "-"}</strong> · ${prod.credito_referencia || ""}</p>`
-            : ""
-        }
-        <p>Indicação de <strong>${ind.nome}</strong></p>
-
-        <form method="POST" action="/consorcio">
-          <input type="hidden" name="indicador_id" value="${ind.id}">
-          <input type="hidden" name="produto_id" value="${prod.id}">
-
-          <label>Nome completo</label><input name="nome" required>
-          <label>Telefone / WhatsApp</label><input name="telefone" required>
-          <label>E-mail</label><input name="email" type="email" required>
-
-          <button class="btn" style="margin-top:12px;">Confirmar pré-adesão</button>
-        </form>
-
-        <p class="muted" style="margin-top:8px;">Um parceiro autorizado entrará em contato para finalizar a venda.</p>
+  const content = `
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card card-shadow border-0 mb-3">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-1">${produto.nome}</h1>
+          <div class="text-muted small mb-2">
+            Administradora: <strong>${produto.administradora}</strong><br>
+            Indicador: <strong>${indicador.nome}</strong>
+          </div>
+          <p class="small text-muted">${produto.descricao}</p>
+          <hr>
+          <form method="POST" action="/consorcio" class="row g-3">
+            <input type="hidden" name="indicadorId" value="${indicador.id}">
+            <input type="hidden" name="produtoId" value="${produto.id}">
+            <div class="col-md-6">
+              <label class="form-label">Valor da carta (R$)</label>
+              <input type="number" class="form-control" name="valorCarta" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Prazo (meses)</label>
+              <input type="number" class="form-control" name="prazoMeses" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Nome completo</label>
+              <input type="text" class="form-control" name="nomeCliente" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">CPF</label>
+              <input type="text" class="form-control" name="cpfCliente" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telefone / WhatsApp</label>
+              <input type="text" class="form-control" name="telefoneCliente" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" name="emailCliente" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cidade / UF</label>
+              <input type="text" class="form-control" name="cidadeUf" required>
+            </div>
+            <div class="col-12 form-check">
+              <input class="form-check-input" type="checkbox" id="aceite" name="aceite" required>
+              <label class="form-check-label small" for="aceite">
+                Autorizo contato para finalização da contratação do consórcio por parceiro autorizado
+                e estou ciente de que a venda será concluída diretamente na administradora.
+              </label>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-success">Confirmar pré-adesão</button>
+            </div>
+          </form>
+          <p class="small text-muted mt-3 mb-0">
+            Esta é uma pré-venda. A proposta será analisada por um parceiro especialista, que fará o cadastro
+            no sistema da administradora, emitirá o boleto e enviará o contrato para sua confirmação.
+          </p>
+        </div>
       </div>
-      `
-    )
-  );
+    </div>
+  </div>`;
+  res.send(layout("Pré-adesão", content, req));
 });
 
-app.post("/consorcio", async (req, res) => {
-  const { indicador_id, produto_id, nome, telefone, email } = req.body;
-  await dbRun(
-    `INSERT INTO pre_vendas (indicador_id,produto_id,nome_cliente,telefone_cliente,email_cliente)
-     VALUES (?,?,?,?,?)`,
-    [indicador_id, produto_id, nome, telefone, email]
-  );
+app.post("/consorcio", (req, res) => {
+  const {
+    indicadorId,
+    produtoId,
+    valorCarta,
+    prazoMeses,
+    nomeCliente,
+    cpfCliente,
+    telefoneCliente,
+    emailCliente,
+    cidadeUf,
+  } = req.body;
 
-  res.send(
-    layout(
-      "Pré-adesão enviada",
-      `<div class="card"><h2>Pré-adesão registrada!</h2><p>O parceiro entrará em contato em breve.</p></div>`
-    )
-  );
+  const indicador = indicadores.find((ind) => ind.id === Number(indicadorId));
+  const produto = produtos.find((prod) => prod.id === Number(produtoId));
+
+  if (!indicador || !produto) {
+    const content = `<div class="alert alert-danger">Indicador ou produto inválido.</div>`;
+    return res.send(layout("Erro pré-adesão", content, req));
+  }
+
+  const pv = {
+    id: nextPreVendaId++,
+    indicadorId: indicador.id,
+    produtoId: produto.id,
+    valorCarta: Number(valorCarta),
+    prazoMeses: Number(prazoMeses),
+    nomeCliente,
+    cpfCliente,
+    telefoneCliente,
+    emailCliente,
+    cidadeUf,
+    status: "PRE_VENDA",
+    parceiroId: null,
+    valorVenda: null,
+  };
+
+  preVendas.push(pv);
+
+  const content = `
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <div class="card card-shadow border-0">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-2">Pré-adesão registrada</h1>
+          <p>Obrigado, <strong>${nomeCliente}</strong>. Sua pré-adesão foi registrada com o código:</p>
+          <p class="display-6 fw-bold mb-3">${pv.id}</p>
+          <p class="text-muted small mb-3">
+            Em até <strong>60 minutos</strong> um especialista da nossa rede de parceiros entrará em contato
+            para confirmar seus dados, ajustar a simulação (se necessário), registrar a proposta na administradora
+            e emitir o boleto e o contrato.
+          </p>
+          <p class="small text-muted mb-0">
+            A venda será concluída apenas após o pagamento do boleto emitido pela administradora de consórcio.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  res.send(layout("Pré-adesão OK", content, req));
 });
 
-// =============================================================
-// PARCEIRO
-// =============================================================
-const PARCEIRO_EMAIL = "parceiro@indicons.com";
-const PARCEIRO_SENHA = "123456";
+// ================= PARCEIRO ====================
 
 app.get("/parceiro/login", (req, res) => {
-  res.send(
-    layout(
-      "Login Parceiro",
-      `
-      <div class="card">
-        <h2>Login do Parceiro</h2>
-        <form method="POST">
-          <label>Email</label><input name="email">
-          <label>Senha</label><input type="password" name="senha">
-          <button class="btn" style="margin-top:10px;">Entrar</button>
-        </form>
-        <p class="muted">Usuário padrão: parceiro@indicons.com / 123456</p>
+  const content = `
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card card-shadow border-0">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-3">Login do Parceiro / Representante</h1>
+          <p class="small text-muted">
+            Acesse para visualizar as pré-vendas geradas pelos indicadores, contatar os clientes e finalizar as vendas
+            no sistema da administradora.
+          </p>
+          <form method="POST" action="/parceiro/login" class="row g-3">
+            <div class="col-12">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Senha</label>
+              <input type="password" class="form-control" name="senha" required>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            </div>
+          </form>
+          <p class="small text-muted mt-3 mb-0">
+            Usuário de teste: parceiro@indicons.com / 123456
+          </p>
+        </div>
       </div>
-      `
-    )
-  );
+    </div>
+  </div>`;
+  res.send(layout("Login Parceiro", content, req));
 });
 
 app.post("/parceiro/login", (req, res) => {
   const { email, senha } = req.body;
-  if (email === PARCEIRO_EMAIL && senha === PARCEIRO_SENHA) {
-    req.session.parceiroId = 1;
-    req.session.parceiroNome = "Parceiro";
-    return res.redirect("/parceiro/pre-vendas");
+  const par = parceiros.find((p) => p.email === email && p.senha === senha);
+  if (!par) {
+    const content = `<div class="alert alert-danger">Credenciais inválidas.</div>`;
+    return res.send(layout("Erro login parceiro", content, req));
   }
-  res.send("Login inválido");
-});
-
-app.get("/parceiro/pre-vendas", requireParceiro, async (req, res) => {
-  const pv = await dbAll(
-    `SELECT pv.*, p.nome produto_nome, i.nome indicador_nome
-     FROM pre_vendas pv
-     JOIN produtos p ON p.id=pv.produto_id
-     JOIN indicadores i ON i.id=pv.indicador_id
-     ORDER BY pv.id DESC`
-  );
-
-  res.send(
-    layout(
-      "Pré-vendas",
-      `
-      <div class="card">
-        <h2>Pré-vendas para atendimento</h2>
-      </div>
-      ${
-        pv.length === 0
-          ? `<div class="card"><p class="muted">Nenhuma pré-venda ainda.</p></div>`
-          : pv
-              .map(
-                (v) => `
-      <div class="card">
-        <h3>${v.nome_cliente}</h3>
-        <p class="muted">${v.produto_nome}</p>
-        <p class="muted">Indicador: ${v.indicador_nome}</p>
-        <p class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</p>
-
-        <form method="POST" action="/parceiro/pre-vendas/${v.id}/status">
-          <label>Status</label>
-          <select name="status">
-            <option value="EM_ATENDIMENTO">Em atendimento</option>
-            <option value="BOLETO_EMITIDO">Boleto emitido</option>
-            <option value="APROVADA">Aprovada</option>
-            <option value="NAO_FECHOU">Não fechou</option>
-          </select>
-
-          <label>Valor da venda (se aprovada)</label>
-          <input name="valor_venda">
-
-          <button class="btn" style="margin-top:8px;">Atualizar</button>
-        </form>
-      </div>`
-              )
-              .join("")
-      }
-      `,
-      `Parceiro: ${req.session.parceiroNome} | <a href="/logout">Sair</a>`
-    )
-  );
-});
-
-app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) => {
-  const { status, valor_venda } = req.body;
-  const id = req.params.id;
-
-  await dbRun(`UPDATE pre_vendas SET status=?, valor_venda=? WHERE id=?`, [
-    status,
-    valor_venda || null,
-    id,
-  ]);
-
-  if (status === "APROVADA" && valor_venda) {
-    const pv = await dbGet("SELECT * FROM pre_vendas WHERE id=?", [id]);
-    if (pv) {
-      await dbRun(
-        `INSERT INTO comissoes (indicador_id,pre_venda_id,valor_venda,valor_comissao)
-         VALUES (?,?,?,?)`,
-        [pv.indicador_id, pv.id, valor_venda, valor_venda * 0.05]
-      );
-    }
-  }
-
+  req.session.parceiroId = par.id;
   res.redirect("/parceiro/pre-vendas");
 });
 
-// =============================================================
-// ADMIN
-// =============================================================
-const ADMIN_EMAIL = "admin@indicons.com";
-const ADMIN_SENHA = "123456";
+app.get("/parceiro/pre-vendas", requireParceiro, (req, res) => {
+  const pvOrdenadas = [...preVendas].sort((a, b) => b.id - a.id);
+
+  let linhas = pvOrdenadas
+    .map((pv) => {
+      const prod = produtos.find((p) => p.id === pv.produtoId);
+      const ind = indicadores.find((i) => i.id === pv.indicadorId);
+      return `
+      <tr>
+        <td>${pv.id}</td>
+        <td>${pv.nomeCliente}</td>
+        <td>${pv.telefoneCliente}</td>
+        <td>${prod ? prod.nome : "-"}</td>
+        <td>${ind ? ind.nome : "-"}</td>
+        <td><span class="status-badge bg-light border text-muted">${pv.status}</span></td>
+        <td><a href="/parceiro/pre-vendas/${pv.id}" class="btn btn-sm btn-outline-primary">Atender</a></td>
+      </tr>`;
+    })
+    .join("");
+
+  if (!linhas) {
+    linhas = `<tr><td colspan="7" class="text-center text-muted">Nenhuma pré-venda disponível.</td></tr>`;
+  }
+
+  const content = `
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h5 mb-0">Pré-vendas para atendimento</h1>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Telefone</th>
+          <th>Produto</th>
+          <th>Indicador</th>
+          <th>Status</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhas}
+      </tbody>
+    </table>
+  </div>`;
+  res.send(layout("Pré-vendas Parceiro", content, req));
+});
+
+app.get("/parceiro/pre-vendas/:id", requireParceiro, (req, res) => {
+  const pv = preVendas.find((pv) => pv.id === Number(req.params.id));
+  if (!pv) {
+    const content = `<div class="alert alert-danger">Pré-venda não encontrada.</div>`;
+    return res.send(layout("Erro", content, req));
+  }
+  const prod = produtos.find((p) => p.id === pv.produtoId);
+  const ind = indicadores.find((i) => i.id === pv.indicadorId);
+
+  const content = `
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="card card-shadow border-0 mb-3">
+        <div class="card-body p-4">
+          <h1 class="h5 mb-2">Pré-venda #${pv.id}</h1>
+          <p class="small text-muted mb-2">Status atual: <strong>${pv.status}</strong></p>
+          <h2 class="h6">Dados do cliente</h2>
+          <ul class="small mb-3">
+            <li><strong>Nome:</strong> ${pv.nomeCliente}</li>
+            <li><strong>CPF:</strong> ${pv.cpfCliente}</li>
+            <li><strong>Telefone:</strong> ${pv.telefoneCliente}</li>
+            <li><strong>E-mail:</strong> ${pv.emailCliente}</li>
+            <li><strong>Cidade/UF:</strong> ${pv.cidadeUf}</li>
+          </ul>
+          <h2 class="h6">Produto e simulação</h2>
+          <ul class="small mb-0">
+            <li><strong>Produto:</strong> ${prod ? prod.nome : "-"}</li>
+            <li><strong>Indicador:</strong> ${ind ? ind.nome : "-"}</li>
+            <li><strong>Valor da carta:</strong> R$ ${pv.valorCarta.toFixed(2)}</li>
+            <li><strong>Prazo:</strong> ${pv.prazoMeses} meses</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card border-0 card-shadow">
+        <div class="card-body p-4">
+          <h2 class="h6 mb-3">Atualizar status / registrar venda</h2>
+          <form method="POST" action="/parceiro/pre-vendas/${pv.id}/status" class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Novo status</label>
+              <select name="status" class="form-select" required>
+                <option value="EM_ATENDIMENTO">Em atendimento</option>
+                <option value="BOLETO_EMITIDO">Boleto emitido</option>
+                <option value="APROVADA">Aprovada / Venda finalizada</option>
+                <option value="REPROVADA">Reprovada</option>
+                <option value="NAO_FECHOU">Não fechou</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Valor da venda (somente se aprovada)</label>
+              <input type="number" step="0.01" name="valorVenda" class="form-control">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary w-100">Salvar</button>
+            </div>
+          </form>
+          <p class="small text-muted mt-3 mb-0">
+            Lembrete: o cadastro da cota, emissão de boleto e contrato devem ser feitos no sistema oficial da administradora.
+            Aqui você registra o status comercial e gera a comissão do indicador.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  res.send(layout("Pré-venda detalhe", content, req));
+});
+
+app.post("/parceiro/pre-vendas/:id/status", requireParceiro, (req, res) => {
+  const pv = preVendas.find((pv) => pv.id === Number(req.params.id));
+  if (!pv) {
+    const content = `<div class="alert alert-danger">Pré-venda não encontrada.</div>`;
+    return res.send(layout("Erro", content, req));
+  }
+  const { status, valorVenda } = req.body;
+  pv.status = status;
+  if (status === "APROVADA" && valorVenda) {
+    pv.valorVenda = Number(valorVenda);
+    const valorComissao = pv.valorVenda * 0.05;
+    comissoes.push({
+      id: nextComissaoId++,
+      indicadorId: pv.indicadorId,
+      preVendaId: pv.id,
+      valorBase: pv.valorVenda,
+      percentual: 5,
+      valorComissao,
+      status: "A_PAGAR",
+    });
+  }
+  res.redirect("/parceiro/pre-vendas");
+});
+
+// ================= ADMIN ====================
 
 app.get("/admin/login", (req, res) => {
-  res.send(
-    layout(
-      "Admin Login",
-      `
-      <div class="card">
-        <h2>Login Admin</h2>
-        <form method="POST">
-          <label>Email</label><input name="email">
-          <label>Senha</label><input type="password" name="senha">
-          <button class="btn" style="margin-top:10px;">Entrar</button>
-        </form>
-        <p class="muted">Usuário padrão: admin@indicons.com / 123456</p>
+  const content = `
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card card-shadow border-0">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-3">Login Administrativo</h1>
+          <form method="POST" action="/admin/login" class="row g-3">
+            <div class="col-12">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Senha</label>
+              <input type="password" class="form-control" name="senha" required>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            </div>
+          </form>
+          <p class="small text-muted mt-3 mb-0">
+            Usuário de teste: admin@indicons.com / 123456
+          </p>
+        </div>
       </div>
-      `
-    )
-  );
+    </div>
+  </div>`;
+  res.send(layout("Login Admin", content, req));
 });
 
 app.post("/admin/login", (req, res) => {
-  if (req.body.email === ADMIN_EMAIL && req.body.senha === ADMIN_SENHA) {
-    req.session.adminId = 1;
-    req.session.adminNome = "Admin";
-    return res.redirect("/admin/dashboard");
+  const { email, senha } = req.body;
+  const adm = admins.find((a) => a.email === email && a.senha === senha);
+  if (!adm) {
+    const content = `<div class="alert alert-danger">Credenciais inválidas.</div>`;
+    return res.send(layout("Erro login admin", content, req));
   }
-  res.send("Login inválido");
+  req.session.adminId = adm.id;
+  res.redirect("/admin/dashboard");
 });
 
-app.get("/admin/dashboard", requireAdmin, async (req, res) => {
-  const coms = await dbAll(
-    `SELECT c.*, i.nome AS indicador_nome
-     FROM comissoes c
-     JOIN indicadores i ON i.id=c.indicador_id
-     ORDER BY c.id DESC`
-  );
+app.get("/admin/dashboard", requireAdmin, (req, res) => {
+  const totalPreVendas = preVendas.length;
+  const totalAprovadas = preVendas.filter((pv) => pv.status === "APROVADA").length;
+  const totalComissao = comissoes.reduce((sum, c) => sum + c.valorComissao, 0);
 
-  res.send(
-    layout(
-      "Dashboard Admin",
-      `
-      <div class="card">
-        <h2>Comissões</h2>
-        ${
-          coms.length === 0
-            ? "<p class='muted'>Nenhuma comissão registrada ainda.</p>"
-            : coms
-                .map(
-                  (c) =>
-                    `<div class="card" style="margin-top:8px;">
-                      Indicador: <strong>${c.indicador_nome}</strong><br>
-                      Valor venda: R$ ${c.valor_venda}<br>
-                      Comissão: <strong>R$ ${c.valor_comissao}</strong>
-                    </div>`
-                )
-                .join("")
-        }
+  const content = `
+  <h1 class="h4 mb-3">Painel Administrativo</h1>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 card-shadow">
+        <div class="card-body">
+          <div class="small text-muted mb-1">Pré-vendas totais</div>
+          <div class="h5 mb-0">${totalPreVendas}</div>
+        </div>
       </div>
-      `,
-      `Admin: ${req.session.adminNome} | <a href="/logout">Sair</a>`
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 card-shadow">
+        <div class="card-body">
+          <div class="small text-muted mb-1">Vendas aprovadas</div>
+          <div class="h5 mb-0">${totalAprovadas}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 card-shadow">
+        <div class="card-body">
+          <div class="small text-muted mb-1">Comissões geradas</div>
+          <div class="h5 mb-0">R$ ${totalComissao.toFixed(2)}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
+    <a href="/admin/produtos" class="btn btn-outline-primary btn-sm">Gerenciar produtos</a>
+    <a href="/admin/indicadores" class="btn btn-outline-primary btn-sm">Ver indicadores</a>
+    <a href="/admin/comissoes" class="btn btn-outline-primary btn-sm">Ver comissões</a>
+  </div>`;
+  res.send(layout("Dashboard Admin", content, req));
+});
+
+// Produtos
+app.get("/admin/produtos", requireAdmin, (req, res) => {
+  let linhas = produtos
+    .map(
+      (p) => `
+    <tr>
+      <td>${p.id}</td>
+      <td>${p.nome}</td>
+      <td>${p.codigo}</td>
+      <td>${p.administradora}</td>
+      <td>${p.descricao}</td>
+    </tr>`
     )
-  );
+    .join("");
+
+  if (!linhas) {
+    linhas = `<tr><td colspan="5" class="text-center text-muted">Nenhum produto cadastrado.</td></tr>`;
+  }
+
+  const content = `
+  <h1 class="h5 mb-3">Produtos de consórcio</h1>
+  <div class="table-responsive mb-3">
+    <table class="table table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Nome</</th>
+          <th>Código</th>
+          <th>Administradora</th>
+          <th>Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhas}
+      </tbody>
+    </table>
+  </div>
+  <hr>
+  <h2 class="h6 mb-3">Novo produto</h2>
+  <form method="POST" action="/admin/produtos" class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Nome</label>
+      <input type="text" name="nome" class="form-control" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Código</label>
+      <input type="text" name="codigo" class="form-control" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Administradora</label>
+      <input type="text" name="administradora" class="form-control" required>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Descrição</label>
+      <textarea name="descricao" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-success">Adicionar produto</button>
+    </div>
+  </form>`;
+  res.send(layout("Produtos", content, req));
 });
 
-// =============================================================
-// LOGOUT
-// =============================================================
+app.post("/admin/produtos", requireAdmin, (req, res) => {
+  const { nome, codigo, administradora, descricao } = req.body;
+  produtos.push({
+    id: nextProdutoId++,
+    nome,
+    codigo,
+    administradora,
+    descricao,
+  });
+  res.redirect("/admin/produtos");
+});
+
+// Indicadores
+app.get("/admin/indicadores", requireAdmin, (req, res) => {
+  let linhas = indicadores
+    .map(
+      (i) => `
+    <tr>
+      <td>${i.id}</td>
+      <td>${i.nome}</td>
+      <td>${i.email}</td>
+      <td>${i.cpfCnpj}</td>
+      <td>${i.pix}</td>
+    </tr>`
+    )
+    .join("");
+
+  if (!linhas) {
+    linhas = `<tr><td colspan="5" class="text-center text-muted">Nenhum indicador cadastrado.</td></tr>`;
+  }
+
+  const content = `
+  <h1 class="h5 mb-3">Indicadores cadastrados</h1>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>CPF/CNPJ</th>
+          <th>Pix</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhas}
+      </tbody>
+    </table>
+  </div>`;
+  res.send(layout("Indicadores", content, req));
+});
+
+// Comissões
+app.get("/admin/comissoes", requireAdmin, (req, res) => {
+  let linhas = comissoes
+    .map((c) => {
+      const ind = indicadores.find((i) => i.id === c.indicadorId);
+      return `
+      <tr>
+        <td>${c.id}</td>
+        <td>${ind ? ind.nome : "-"}</td>
+        <td>R$ ${c.valorBase.toFixed(2)}</td>
+        <td>R$ ${c.valorComissao.toFixed(2)}</td>
+        <td>${c.status}</td>
+      </tr>`;
+    })
+    .join("");
+
+  if (!linhas) {
+    linhas = `<tr><td colspan="5" class="text-center text-muted">Nenhuma comissão gerada.</td></tr>`;
+  }
+
+  const content = `
+  <h1 class="h5 mb-3">Comissões</h1>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Indicador</th>
+          <th>Valor base</th>
+          <th>Comissão (5%)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhas}
+      </tbody>
+    </table>
+  </div>
+  <p class="small text-muted mb-0">
+    Neste MVP, todas as comissões são criadas com status <code>A_PAGAR</code>.
+    Em uma evolução, você pode adicionar uma tela para marcar como <code>PAGA</code> e registrar data de pagamento.
+  </p>`;
+  res.send(layout("Comissões", content, req));
+});
+
+// Logout
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/"));
-});
-
-// =============================================================
-// IA DEMO E WHATSAPP DEMO (somente estrutura)
-// =============================================================
-app.post("/api/ia-demo", (req, res) => {
-  const pergunta = req.body.pergunta || "";
-  res.json({
-    resposta:
-      "Esta é uma resposta automática de demonstração. Em produção, aqui entraria a integração com IA (OpenAI, etc.). Sua pergunta foi: " +
-      pergunta,
+  req.session.destroy(() => {
+    res.redirect("/");
   });
 });
 
-app.post("/api/whatsapp-demo", (req, res) => {
-  const { telefone, mensagem } = req.body;
-  console.log("Simulando envio de WhatsApp para:", telefone, "mensagem:", mensagem);
-  res.json({
-    ok: true,
-    detalhe:
-      "Envio de WhatsApp simulado. Em produção, aqui entra a integração com um provedor (Z-API, Gupshup, etc.).",
-  });
-});
-
-// =============================================================
-// INICIAR SERVIDOR
-// =============================================================
+// Porta (Render usa process.env.PORT)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("INDICONS rodando na porta " + PORT));
+app.listen(PORT, () => {
+  console.log("INDICONS rodando na porta " + PORT);
+});
