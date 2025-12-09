@@ -1,5 +1,5 @@
 // =============================================================
-// INDICONS – Sistema completo + SQLite + Layout Pro + WhatsApp + IA + PWA
+// INDICONS – Sistema completo + SQLite + Layout Claro + WhatsApp + IA + PWA
 // =============================================================
 require("dotenv").config();
 
@@ -22,6 +22,11 @@ app.use(
     saveUninitialized: true,
   })
 );
+
+// -----------------------------------------------
+// CONFIG – COMISSÃO
+// -----------------------------------------------
+const COMMISSION_RATE = 0.015; // até 1,5%
 
 // -----------------------------------------------
 // BANCO DE DADOS SQLite
@@ -172,7 +177,7 @@ function dbRun(sql, params = []) {
 // -------------------------------------------------------------
 // WHATSAPP
 // -------------------------------------------------------------
-const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;   // ex: https://graph.facebook.com/v20.0
+const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const PARCEIRO_TELEFONE = process.env.PARCEIRO_TELEFONE || "";
@@ -222,7 +227,7 @@ async function notifyPartnerNewLead(partnerPhone, preVendaId) {
 }
 
 async function sendFollowUpLead(phone, nome) {
-  const msg = `Olá ${nome}, vimos que sua pré-adesão de consórcio ainda está em aberto. Posso te ajudar com alguma dúvida para seguir com a contratação?`;
+  const msg = `Olá ${nome}, vimos que sua pré-adesão de consórcio ainda está em aberto. Posso ajudar com alguma dúvida para seguir com a contratação?`;
   return sendWhatsAppMessage(phone, msg);
 }
 
@@ -234,7 +239,7 @@ async function askAI(message, context = []) {
 }
 
 // -------------------------------------------------------------
-// LAYOUT GLOBAL – TEMA PROFISSIONAL
+// LAYOUT GLOBAL – TEMA CLARO + FOOTER + CONTATO
 // -------------------------------------------------------------
 function layout(title, content, userNav = "") {
   return `
@@ -252,21 +257,21 @@ function layout(title, content, userNav = "") {
 
   <style>
     :root {
-      --bg-body: #020617;
-      --bg-main: #020617;
-      --header-bg: rgba(15,23,42,0.92);
-      --header-border: rgba(148,163,184,0.35);
-      --card-bg: #020617;
-      --card-border: rgba(148,163,184,0.35);
-      --card-shadow: 0 18px 45px rgba(15,23,42,0.85);
-      --text-main: #e5e7eb;
-      --text-muted: #9ca3af;
-      --accent: #22c55e;
-      --accent-soft: rgba(34,197,94,0.12);
-      --accent-strong: #16a34a;
+      --bg-body: #f1f5f9;
+      --bg-main: #f8fafc;
+      --header-bg: rgba(255,255,255,0.92);
+      --header-border: #e2e8f0;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --card-shadow: 0 10px 30px rgba(15,23,42,0.06);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #16a34a;
+      --accent-soft: #dcfce7;
+      --accent-strong: #15803d;
       --accent-alt: #0ea5e9;
       --danger: #ef4444;
-      --danger-soft: rgba(248,113,113,0.12);
+      --danger-soft: #fee2e2;
     }
 
     * { box-sizing: border-box; }
@@ -276,8 +281,8 @@ function layout(title, content, userNav = "") {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text-main);
       background:
-        radial-gradient(circle at top left, rgba(56,189,248,0.18) 0, transparent 60%),
-        radial-gradient(circle at bottom right, rgba(34,197,94,0.18) 0, transparent 60%),
+        radial-gradient(circle at top left, rgba(56,189,248,0.12) 0, transparent 55%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,0.12) 0, transparent 55%),
         var(--bg-body);
     }
 
@@ -289,11 +294,7 @@ function layout(title, content, userNav = "") {
       z-index: 20;
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      background: linear-gradient(
-        to bottom,
-        rgba(15,23,42,0.96),
-        rgba(15,23,42,0.9)
-      );
+      background: var(--header-bg);
       border-bottom: 1px solid var(--header-border);
     }
 
@@ -315,7 +316,7 @@ function layout(title, content, userNav = "") {
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #e5e7eb;
+      color: #0f172a;
     }
 
     .logo-mark {
@@ -323,24 +324,28 @@ function layout(title, content, userNav = "") {
       height: 34px;
       border-radius: 999px;
       background:
-        radial-gradient(circle at 30% 0, #22c55e, transparent 60%),
+        radial-gradient(circle at 30% 0, #16a34a, transparent 60%),
         radial-gradient(circle at 80% 100%, #0ea5e9, transparent 60%),
-        #020617;
-      border: 1px solid rgba(148,163,184,0.8);
+        #ffffff;
+      border: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #f9fafb;
+      color: #0f172a;
       font-size: 18px;
       font-weight: 800;
-      box-shadow: 0 0 0 1px rgba(15,23,42,0.8),
-                  0 10px 25px rgba(15,23,42,0.9);
+      box-shadow: 0 4px 10px rgba(15,23,42,0.08);
     }
 
+    nav {
+      display:flex;
+      align-items:center;
+      gap:4px;
+      flex-wrap:wrap;
+    }
     nav a {
-      margin-left: 14px;
       text-decoration: none;
-      color: #e5e7eb;
+      color: #0f172a;
       font-weight: 500;
       font-size: 13px;
       padding: 6px 10px;
@@ -349,9 +354,18 @@ function layout(title, content, userNav = "") {
       transition: all 0.18s ease-out;
     }
     nav a:hover {
-      color: #e5e7eb;
-      border-color: rgba(148,163,184,0.6);
-      background: rgba(15,23,42,0.7);
+      color: #0f172a;
+      border-color: #e2e8f0;
+      background: #f1f5f9;
+    }
+    .nav-contact {
+      border-color:#16a34a;
+      background:#ecfdf5;
+      color:#166534;
+      font-weight:600;
+    }
+    .nav-contact:hover {
+      background:#bbf7d0;
     }
 
     main {
@@ -361,26 +375,31 @@ function layout(title, content, userNav = "") {
     }
 
     .card {
-      background:
-        radial-gradient(circle at top left, rgba(148,163,184,0.14), transparent 55%),
-        var(--card-bg);
-      border-radius: 20px;
-      padding: 20px 18px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 18px 18px;
       margin-bottom: 18px;
       border: 1px solid var(--card-border);
       box-shadow: var(--card-shadow);
+    }
+
+    /* Cartões menores para login/cadastro */
+    .auth-card {
+      max-width: 420px;
+      margin: 0 auto 18px;
+      padding: 18px 16px;
     }
 
     .card h1,
     .card h2,
     .card h3 {
       margin-top: 0;
-      color: #f9fafb;
+      color: #0f172a;
     }
 
     .btn {
       background: var(--accent);
-      color: #020617;
+      color: #ffffff;
       padding: 9px 18px;
       border-radius: 999px;
       border: none;
@@ -392,22 +411,22 @@ function layout(title, content, userNav = "") {
       align-items: center;
       gap: 6px;
       transition: all 0.18s ease-out;
-      box-shadow: 0 12px 28px rgba(22,163,74,0.55);
+      box-shadow: 0 8px 20px rgba(22,163,74,0.25);
     }
     .btn:hover {
       background: var(--accent-strong);
       transform: translateY(-1px);
-      box-shadow: 0 16px 34px rgba(22,163,74,0.75);
+      box-shadow: 0 10px 26px rgba(22,163,74,0.35);
     }
 
     .btn-secondary {
-      background: rgba(15,23,42,0.9);
-      color: #e5e7eb;
-      border: 1px solid rgba(148,163,184,0.7);
-      box-shadow: 0 10px 24px rgba(15,23,42,0.9);
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 14px rgba(15,23,42,0.06);
     }
     .btn-secondary:hover {
-      background: rgba(15,23,42,1);
+      background: #f9fafb;
       border-color: var(--accent-alt);
     }
 
@@ -418,25 +437,25 @@ function layout(title, content, userNav = "") {
       border-radius:999px;
       padding:3px 9px;
       font-size:11px;
-      border:1px solid rgba(148,163,184,0.6);
-      background:rgba(15,23,42,0.9);
-      color:#e5e7eb;
+      border:1px solid #e2e8f0;
+      background:#f8fafc;
+      color:#0f172a;
     }
     .badge-status-dot {
       width:7px;
       height:7px;
       border-radius:999px;
-      background:#6b7280;
+      background:#9ca3af;
     }
-    .badge-status--pre { border-color:#38bdf8; background:rgba(56,189,248,0.08); color:#e0f2fe; }
-    .badge-status--pre .badge-status-dot { background:#38bdf8; }
-    .badge-status--atend { border-color:#a855f7; background:rgba(168,85,247,0.08); color:#f3e8ff; }
+    .badge-status--pre { border-color:#bfdbfe; background:#eff6ff; color:#1d4ed8; }
+    .badge-status--pre .badge-status-dot { background:#3b82f6; }
+    .badge-status--atend { border-color:#e9d5ff; background:#f5f3ff; color:#7c2d12; }
     .badge-status--atend .badge-status-dot { background:#a855f7; }
-    .badge-status--boleto { border-color:#f97316; background:rgba(249,115,22,0.08); color:#ffedd5; }
+    .badge-status--boleto { border-color:#fed7aa; background:#fffbeb; color:#9a3412; }
     .badge-status--boleto .badge-status-dot { background:#f97316; }
-    .badge-status--ok { border-color:#22c55e; background:rgba(34,197,94,0.08); color:#bbf7d0; }
+    .badge-status--ok { border-color:#bbf7d0; background:#ecfdf5; color:#166534; }
     .badge-status--ok .badge-status-dot { background:#22c55e; }
-    .badge-status--lost { border-color:#ef4444; background:rgba(239,68,68,0.08); color:#fecaca; }
+    .badge-status--lost { border-color:#fecaca; background:#fef2f2; color:#b91c1c; }
     .badge-status--lost .badge-status-dot { background:#ef4444; }
 
     .muted { color: var(--text-muted); }
@@ -447,11 +466,11 @@ function layout(title, content, userNav = "") {
       width: 100%;
       padding: 9px 10px;
       margin-top: 5px;
-      border-radius: 10px;
-      border: 1px solid rgba(148,163,184,0.55);
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
       font-size: 14px;
-      background: rgba(15,23,42,0.9);
-      color: #e5e7eb;
+      background: #ffffff;
+      color: #0f172a;
       outline: none;
       transition: all 0.18s ease-out;
     }
@@ -459,11 +478,11 @@ function layout(title, content, userNav = "") {
     select:focus,
     textarea:focus {
       border-color: var(--accent-alt);
-      box-shadow: 0 0 0 1px rgba(56,189,248,0.5);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.4);
     }
 
     textarea { min-height: 70px; }
-    form label { font-weight: 500; margin-top: 10px; display: block; color: #e5e7eb; }
+    form label { font-weight: 500; margin-top: 10px; display: block; color: #0f172a; }
 
     .grid {
       display: grid;
@@ -480,41 +499,72 @@ function layout(title, content, userNav = "") {
       border-collapse: collapse;
       font-size: 13px;
       min-width: 720px;
-      color: #e5e7eb;
+      color: #0f172a;
+      background:#ffffff;
     }
     table.data-table th,
     table.data-table td {
       padding: 8px 10px;
-      border-bottom: 1px solid rgba(55,65,81,0.85);
+      border-bottom: 1px solid #e5e7eb;
       text-align: left;
       vertical-align: top;
     }
     table.data-table thead th {
-      background: rgba(15,23,42,0.95);
+      background: #f1f5f9;
       font-size: 11px;
       font-weight: 600;
-      color: #9ca3af;
+      color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
     table.data-table tbody tr:nth-child(even) {
-      background: rgba(15,23,42,0.8);
-    }
-    table.data-table tbody tr:nth-child(odd) {
-      background: rgba(15,23,42,0.65);
+      background: #f9fafb;
     }
     table.data-table tbody tr:hover {
-      background: rgba(15,23,42,0.95);
+      background: #e5f3ff;
     }
 
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 11px;
-      background: rgba(15,23,42,0.9);
+      background: #f1f5f9;
       padding: 3px 6px;
-      border-radius: 6px;
-      border: 1px solid rgba(55,65,81,0.9);
-      color: #a5b4fc;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      color: #1d4ed8;
+    }
+
+    /* Footer */
+    .site-footer {
+      border-top:1px solid #e2e8f0;
+      background:#ffffff;
+    }
+    .site-footer-inner {
+      max-width:1120px;
+      margin:0 auto;
+      padding:10px 18px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      font-size:11px;
+      color:#64748b;
+    }
+    .footer-left { display:flex; flex-direction:column; gap:2px; }
+    .footer-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .footer-contact-btn {
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #16a34a;
+      background:#ecfdf5;
+      color:#166534;
+      font-size:11px;
+      text-decoration:none;
+      font-weight:500;
+    }
+    .footer-contact-btn:hover {
+      background:#bbf7d0;
     }
 
     @media (max-width: 640px) {
@@ -523,20 +573,16 @@ function layout(title, content, userNav = "") {
         justify-content: center;
       }
       nav {
-        display: flex;
-        flex-wrap: wrap;
         justify-content: center;
-      }
-      nav a {
-        margin-left: 6px;
-        margin-right: 6px;
-        margin-top: 4px;
       }
       main {
         padding: 16px 14px 28px;
       }
       .card {
-        padding: 18px 14px;
+        padding: 16px 14px;
+      }
+      .site-footer-inner {
+        align-items:flex-start;
       }
     }
   </style>
@@ -555,14 +601,29 @@ function layout(title, content, userNav = "") {
       <a href="/indicador/login">Indicador</a>
       <a href="/parceiro/login">Parceiro</a>
       <a href="/admin/login">Admin</a>
+      <a href="/contato" class="nav-contact">Contato</a>
     </nav>
 
-    <div style="font-size:11px; color:#cbd5f5;">${userNav}</div>
+    <div style="font-size:11px; color:#64748b;">${userNav}</div>
   </div>
 </header>
 
 <main>${content}</main>
 
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-left">
+      <div>© 2025 Dhealth Ltda — CNPJ 56.952.650/0001-91</div>
+      <div>Plataforma de indicações de consórcio com parceiros homologados.</div>
+    </div>
+    <div class="footer-right">
+      <span>Conexão segura (HTTPS) • Boas práticas de proteção de dados</span>
+      <a href="/contato" class="footer-contact-btn">Falar com um especialista</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
@@ -570,7 +631,7 @@ function layout(title, content, userNav = "") {
 }
 
 // -------------------------------------------------------------
-// PWA BÁSICO (opcional)
+// PWA BÁSICO
 // -------------------------------------------------------------
 app.get("/manifest.json", (req, res) => {
   res.json({
@@ -578,8 +639,8 @@ app.get("/manifest.json", (req, res) => {
     short_name: "INDICONS",
     start_url: "/",
     display: "standalone",
-    background_color: "#020617",
-    theme_color: "#22c55e",
+    background_color: "#f8fafc",
+    theme_color: "#16a34a",
     icons: [],
   });
 });
@@ -604,17 +665,17 @@ app.get("/", (req, res) => {
   <style>
     .lp-hero {
       background:
-        radial-gradient(circle at top left, rgba(56,189,248,0.2), transparent 60%),
-        radial-gradient(circle at bottom right, rgba(34,197,94,0.25), transparent 55%),
-        rgba(15,23,42,0.98);
+        radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,0.18), transparent 55%),
+        #ffffff;
       border-radius: 22px;
       padding: 32px 24px;
       display: grid;
       grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.7fr);
       gap: 26px;
       align-items: center;
-      border: 1px solid rgba(148,163,184,0.5);
-      box-shadow: 0 26px 70px rgba(15,23,42,0.98);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 20px 45px rgba(15,23,42,0.08);
     }
     @media (max-width: 900px) {
       .lp-hero {
@@ -625,16 +686,16 @@ app.get("/", (req, res) => {
       font-size: 32px;
       line-height: 1.15;
       font-weight: 800;
-      color: #f9fafb;
+      color: #0f172a;
       margin-bottom: 10px;
     }
     .lp-hero-sub {
       font-size: 15px;
-      color: #e5e7eb;
+      color: #475569;
       margin-bottom: 16px;
     }
     .lp-hero-sub strong {
-      color: #bbf7d0;
+      color: #16a34a;
     }
     .lp-hero-badge {
       display:inline-flex;
@@ -642,17 +703,17 @@ app.get("/", (req, res) => {
       gap:8px;
       padding:5px 12px;
       border-radius:999px;
-      background: rgba(15,23,42,0.85);
-      color:#a5b4fc;
+      background: #ecfdf5;
+      color:#166534;
       font-size:11px;
       font-weight:600;
       margin-bottom:10px;
-      border: 1px solid rgba(129,140,248,0.7);
+      border: 1px solid #bbf7d0;
     }
     .lp-hero-badge::before {
       content: "●";
       font-size: 13px;
-      color: #22c55e;
+      color: #16a34a;
     }
 
     .lp-hero-metrics {
@@ -664,89 +725,86 @@ app.get("/", (req, res) => {
     .lp-hero-metric {
       border-radius:14px;
       padding:10px 12px;
-      background:rgba(15,23,42,0.9);
-      border:1px solid rgba(148,163,184,0.55);
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
       min-width:130px;
     }
     .lp-hero-metric strong {
       display:block;
       font-size:18px;
-      color:#bbf7d0;
+      color:#0f172a;
     }
     .lp-hero-metric span {
       display:block;
       font-size:11px;
-      color:#9ca3af;
+      color:#64748b;
     }
 
     .lp-hero-img-wrapper {
       border-radius: 18px;
       overflow: hidden;
       position: relative;
-      background:#020617;
-      border: 1px solid rgba(148,163,184,0.7);
-      box-shadow: 0 20px 55px rgba(15,23,42,1);
+      background:#f1f5f9;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 18px 40px rgba(15,23,42,0.1);
     }
     .lp-hero-img {
       width: 100%;
       display: block;
       object-fit: cover;
       max-height: 300px;
-      filter: saturate(1.05) contrast(1.02);
-      transform: scale(1.02);
+      filter: saturate(1.02) contrast(1.01);
     }
     .lp-hero-tag {
       position:absolute;
       bottom:10px;
       left:10px;
-      background:rgba(15,23,42,0.95);
-      color:#e5e7eb;
+      background:rgba(15,23,42,0.9);
+      color:#f9fafb;
       padding:6px 10px;
       border-radius:999px;
       font-size:11px;
-      border: 1px solid rgba(148,163,184,0.8);
+      border: 1px solid rgba(226,232,240,0.8);
     }
 
     .lp-cta-main {
       display:inline-flex;
       align-items:center;
       gap:8px;
-      background:#22c55e;
-      color:#020617;
+      background:#16a34a;
+      color:#ffffff;
       padding:11px 22px;
       border-radius:999px;
       font-weight:700;
       text-decoration:none;
       font-size:14px;
-      box-shadow:0 16px 40px rgba(21,128,61,0.9);
+      box-shadow:0 12px 30px rgba(22,163,74,0.4);
       border: none;
       transition: all .18s ease-out;
     }
     .lp-cta-main:hover {
-      background:#16a34a;
+      background:#15803d;
       transform: translateY(-1px);
-      box-shadow:0 20px 50px rgba(21,128,61,1);
+      box-shadow:0 16px 40px rgba(22,163,74,0.5);
     }
     .lp-cta-note {
       font-size: 12px;
-      color:#9ca3af;
+      color:#64748b;
       margin-top:8px;
     }
 
     .lp-section {
-      background:
-        radial-gradient(circle at top left, rgba(148,163,184,0.2), transparent 60%),
-        #020617;
+      background: #ffffff;
       border-radius:20px;
       padding:22px 18px;
       margin-top:20px;
-      border:1px solid rgba(148,163,184,0.4);
-      box-shadow:0 18px 50px rgba(15,23,42,0.95);
+      border:1px solid #e2e8f0;
+      box-shadow:0 10px 30px rgba(15,23,42,0.06);
     }
     .lp-section h2 {
       margin-top:0;
       font-size:20px;
-      color:#f9fafb;
+      color:#0f172a;
     }
     .lp-grid {
       display:grid;
@@ -755,21 +813,21 @@ app.get("/", (req, res) => {
       margin-top:14px;
     }
     .lp-card {
-      background:rgba(15,23,42,0.95);
+      background:#f8fafc;
       border-radius:14px;
       padding:14px 12px;
-      border:1px solid rgba(55,65,81,0.95);
+      border:1px solid #e2e8f0;
     }
     .lp-card h3 {
       margin-top:0;
       font-size:15px;
-      color:#e5e7eb;
+      color:#0f172a;
       margin-bottom:6px;
     }
     .lp-card p {
       margin:0;
       font-size:13px;
-      color:#9ca3af;
+      color:#64748b;
     }
 
     .lp-table {
@@ -777,25 +835,45 @@ app.get("/", (req, res) => {
       border-collapse:collapse;
       margin-top:12px;
       font-size:13px;
-      color:#e5e7eb;
+      color:#0f172a;
+      background:#ffffff;
     }
     .lp-table th, .lp-table td {
-      border:1px solid rgba(55,65,81,0.9);
+      border:1px solid #e5e7eb;
       padding:8px;
       text-align:center;
     }
     .lp-table th {
-      background:rgba(15,23,42,0.95);
-      color:#9ca3af;
+      background:#f1f5f9;
+      color:#64748b;
       font-size:11px;
       text-transform:uppercase;
       letter-spacing:.08em;
     }
     .lp-table tbody tr:nth-child(even) {
-      background:rgba(15,23,42,0.8);
+      background:#f9fafb;
     }
-    .lp-table tbody tr:nth-child(odd) {
-      background:rgba(15,23,42,0.65);
+
+    .lp-trust-strip {
+      margin-top:18px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      font-size:11px;
+      color:#64748b;
+    }
+    .lp-trust-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:#f1f5f9;
+      border:1px solid #e2e8f0;
+    }
+    .lp-trust-pill-icon {
+      font-size:13px;
     }
   </style>
 
@@ -807,7 +885,7 @@ app.get("/", (req, res) => {
       </h1>
       <p class="lp-hero-sub">
         Você só indica. Um parceiro especializado faz todo o atendimento, negocia e fecha a venda.
-        Em cada consórcio aprovado, você recebe <strong>5% de comissão</strong>.
+        Em cada consórcio aprovado, você recebe <strong>comissão de até 1,5%</strong>.
       </p>
 
       <a href="/indicador/registrar" class="lp-cta-main">
@@ -819,16 +897,31 @@ app.get("/", (req, res) => {
 
       <div class="lp-hero-metrics">
         <div class="lp-hero-metric">
-          <strong>5%</strong>
-          <span>de comissão sobre vendas aprovadas</span>
+          <strong>1,5%</strong>
+          <span>comissão máxima sobre vendas aprovadas</span>
         </div>
         <div class="lp-hero-metric">
           <strong>R$ 100 mil</strong>
-          <span>pode gerar R$ 5 mil para você</span>
+          <span>podem gerar até R$ 1.500 para você</span>
         </div>
         <div class="lp-hero-metric">
           <strong>100% online</strong>
           <span>links, pré-adesões e painel web</span>
+        </div>
+      </div>
+
+      <div class="lp-trust-strip">
+        <div class="lp-trust-pill">
+          <span class="lp-trust-pill-icon">🏢</span>
+          <span>Dhealth Ltda • CNPJ 56.952.650/0001-91</span>
+        </div>
+        <div class="lp-trust-pill">
+          <span class="lp-trust-pill-icon">🔒</span>
+          <span>Site com conexão segura (HTTPS)</span>
+        </div>
+        <div class="lp-trust-pill">
+          <span class="lp-trust-pill-icon">✅</span>
+          <span>Atuação com administradoras de consórcio reguladas</span>
         </div>
       </div>
     </div>
@@ -850,7 +943,7 @@ app.get("/", (req, res) => {
     <div class="lp-grid">
       <div class="lp-card">
         <h3>1. Gere seu link</h3>
-        <p>Você se cadastra como indicador e escolhe o plano de consórcio. O sistema gera links prontos para compartilhar.</p>
+        <p>Você se cadastra como indicador e escolhe o plano de consórcio. O sistema gera links personalizados prontos para compartilhar.</p>
       </div>
       <div class="lp-card">
         <h3>2. Cliente faz a pré-adesão</h3>
@@ -862,7 +955,7 @@ app.get("/", (req, res) => {
       </div>
       <div class="lp-card">
         <h3>4. Você recebe comissão</h3>
-        <p>Ao marcar a venda como aprovada, o sistema calcula automaticamente sua comissão de 5%.</p>
+        <p>Ao marcar a venda como aprovada, o sistema calcula automaticamente sua comissão de até 1,5%.</p>
       </div>
     </div>
   </section>
@@ -874,20 +967,49 @@ app.get("/", (req, res) => {
         <tr>
           <th>Quantidade de vendas</th>
           <th>Ticket médio</th>
-          <th>Comissão (5%) estimada</th>
+          <th>Comissão (até 1,5%) estimada</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>2 vendas / mês</td><td>R$ 80.000</td><td>R$ 8.000</td></tr>
-        <tr><td>4 vendas / mês</td><td>R$ 60.000</td><td>R$ 12.000</td></tr>
-        <tr><td>8 vendas / mês</td><td>R$ 50.000</td><td>R$ 20.000</td></tr>
+        <tr><td>2 vendas / mês</td><td>R$ 80.000</td><td>R$ 2.400</td></tr>
+        <tr><td>4 vendas / mês</td><td>R$ 60.000</td><td>R$ 3.600</td></tr>
+        <tr><td>8 vendas / mês</td><td>R$ 50.000</td><td>R$ 6.000</td></tr>
       </tbody>
     </table>
-    <p class="muted" style="margin-top:8px;">Valores meramente ilustrativos.</p>
+    <p class="muted" style="margin-top:8px;">Valores meramente ilustrativos, considerando comissão máxima de 1,5%.</p>
   </section>
   `;
 
   res.send(layout("Home – INDICONS", content));
+});
+
+// =============================================================
+// PÁGINA DE CONTATO
+// =============================================================
+app.get("/contato", (req, res) => {
+  const content = `
+    <div class="card auth-card">
+      <h2>Contato</h2>
+      <p class="muted">
+        Fale com a equipe da <strong>Dhealth Ltda</strong> sobre parcerias, dúvidas sobre o INDICONS
+        ou suporte à plataforma.
+      </p>
+      <ul class="muted" style="font-size:13px; padding-left:18px; margin-top:8px;">
+        <li>Razão Social: Dhealth Ltda</li>
+        <li>CNPJ: 56.952.650/0001-91</li>
+      </ul>
+
+      <div style="margin-top:12px; font-size:13px;">
+        <p><strong>E-mail:</strong> <a href="mailto:contato@dhealth.com.br">contato@dhealth.com.br</a></p>
+        <p><strong>WhatsApp:</strong> <a href="https://wa.me/5500000000000" target="_blank" rel="noopener noreferrer">+55 (00) 00000-0000</a></p>
+      </div>
+
+      <p class="muted" style="font-size:12px; margin-top:12px;">
+        As informações acima são exemplos. Ajuste e-mails e telefone para os dados oficiais da empresa.
+      </p>
+    </div>
+  `;
+  res.send(layout("Contato – INDICONS", content));
 });
 
 // =============================================================
@@ -914,7 +1036,7 @@ app.get("/indicador/registrar", (req, res) => {
     layout(
       "Registrar Indicador",
       `
-      <div class="card">
+      <div class="card auth-card">
         <h2>Cadastrar Indicador</h2>
         <form method="POST">
           <label>Nome</label><input required name="nome">
@@ -946,7 +1068,7 @@ app.get("/indicador/login", (req, res) => {
     layout(
       "Login Indicador",
       `
-      <div class="card">
+      <div class="card auth-card">
         <h2>Login do Indicador</h2>
         <form method="POST">
           <label>Email</label><input name="email">
@@ -1052,35 +1174,35 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         }
       }
       .metric-card {
-        border-radius:14px;
+        border-radius:12px;
         padding:10px 12px;
-        background:rgba(15,23,42,0.94);
-        border:1px solid rgba(148,163,184,0.55);
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
       }
       .metric-label {
         font-size:11px;
         text-transform:uppercase;
         letter-spacing:.08em;
-        color:#9ca3af;
+        color:#64748b;
       }
       .metric-value {
         font-size:20px;
         font-weight:700;
         margin-top:4px;
-        color:#f9fafb;
+        color:#0f172a;
       }
       .metric-helper {
         font-size:11px;
-        color:#6b7280;
+        color:#94a3b8;
       }
 
       .hero-img-panel {
         border-radius:18px;
         overflow:hidden;
         position:relative;
-        background:#020617;
-        border:1px solid rgba(148,163,184,0.7);
-        box-shadow:0 20px 55px rgba(15,23,42,1);
+        background:#f1f5f9;
+        border:1px solid #e2e8f0;
+        box-shadow:0 16px 40px rgba(15,23,42,0.08);
       }
       .hero-img {
         width:100%;
@@ -1092,12 +1214,12 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         position:absolute;
         bottom:10px;
         left:10px;
-        background:rgba(15,23,42,0.96);
-        color:#e5e7eb;
+        background:rgba(15,23,42,0.9);
+        color:#f9fafb;
         padding:6px 10px;
         border-radius:999px;
         font-size:11px;
-        border:1px solid rgba(148,163,184,0.8);
+        border:1px solid rgba(226,232,240,0.8);
       }
 
       .timeline-wrapper {
@@ -1125,23 +1247,23 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         width: 36px;
         height: 36px;
         border-radius: 999px;
-        border: 3px solid #d1d5db;
-        background: #020617;
+        border: 3px solid #cbd5e1;
+        background: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        color: #e5e7eb;
+        color: #0f172a;
         z-index: 2;
       }
       .timeline-label {
         margin-top: 6px;
         font-weight: 600;
-        color: #f9fafb;
+        color: #0f172a;
       }
       .timeline-caption {
         margin-top: 2px;
-        color: #9ca3af;
+        color: #64748b;
         font-size: 11px;
         max-width: 160px;
       }
@@ -1152,7 +1274,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         left: 0;
         right: 0;
         height: 3px;
-        background: rgba(55,65,81,0.9);
+        background: #e2e8f0;
         z-index: 1;
       }
       .timeline-progress {
@@ -1160,7 +1282,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         top: 32px;
         left: 0;
         height: 3px;
-        background: linear-gradient(90deg,#0ea5e9,#22c55e);
+        background: linear-gradient(90deg,#0ea5e9,#16a34a);
         z-index: 1;
         width:100%;
       }
@@ -1178,36 +1300,36 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         font-size:11px;
         padding:4px 8px;
         border-radius:999px;
-        border:1px solid #e5e7eb22;
-        background:#020617;
-        color:#9ca3af;
+        border:1px solid #e2e8f0;
+        background:#f9fafb;
+        color:#64748b;
       }
       .stepper-mini-step-dot {
         width:8px;
         height:8px;
         border-radius:999px;
-        background:#4b5563;
+        background:#cbd5e1;
       }
       .stepper-mini-step.done {
-        border-color:#22c55e66;
-        background:#022c22;
-        color:#bbf7d0;
+        border-color:#bbf7d0;
+        background:#ecfdf5;
+        color:#166534;
       }
       .stepper-mini-step.done .stepper-mini-step-dot {
         background:#22c55e;
       }
       .stepper-mini-step.current {
-        border-color:#0ea5e966;
-        background:#082f49;
-        color:#e0f2fe;
+        border-color:#7dd3fc;
+        background:#e0f2fe;
+        color:#0f172a;
       }
       .stepper-mini-step.current .stepper-mini-step-dot {
         background:#0ea5e9;
       }
       .stepper-mini-step.lost {
-        border-color:#ef444466;
-        background:#450a0a;
-        color:#fecaca;
+        border-color:#fecaca;
+        background:#fef2f2;
+        color:#b91c1c;
       }
       .stepper-mini-step.lost .stepper-mini-step-dot {
         background:#ef4444;
@@ -1231,7 +1353,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
           <h2>Painel do Indicador</h2>
           <p class="muted">
             Acompanhe todas as indicações, entenda em que etapa do funil cada cliente está
-            e visualize quanto você já gerou de vendas e comissões.
+            e visualize quanto você já gerou de vendas e comissões (até 1,5% por venda).
           </p>
           <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
 
@@ -1254,7 +1376,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
             <div class="metric-card">
               <div class="metric-label">Comissões acumuladas</div>
               <div class="metric-value">R$ ${totalComissao.toFixed(2)}</div>
-              <div class="metric-helper">Baseado em 5% de comissão</div>
+              <div class="metric-helper">Baseado em comissão de até 1,5%</div>
             </div>
           </div>
         </div>
@@ -1401,12 +1523,11 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
       }
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       window.addEventListener('DOMContentLoaded', function () {
         var ctxBar = document.getElementById('funilBarChart');
         if (ctxBar) {
-          var bar = new Chart(ctxBar.getContext('2d'), {
+          new Chart(ctxBar.getContext('2d'), {
             type: 'bar',
             data: {
               labels: [
@@ -1432,10 +1553,10 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               responsive: true,
               plugins: { legend: { display: false } },
               scales: {
-                x: { ticks: { color: '#9ca3af', font: { size: 11 } } },
+                x: { ticks: { color: '#64748b', font: { size: 11 } } },
                 y: {
                   beginAtZero: true,
-                  ticks: { color: '#9ca3af', font: { size: 11 } }
+                  ticks: { color: '#64748b', font: { size: 11 } }
                 }
               }
             }
@@ -1445,7 +1566,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         var total = ${totalPre};
         var ctxPie = document.getElementById('conversionChart');
         if (ctxPie && total > 0) {
-          var pie = new Chart(ctxPie.getContext('2d'), {
+          new Chart(ctxPie.getContext('2d'), {
             type: 'doughnut',
             data: {
               labels: [
@@ -1470,7 +1591,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               plugins: {
                 legend: {
                   position: 'bottom',
-                  labels: { color: '#e5e7eb', font: { size: 11 } }
+                  labels: { color: '#0f172a', font: { size: 11 } }
                 }
               }
             }
@@ -1568,12 +1689,12 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
             msg.style.position = 'fixed';
             msg.style.bottom = '16px';
             msg.style.right = '16px';
-            msg.style.background = '#22c55e';
-            msg.style.color = 'black';
+            msg.style.background = '#16a34a';
+            msg.style.color = 'white';
             msg.style.padding = '8px 14px';
             msg.style.borderRadius = '999px';
             msg.style.fontSize = '13px';
-            msg.style.boxShadow = '0 4px 12px rgba(15,23,42,0.25)';
+            msg.style.boxShadow = '0 4px 12px rgba(15,23,42,0.2)';
             document.body.appendChild(msg);
             setTimeout(function(){ document.body.removeChild(msg); }, 1800);
           })
@@ -1607,7 +1728,7 @@ app.get("/consorcio", async (req, res) => {
     layout(
       "Pré-adesão",
       `
-      <div class="card">
+      <div class="card auth-card">
         <h2>${prod.nome}</h2>
         ${
           prod.codigo || prod.credito_referencia
@@ -1650,7 +1771,7 @@ app.post("/consorcio", async (req, res) => {
   res.send(
     layout(
       "Pré-adesão enviada",
-      `<div class="card"><h2>Pré-adesão registrada!</h2><p>O parceiro entrará em contato em breve.</p></div>`
+      `<div class="card auth-card"><h2>Pré-adesão registrada!</h2><p>O parceiro entrará em contato em breve.</p></div>`
     )
   );
 });
@@ -1666,7 +1787,7 @@ app.get("/parceiro/login", (req, res) => {
     layout(
       "Login Parceiro",
       `
-      <div class="card">
+      <div class="card auth-card">
         <h2>Login do Parceiro</h2>
         <form method="POST">
           <label>Email</label><input name="email">
@@ -1755,10 +1876,11 @@ app.post("/parceiro/pre-vendas/:id/status", requireParceiro, async (req, res) =>
   if (status === "APROVADA" && valor_venda) {
     const pv = await dbGet("SELECT * FROM pre_vendas WHERE id=?", [id]);
     if (pv) {
+      const valor = Number(valor_venda);
       await dbRun(
         `INSERT INTO comissoes (indicador_id,pre_venda_id,valor_venda,valor_comissao)
          VALUES (?,?,?,?)`,
-        [pv.indicador_id, pv.id, valor_venda, valor_venda * 0.05]
+        [pv.indicador_id, pv.id, valor, valor * COMMISSION_RATE]
       );
     }
   }
@@ -1777,7 +1899,7 @@ app.get("/admin/login", (req, res) => {
     layout(
       "Admin Login",
       `
-      <div class="card">
+      <div class="card auth-card">
         <h2>Login Admin</h2>
         <form method="POST">
           <label>Email</label><input name="email">
@@ -1820,7 +1942,7 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
                     `<div class="card" style="margin-top:8px;">
                       Indicador: <strong>${c.indicador_nome}</strong><br>
                       Valor venda: R$ ${c.valor_venda}<br>
-                      Comissão: <strong>R$ ${c.valor_comissao}</strong>
+                      Comissão (até 1,5%): <strong>R$ ${c.valor_comissao}</strong>
                     </div>`
                 )
                 .join("")
@@ -1861,7 +1983,7 @@ app.post("/admin/disparar-followup", requireAdmin, async (req, res) => {
   res.send(
     layout(
       "Follow-up disparado",
-      `<div class="card"><h2>Follow-up enviado para ${abertas.length} pré-vendas abertas.</h2></div>`,
+      `<div class="card auth-card"><h2>Follow-up enviado para ${abertas.length} pré-vendas abertas.</h2></div>`,
       `Admin: ${req.session.adminNome} | <a href="/logout">Sair</a>`
     )
   );
