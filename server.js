@@ -768,7 +768,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const statusAprovada    = countStatus("APROVADA");
   const statusNaoFechou   = countStatus("NAO_FECHOU");
 
-  // ordem das etapas para linha do tempo
+  // ordem das etapas para a linha do tempo
   const stageOrder = [
     "PRE_ADESAO",
     "EM_ATENDIMENTO",
@@ -787,7 +787,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
 
   const content = `
     <style>
-      /* Linha do tempo grande (infográfico) */
+      /* Linha do tempo grande (infográfico explicativo) */
       .timeline-wrapper {
         margin-top: 14px;
         overflow-x: auto;
@@ -822,22 +822,6 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         color: #4b5563;
         z-index: 2;
       }
-      .timeline-step.completed .timeline-circle {
-        border-color: #22c55e;
-        background: #dcfce7;
-        color: #166534;
-      }
-      .timeline-step.current .timeline-circle {
-        border-color: #0ea5e9;
-        background: #e0f2fe;
-        color: #0369a1;
-      }
-      .timeline-step.lost .timeline-circle {
-        border-color: #ef4444;
-        background: #fee2e2;
-        color: #991b1b;
-      }
-
       .timeline-label {
         margin-top: 6px;
         font-weight: 600;
@@ -849,7 +833,6 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         font-size: 11px;
         max-width: 160px;
       }
-
       .timeline-connector {
         position: absolute;
         top: 25px;
@@ -868,53 +851,71 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         z-index: 1;
       }
 
-      /* Stepper mini em cada pré-venda (versão compacta) */
-      .stepper-mini {
-        display:flex;
-        gap:6px;
-        margin-top:8px;
-        flex-wrap:wrap;
+      /* Linha do tempo mini para cada indicação */
+      .timeline-mini {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 10px;
+        position: relative;
+        padding: 0 4px 6px 4px;
       }
-      .stepper-mini-step {
-        display:flex;
-        align-items:center;
-        gap:4px;
-        font-size:11px;
-        padding:4px 8px;
-        border-radius:999px;
-        border:1px solid #e5e7eb;
-        background:#f9fafb;
-        color:#6b7280;
+      .timeline-mini::before {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: 10px;
+        right: 10px;
+        height: 2px;
+        background: #e5e7eb;
+        z-index: 1;
       }
-      .stepper-mini-step-dot {
-        width:8px;
-        height:8px;
-        border-radius:999px;
-        background:#e5e7eb;
+      .timeline-mini-node {
+        flex: 1;
+        text-align: center;
+        font-size: 10px;
+        color: #6b7280;
+        position: relative;
       }
-      .stepper-mini-step.done {
-        border-color:#bbf7d0;
-        background:#f0fdf4;
-        color:#166534;
+      .timeline-mini-circle {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 2px solid #e5e7eb;
+        background: #ffffff;
+        margin: 0 auto 3px auto;
+        position: relative;
+        z-index: 2;
       }
-      .stepper-mini-step.done .stepper-mini-step-dot {
-        background:#22c55e;
+      .timeline-mini-label {
+        font-size: 10px;
+        line-height: 1.2;
       }
-      .stepper-mini-step.current {
-        border-color:#7dd3fc;
-        background:#eff6ff;
-        color:#0f172a;
+
+      .timeline-mini-node.done .timeline-mini-circle {
+        border-color: #22c55e;
+        background: #dcfce7;
       }
-      .stepper-mini-step.current .stepper-mini-step-dot {
-        background:#0ea5e9;
+      .timeline-mini-node.current .timeline-mini-circle {
+        border-color: #0ea5e9;
+        background: #e0f2fe;
       }
-      .stepper-mini-step.lost {
-        border-color:#fecaca;
-        background:#fef2f2;
-        color:#991b1b;
+      .timeline-mini-node.lost .timeline-mini-circle {
+        border-color: #ef4444;
+        background: #fee2e2;
       }
-      .stepper-mini-step.lost .stepper-mini-step-dot {
-        background:#ef4444;
+      .timeline-mini-node.done .timeline-mini-label {
+        color: #166534;
+        font-weight: 600;
+      }
+      .timeline-mini-node.current .timeline-mini-label {
+        color: #0f172a;
+        font-weight: 600;
+      }
+      .timeline-mini-node.lost .timeline-mini-label {
+        color: #991b1b;
+        font-weight: 600;
       }
     </style>
 
@@ -925,11 +926,10 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
       </p>
       <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
 
+      <!-- Linha do tempo grande (explicativa, fixa) -->
       <div class="timeline-wrapper">
         <div class="timeline">
           <div class="timeline-connector"></div>
-          <!-- Como este infográfico é explicativo, marcamos tudo como "caminho padrão" -->
-          <!-- Se quiser, pode depois usar média do funil para pintar a barra de progresso -->
           <div class="timeline-progress" style="width:100%;"></div>
 
           <div class="timeline-step">
@@ -1018,6 +1018,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               .map((v) => {
                 const currentStageIndex = stageOrder.indexOf(v.status);
                 const isLost = v.status === "NAO_FECHOU";
+
                 return `
         <div class="card" style="margin-top:8px;">
           <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
@@ -1029,7 +1030,8 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               : ""
           }
 
-          <div class="stepper-mini">
+          <!-- Linha de etapas da indicação -->
+          <div class="timeline-mini">
             ${stageOrder
               .map((st, idx) => {
                 let cls = "";
@@ -1041,9 +1043,9 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
                   cls = "current";
                 }
                 return `
-                  <div class="stepper-mini-step ${cls}">
-                    <div class="stepper-mini-step-dot"></div>
-                    <span>${stageLabels[st]}</span>
+                  <div class="timeline-mini-node ${cls}">
+                    <div class="timeline-mini-circle"></div>
+                    <div class="timeline-mini-label">${stageLabels[st]}</div>
                   </div>
                 `;
               })
@@ -1102,6 +1104,7 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
     )
   );
 });
+
 
 // =============================================================
 // INDICADOR – LINKS (tabela + copiar link)
