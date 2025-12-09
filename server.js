@@ -729,8 +729,8 @@ app.post("/indicador/login", async (req, res) => {
   res.redirect("/indicador/dashboard");
 });
 
-// // =============================================================
-// INDICADOR – DASHBOARD
+// =============================================================
+// INDICADOR – DASHBOARD ESTILO LINHA DO TEMPO (5 ETAPAS)
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -768,7 +768,331 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const statusAprovada    = countStatus("APROVADA");
   const statusNaoFechou   = countStatus("NAO_FECHOU");
 
-  const content = ` ... `; // (vários HTML aqui)
+  // ordem das etapas para linha do tempo
+  const stageOrder = [
+    "PRE_ADESAO",
+    "EM_ATENDIMENTO",
+    "BOLETO_EMITIDO",
+    "APROVADA",
+    "NAO_FECHOU"
+  ];
+
+  const stageLabels = {
+    PRE_ADESAO: "Pré-adesão",
+    EM_ATENDIMENTO: "Em atendimento",
+    BOLETO_EMITIDO: "Boleto emitido",
+    APROVADA: "Venda aprovada",
+    NAO_FECHOU: "Não fechou"
+  };
+
+  const content = `
+    <style>
+      /* Linha do tempo grande (infográfico) */
+      .timeline-wrapper {
+        margin-top: 14px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+      }
+      .timeline {
+        display: flex;
+        align-items: flex-start;
+        min-width: 600px;
+        position: relative;
+        padding: 10px 6px 0 6px;
+      }
+      .timeline-step {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        text-align: center;
+        font-size: 12px;
+      }
+      .timeline-circle {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: 3px solid #d1d5db;
+        background: #eef2ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #4b5563;
+        z-index: 2;
+      }
+      .timeline-step.completed .timeline-circle {
+        border-color: #22c55e;
+        background: #dcfce7;
+        color: #166534;
+      }
+      .timeline-step.current .timeline-circle {
+        border-color: #0ea5e9;
+        background: #e0f2fe;
+        color: #0369a1;
+      }
+      .timeline-step.lost .timeline-circle {
+        border-color: #ef4444;
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .timeline-label {
+        margin-top: 6px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+      .timeline-caption {
+        margin-top: 2px;
+        color: #6b7280;
+        font-size: 11px;
+        max-width: 160px;
+      }
+
+      .timeline-connector {
+        position: absolute;
+        top: 25px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #e5e7eb;
+        z-index: 1;
+      }
+      .timeline-progress {
+        position: absolute;
+        top: 25px;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg,#0ea5e9,#22c55e);
+        z-index: 1;
+      }
+
+      /* Stepper mini em cada pré-venda (versão compacta) */
+      .stepper-mini {
+        display:flex;
+        gap:6px;
+        margin-top:8px;
+        flex-wrap:wrap;
+      }
+      .stepper-mini-step {
+        display:flex;
+        align-items:center;
+        gap:4px;
+        font-size:11px;
+        padding:4px 8px;
+        border-radius:999px;
+        border:1px solid #e5e7eb;
+        background:#f9fafb;
+        color:#6b7280;
+      }
+      .stepper-mini-step-dot {
+        width:8px;
+        height:8px;
+        border-radius:999px;
+        background:#e5e7eb;
+      }
+      .stepper-mini-step.done {
+        border-color:#bbf7d0;
+        background:#f0fdf4;
+        color:#166534;
+      }
+      .stepper-mini-step.done .stepper-mini-step-dot {
+        background:#22c55e;
+      }
+      .stepper-mini-step.current {
+        border-color:#7dd3fc;
+        background:#eff6ff;
+        color:#0f172a;
+      }
+      .stepper-mini-step.current .stepper-mini-step-dot {
+        background:#0ea5e9;
+      }
+      .stepper-mini-step.lost {
+        border-color:#fecaca;
+        background:#fef2f2;
+        color:#991b1b;
+      }
+      .stepper-mini-step.lost .stepper-mini-step-dot {
+        background:#ef4444;
+      }
+    </style>
+
+    <div class="card">
+      <h2>Painel comercial – ${req.session.indicadorNome}</h2>
+      <p class="muted">
+        Veja abaixo todas as etapas do caminho da indicação, do clique no link até a venda aprovada.
+      </p>
+      <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
+
+      <div class="timeline-wrapper">
+        <div class="timeline">
+          <div class="timeline-connector"></div>
+          <!-- Como este infográfico é explicativo, marcamos tudo como "caminho padrão" -->
+          <!-- Se quiser, pode depois usar média do funil para pintar a barra de progresso -->
+          <div class="timeline-progress" style="width:100%;"></div>
+
+          <div class="timeline-step">
+            <div class="timeline-circle">1</div>
+            <div class="timeline-label">Pré-adesão</div>
+            <div class="timeline-caption">
+              Cliente preenche o formulário pelo seu link.
+            </div>
+          </div>
+
+          <div class="timeline-step">
+            <div class="timeline-circle">2</div>
+            <div class="timeline-label">Em atendimento</div>
+            <div class="timeline-caption">
+              Parceiro entra em contato (ligação / WhatsApp).
+            </div>
+          </div>
+
+          <div class="timeline-step">
+            <div class="timeline-circle">3</div>
+            <div class="timeline-label">Boleto emitido</div>
+            <div class="timeline-caption">
+              Boleto é gerado na administradora.
+            </div>
+          </div>
+
+          <div class="timeline-step">
+            <div class="timeline-circle">4</div>
+            <div class="timeline-label">Venda aprovada</div>
+            <div class="timeline-caption">
+              Boleto pago e venda confirmada.
+            </div>
+          </div>
+
+          <div class="timeline-step">
+            <div class="timeline-circle">5</div>
+            <div class="timeline-label">Não fechou</div>
+            <div class="timeline-caption">
+              Cliente não segue com a contratação (registro fica salvo).
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Resumo numérico do funil</h3>
+      <div class="grid">
+        <div class="card">
+          <strong>Total de pré-vendas</strong>
+          <p style="font-size:24px; margin:6px 0;">${totalPre}</p>
+          <p class="muted">Clientes que chegaram pelos seus links.</p>
+        </div>
+        <div class="card">
+          <strong>Vendas aprovadas</strong>
+          <p style="font-size:24px; margin:6px 0;">${totalAprovadas}</p>
+          <p class="muted">Pré-vendas que viraram contrato.</p>
+        </div>
+        <div class="card">
+          <strong>Valor vendido (aprovadas)</strong>
+          <p style="font-size:24px; margin:6px 0;">R$ ${valorVendasAprovadas.toFixed(2)}</p>
+          <p class="muted">Somente vendas com status "APROVADA".</p>
+        </div>
+        <div class="card">
+          <strong>Comissões acumuladas</strong>
+          <p style="font-size:24px; margin:6px 0;">R$ ${totalComissao.toFixed(2)}</p>
+          <p class="muted">Baseado em registros de comissão.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Funil por etapa (gráfico)</h3>
+      <p class="muted">Quantidade de pré-vendas em cada etapa.</p>
+      <div style="max-width:520px; margin-top:10px;">
+        <canvas id="indicadorChart" height="180"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Minhas pré-vendas (linha do tempo de cada indicação)</h3>
+      ${
+        pre.length === 0
+          ? `<p class="muted">Nenhuma pré-venda ainda.</p>`
+          : pre
+              .map((v) => {
+                const currentStageIndex = stageOrder.indexOf(v.status);
+                const isLost = v.status === "NAO_FECHOU";
+                return `
+        <div class="card" style="margin-top:8px;">
+          <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
+          <span class="muted">Status atual: ${stageLabels[v.status] || v.status}</span><br>
+          <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
+          ${
+            v.valor_venda
+              ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span><br>`
+              : ""
+          }
+
+          <div class="stepper-mini">
+            ${stageOrder
+              .map((st, idx) => {
+                let cls = "";
+                if (isLost && st === "NAO_FECHOU") {
+                  cls = "lost";
+                } else if (idx < currentStageIndex && v.status !== "NAO_FECHOU") {
+                  cls = "done";
+                } else if (idx === currentStageIndex) {
+                  cls = "current";
+                }
+                return `
+                  <div class="stepper-mini-step ${cls}">
+                    <div class="stepper-mini-step-dot"></div>
+                    <span>${stageLabels[st]}</span>
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+        </div>`;
+              })
+              .join("")
+      }
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', function () {
+        var ctx = document.getElementById('indicadorChart');
+        if (!ctx) return;
+        ctx = ctx.getContext('2d');
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [
+              'Pré-adesão',
+              'Em atendimento',
+              'Boleto emitido',
+              'Aprovada',
+              'Não fechou'
+            ],
+            datasets: [{
+              label: 'Pré-vendas',
+              data: [
+                ${statusPreAdesao},
+                ${statusEmAtend},
+                ${statusBoleto},
+                ${statusAprovada},
+                ${statusNaoFechou}
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      });
+    </script>
+  `;
 
   res.send(
     layout(
