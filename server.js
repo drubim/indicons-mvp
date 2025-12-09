@@ -1,5 +1,5 @@
 // =============================================================
-// INDICONS – Sistema completo + SQLite + WhatsApp + IA + PWA
+// INDICONS – Sistema completo + SQLite + Layout Pro + WhatsApp + IA + PWA
 // =============================================================
 require("dotenv").config();
 
@@ -75,7 +75,7 @@ db.serialize(() => {
     )
   `);
 
-  // Seed com os planos reais de AUTOS (tabela enviada)
+  // Seed planos AUTOS
   db.get("SELECT COUNT(*) AS c FROM produtos", (err, row) => {
     if (row && row.c === 0) {
       const planosAutos = [
@@ -170,12 +170,12 @@ function dbRun(sql, params = []) {
 }
 
 // -------------------------------------------------------------
-// SERVIÇO DE WHATSAPP (Cloud API ou outro provedor)
+// WHATSAPP
 // -------------------------------------------------------------
 const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;   // ex: https://graph.facebook.com/v20.0
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
-const PARCEIRO_TELEFONE = process.env.PARCEIRO_TELEFONE || ""; // telefone do parceiro para notificação
+const PARCEIRO_TELEFONE = process.env.PARCEIRO_TELEFONE || "";
 
 async function sendWhatsAppMessage(phone, message) {
   if (!WHATSAPP_API_URL || !WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
@@ -208,7 +208,7 @@ async function sendWhatsAppMessage(phone, message) {
 }
 
 async function notifyCustomerPreAdesao(phone, nome) {
-  const msg = `Olá ${nome}, recebemos sua pré-adesão do consórcio. Um especialista entrará em contato em até 60 minutos.`;
+  const msg = `Olá ${nome}, recebemos sua pré-adesão de consórcio pelo INDICONS. Um especialista entrará em contato em até 60 minutos.`;
   return sendWhatsAppMessage(phone, msg);
 }
 
@@ -217,25 +217,24 @@ async function notifyPartnerNewLead(partnerPhone, preVendaId) {
     console.log("[DEBUG] Telefone do parceiro não configurado. Notificação não enviada.");
     return;
   }
-  const msg = `Nova pré-venda recebida no INDICONS. ID da pré-venda: ${preVendaId}. Acesse o painel do parceiro para atender.`;
+  const msg = `Nova pré-venda recebida no INDICONS. ID: ${preVendaId}. Acesse o painel do parceiro para atender.`;
   return sendWhatsAppMessage(partnerPhone, msg);
 }
 
 async function sendFollowUpLead(phone, nome) {
-  const msg = `Olá ${nome}, vimos que sua pré-adesão ainda está em aberto. Tem alguma dúvida ou gostaria de seguir com a contratação?`;
+  const msg = `Olá ${nome}, vimos que sua pré-adesão de consórcio ainda está em aberto. Posso te ajudar com alguma dúvida para seguir com a contratação?`;
   return sendWhatsAppMessage(phone, msg);
 }
 
 // -------------------------------------------------------------
-// SERVIÇO DE IA – ATENDIMENTO (SITE / WHATSAPP)
+// IA – STUB
 // -------------------------------------------------------------
 async function askAI(message, context = []) {
-  // Integre aqui com a IA real (OpenAI, etc.)
-  return `IA (simulado): você perguntou "${message}". Em produção, aqui você conecta na API de IA.`;
+  return `IA (simulado): você perguntou "${message}". Em produção, aqui entra a integração com o provedor de IA.`;
 }
 
 // -------------------------------------------------------------
-// LAYOUT GLOBAL + BOOTSTRAP + PWA
+// LAYOUT GLOBAL – TEMA PROFISSIONAL
 // -------------------------------------------------------------
 function layout(title, content, userNav = "") {
   return `
@@ -245,127 +244,300 @@ function layout(title, content, userNav = "") {
   <meta charset="UTF-8" />
   <title>${title}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="/manifest.json" />
 
-  <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(function() { console.log('Service worker registrado'); })
-          .catch(function(err) { console.error('Erro SW:', err); });
-      });
-    }
-  </script>
-
   <style>
-    body { background:#f1f5f9; margin:0; font-family: Arial, system-ui; color:#1e293b; }
+    :root {
+      --bg-body: #020617;
+      --bg-main: #020617;
+      --header-bg: rgba(15,23,42,0.92);
+      --header-border: rgba(148,163,184,0.35);
+      --card-bg: #020617;
+      --card-border: rgba(148,163,184,0.35);
+      --card-shadow: 0 18px 45px rgba(15,23,42,0.85);
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --accent: #22c55e;
+      --accent-soft: rgba(34,197,94,0.12);
+      --accent-strong: #16a34a;
+      --accent-alt: #0ea5e9;
+      --danger: #ef4444;
+      --danger-soft: rgba(248,113,113,0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.18) 0, transparent 60%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,0.18) 0, transparent 60%),
+        var(--bg-body);
+    }
+
+    a { color: inherit; }
 
     header {
-      background:#ffffff;
-      border-bottom:1px solid #cbd5e1;
-      position:sticky; top:0;
-      z-index:10;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: linear-gradient(
+        to bottom,
+        rgba(15,23,42,0.96),
+        rgba(15,23,42,0.9)
+      );
+      border-bottom: 1px solid var(--header-border);
     }
 
     .header-inner {
-      max-width:1100px;
-      margin:auto;
-      padding:10px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
 
-    .logo { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:bold; }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
     .logo-mark {
-      width:34px; height:34px; border-radius:50%;
-      background:linear-gradient(135deg,#0ea5e9,#0369a1);
-      color:white; display:flex; align-items:center; justify-content:center;
-      font-size:18px; font-weight:700;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 30% 0, #22c55e, transparent 60%),
+        radial-gradient(circle at 80% 100%, #0ea5e9, transparent 60%),
+        #020617;
+      border: 1px solid rgba(148,163,184,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f9fafb;
+      font-size: 18px;
+      font-weight: 800;
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.8),
+                  0 10px 25px rgba(15,23,42,0.9);
     }
 
     nav a {
-      margin-left: 12px;
-      text-decoration:none;
-      color:#475569;
-      font-weight:500;
-      font-size:14px;
+      margin-left: 14px;
+      text-decoration: none;
+      color: #e5e7eb;
+      font-weight: 500;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: all 0.18s ease-out;
     }
-    nav a:hover { color:#0ea5e9; }
+    nav a:hover {
+      color: #e5e7eb;
+      border-color: rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.7);
+    }
 
-    main { max-width:1100px; margin:auto; padding:18px; }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 20px 18px 32px;
+    }
 
     .card {
-      background:#ffffff;
-      border:1px solid #cbd5e1;
-      border-radius:14px;
-      padding:22px;
-      margin-bottom:18px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.05);
+      background:
+        radial-gradient(circle at top left, rgba(148,163,184,0.14), transparent 55%),
+        var(--card-bg);
+      border-radius: 20px;
+      padding: 20px 18px;
+      margin-bottom: 18px;
+      border: 1px solid var(--card-border);
+      box-shadow: var(--card-shadow);
+    }
+
+    .card h1,
+    .card h2,
+    .card h3 {
+      margin-top: 0;
+      color: #f9fafb;
     }
 
     .btn {
-      background:#0ea5e9; color:white;
-      padding:10px 18px; border-radius:999px;
-      border:none; cursor:pointer; font-weight:600; font-size:14px;
-      text-decoration:none; display:inline-block;
+      background: var(--accent);
+      color: #020617;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease-out;
+      box-shadow: 0 12px 28px rgba(22,163,74,0.55);
     }
-    .btn:hover { background:#0369a1; }
+    .btn:hover {
+      background: var(--accent-strong);
+      transform: translateY(-1px);
+      box-shadow: 0 16px 34px rgba(22,163,74,0.75);
+    }
 
     .btn-secondary {
-      background:#e2e8f0;
-      color:#1e293b;
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      border: 1px solid rgba(148,163,184,0.7);
+      box-shadow: 0 10px 24px rgba(15,23,42,0.9);
     }
     .btn-secondary:hover {
-      background:#cbd5e1;
+      background: rgba(15,23,42,1);
+      border-color: var(--accent-alt);
     }
 
-    .muted { color:#64748b; }
-
-    input,select,textarea {
-      width:100%; padding:9px; margin-top:5px;
-      border-radius:8px; border:1px solid #cbd5e1;
-      font-size:14px;
+    .badge-status {
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      border-radius:999px;
+      padding:3px 9px;
+      font-size:11px;
+      border:1px solid rgba(148,163,184,0.6);
+      background:rgba(15,23,42,0.9);
+      color:#e5e7eb;
     }
-    textarea { min-height:70px; }
-    form label { font-weight:600; margin-top:10px; display:block; }
+    .badge-status-dot {
+      width:7px;
+      height:7px;
+      border-radius:999px;
+      background:#6b7280;
+    }
+    .badge-status--pre { border-color:#38bdf8; background:rgba(56,189,248,0.08); color:#e0f2fe; }
+    .badge-status--pre .badge-status-dot { background:#38bdf8; }
+    .badge-status--atend { border-color:#a855f7; background:rgba(168,85,247,0.08); color:#f3e8ff; }
+    .badge-status--atend .badge-status-dot { background:#a855f7; }
+    .badge-status--boleto { border-color:#f97316; background:rgba(249,115,22,0.08); color:#ffedd5; }
+    .badge-status--boleto .badge-status-dot { background:#f97316; }
+    .badge-status--ok { border-color:#22c55e; background:rgba(34,197,94,0.08); color:#bbf7d0; }
+    .badge-status--ok .badge-status-dot { background:#22c55e; }
+    .badge-status--lost { border-color:#ef4444; background:rgba(239,68,68,0.08); color:#fecaca; }
+    .badge-status--lost .badge-status-dot { background:#ef4444; }
 
-    .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+    .muted { color: var(--text-muted); }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 10px;
+      margin-top: 5px;
+      border-radius: 10px;
+      border: 1px solid rgba(148,163,184,0.55);
+      font-size: 14px;
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      outline: none;
+      transition: all 0.18s ease-out;
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent-alt);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.5);
+    }
+
+    textarea { min-height: 70px; }
+    form label { font-weight: 500; margin-top: 10px; display: block; color: #e5e7eb; }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
 
     .table-wrapper {
-      overflow-x:auto;
-      margin-top:8px;
+      overflow-x: auto;
+      margin-top: 8px;
     }
     table.data-table {
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-      min-width:720px;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 720px;
+      color: #e5e7eb;
     }
     table.data-table th,
     table.data-table td {
-      padding:8px 10px;
-      border-bottom:1px solid #e2e8f0;
-      text-align:left;
-      vertical-align:top;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(55,65,81,0.85);
+      text-align: left;
+      vertical-align: top;
     }
     table.data-table thead th {
-      background:#f8fafc;
-      font-size:12px;
-      font-weight:600;
-      color:#6b7280;
-      text-transform:uppercase;
-      letter-spacing:0.05em;
+      background: rgba(15,23,42,0.95);
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    table.data-table tbody tr:nth-child(even) {
+      background: rgba(15,23,42,0.8);
+    }
+    table.data-table tbody tr:nth-child(odd) {
+      background: rgba(15,23,42,0.65);
     }
     table.data-table tbody tr:hover {
-      background:#f9fafb;
+      background: rgba(15,23,42,0.95);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      background: rgba(15,23,42,0.9);
+      padding: 3px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(55,65,81,0.9);
+      color: #a5b4fc;
+    }
+
+    @media (max-width: 640px) {
+      .header-inner {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      nav a {
+        margin-left: 6px;
+        margin-right: 6px;
+        margin-top: 4px;
+      }
+      main {
+        padding: 16px 14px 28px;
+      }
+      .card {
+        padding: 18px 14px;
+      }
     }
   </style>
 </head>
@@ -385,13 +557,12 @@ function layout(title, content, userNav = "") {
       <a href="/admin/login">Admin</a>
     </nav>
 
-    <div style="font-size:12px;">${userNav}</div>
+    <div style="font-size:11px; color:#cbd5f5;">${userNav}</div>
   </div>
 </header>
 
 <main>${content}</main>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
@@ -399,7 +570,7 @@ function layout(title, content, userNav = "") {
 }
 
 // -------------------------------------------------------------
-// MANIFEST + SERVICE WORKER (PWA BÁSICO)
+// PWA BÁSICO (opcional)
 // -------------------------------------------------------------
 app.get("/manifest.json", (req, res) => {
   res.json({
@@ -407,8 +578,8 @@ app.get("/manifest.json", (req, res) => {
     short_name: "INDICONS",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#0ea5e9",
+    background_color: "#020617",
+    theme_color: "#22c55e",
     icons: [],
   });
 });
@@ -426,109 +597,156 @@ self.addEventListener('fetch', function(event) {
 });
 
 // =============================================================
-// HOME = TELA "SEJA INDICADOR"
+// HOME – LANDING PAGE
 // =============================================================
 app.get("/", (req, res) => {
   const content = `
   <style>
     .lp-hero {
-      background: linear-gradient(135deg, #e0f2fe, #f9fafb);
-      border-radius: 18px;
-      padding: 40px 24px;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.2), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,0.25), transparent 55%),
+        rgba(15,23,42,0.98);
+      border-radius: 22px;
+      padding: 32px 24px;
       display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
-      gap: 24px;
+      grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.7fr);
+      gap: 26px;
       align-items: center;
-      border: 1px solid #bfdbfe;
-      box-shadow: 0 10px 40px rgba(15,23,42,0.12);
-      animation: lpFadeIn 0.7s ease-out;
+      border: 1px solid rgba(148,163,184,0.5);
+      box-shadow: 0 26px 70px rgba(15,23,42,0.98);
     }
-    @media (max-width: 768px) {
-      .lp-hero { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .lp-hero {
+        grid-template-columns: 1fr;
+      }
     }
     .lp-hero-title {
       font-size: 32px;
-      line-height: 1.2;
+      line-height: 1.15;
       font-weight: 800;
-      color: #0f172a;
+      color: #f9fafb;
       margin-bottom: 10px;
     }
     .lp-hero-sub {
-      font-size: 16px;
-      color: #64748b;
+      font-size: 15px;
+      color: #e5e7eb;
       margin-bottom: 16px;
+    }
+    .lp-hero-sub strong {
+      color: #bbf7d0;
     }
     .lp-hero-badge {
       display:inline-flex;
       align-items:center;
-      gap:6px;
-      padding:4px 10px;
+      gap:8px;
+      padding:5px 12px;
       border-radius:999px;
-      background:#e0f2fe;
-      color:#0369a1;
-      font-size:12px;
+      background: rgba(15,23,42,0.85);
+      color:#a5b4fc;
+      font-size:11px;
       font-weight:600;
       margin-bottom:10px;
+      border: 1px solid rgba(129,140,248,0.7);
     }
+    .lp-hero-badge::before {
+      content: "●";
+      font-size: 13px;
+      color: #22c55e;
+    }
+
+    .lp-hero-metrics {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .lp-hero-metric {
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(15,23,42,0.9);
+      border:1px solid rgba(148,163,184,0.55);
+      min-width:130px;
+    }
+    .lp-hero-metric strong {
+      display:block;
+      font-size:18px;
+      color:#bbf7d0;
+    }
+    .lp-hero-metric span {
+      display:block;
+      font-size:11px;
+      color:#9ca3af;
+    }
+
     .lp-hero-img-wrapper {
       border-radius: 18px;
       overflow: hidden;
       position: relative;
-      background:#0f172a;
+      background:#020617;
+      border: 1px solid rgba(148,163,184,0.7);
+      box-shadow: 0 20px 55px rgba(15,23,42,1);
     }
     .lp-hero-img {
       width: 100%;
       display: block;
       object-fit: cover;
-      max-height: 260px;
-      filter: saturate(1.1);
+      max-height: 300px;
+      filter: saturate(1.05) contrast(1.02);
       transform: scale(1.02);
     }
     .lp-hero-tag {
       position:absolute;
       bottom:10px;
       left:10px;
-      background:rgba(15,23,42,0.9);
+      background:rgba(15,23,42,0.95);
       color:#e5e7eb;
       padding:6px 10px;
       border-radius:999px;
-      font-size:12px;
+      font-size:11px;
+      border: 1px solid rgba(148,163,184,0.8);
     }
 
     .lp-cta-main {
       display:inline-flex;
       align-items:center;
       gap:8px;
-      background:#0ea5e9;
-      color:white;
-      padding:12px 22px;
+      background:#22c55e;
+      color:#020617;
+      padding:11px 22px;
       border-radius:999px;
       font-weight:700;
       text-decoration:none;
-      font-size:15px;
-      box-shadow:0 10px 25px rgba(14,165,233,0.4);
+      font-size:14px;
+      box-shadow:0 16px 40px rgba(21,128,61,0.9);
+      border: none;
+      transition: all .18s ease-out;
     }
     .lp-cta-main:hover {
-      background:#0369a1;
+      background:#16a34a;
+      transform: translateY(-1px);
+      box-shadow:0 20px 50px rgba(21,128,61,1);
     }
     .lp-cta-note {
-      font-size: 13px;
-      color:#64748b;
-      margin-top:6px;
+      font-size: 12px;
+      color:#9ca3af;
+      margin-top:8px;
     }
 
     .lp-section {
-      background:#ffffff;
-      border-radius:18px;
-      padding:24px 20px;
+      background:
+        radial-gradient(circle at top left, rgba(148,163,184,0.2), transparent 60%),
+        #020617;
+      border-radius:20px;
+      padding:22px 18px;
       margin-top:20px;
-      border:1px solid #e2e8f0;
-      box-shadow:0 8px 24px rgba(15,23,42,0.06);
+      border:1px solid rgba(148,163,184,0.4);
+      box-shadow:0 18px 50px rgba(15,23,42,0.95);
     }
     .lp-section h2 {
       margin-top:0;
-      font-size:22px;
-      color:#0f172a;
+      font-size:20px;
+      color:#f9fafb;
     }
     .lp-grid {
       display:grid;
@@ -537,89 +755,114 @@ app.get("/", (req, res) => {
       margin-top:14px;
     }
     .lp-card {
-      background:#f8fafc;
+      background:rgba(15,23,42,0.95);
       border-radius:14px;
       padding:14px 12px;
-      border:1px solid #e2e8f0;
+      border:1px solid rgba(55,65,81,0.95);
     }
     .lp-card h3 {
       margin-top:0;
-      font-size:16px;
-      color:#0f172a;
+      font-size:15px;
+      color:#e5e7eb;
       margin-bottom:6px;
     }
     .lp-card p {
       margin:0;
-      font-size:14px;
-      color:#64748b;
+      font-size:13px;
+      color:#9ca3af;
     }
 
     .lp-table {
       width:100%;
       border-collapse:collapse;
       margin-top:12px;
-      font-size:14px;
+      font-size:13px;
+      color:#e5e7eb;
     }
     .lp-table th, .lp-table td {
-      border:1px solid #e2e8f0;
+      border:1px solid rgba(55,65,81,0.9);
       padding:8px;
       text-align:center;
     }
     .lp-table th {
-      background:#eff6ff;
-      color:#1e293b;
+      background:rgba(15,23,42,0.95);
+      color:#9ca3af;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .lp-table tbody tr:nth-child(even) {
+      background:rgba(15,23,42,0.8);
+    }
+    .lp-table tbody tr:nth-child(odd) {
+      background:rgba(15,23,42,0.65);
     }
   </style>
 
   <section class="lp-hero">
     <div>
-      <div class="lp-hero-badge">🔑 Renda extra com indicação de consórcios</div>
+      <div class="lp-hero-badge">Plataforma de indicação de consórcios</div>
       <h1 class="lp-hero-title">
-        Ganhe até R$ 5.000 por mês<br>apenas indicando consórcios
+        Transforme sua rede de contatos<br>em renda recorrente.
       </h1>
       <p class="lp-hero-sub">
-        Você não precisa vender, negociar ou explicar o produto. Apenas envia um link.  
-        A equipe parceira faz o restante e você recebe <strong>5% de comissão</strong>
-        nas vendas aprovadas.
+        Você só indica. Um parceiro especializado faz todo o atendimento, negocia e fecha a venda.
+        Em cada consórcio aprovado, você recebe <strong>5% de comissão</strong>.
       </p>
+
       <a href="/indicador/registrar" class="lp-cta-main">
-        Quero ser Indicador agora
+        Começar como Indicador
       </a>
       <div class="lp-cta-note">
-        Cadastro gratuito · Sem meta mínima · Sem necessidade de CNPJ
+        Cadastro gratuito · Sem meta mínima · Acompanhe tudo em um painel profissional
+      </div>
+
+      <div class="lp-hero-metrics">
+        <div class="lp-hero-metric">
+          <strong>5%</strong>
+          <span>de comissão sobre vendas aprovadas</span>
+        </div>
+        <div class="lp-hero-metric">
+          <strong>R$ 100 mil</strong>
+          <span>pode gerar R$ 5 mil para você</span>
+        </div>
+        <div class="lp-hero-metric">
+          <strong>100% online</strong>
+          <span>links, pré-adesões e painel web</span>
+        </div>
       </div>
     </div>
 
     <div class="lp-hero-img-wrapper">
       <img
         class="lp-hero-img"
-        src="https://images.pexels.com/photos/1181555/pexels-photo-1181555.jpeg?auto=compress&cs=tinysrgb&w=800"
-        alt="Pessoa usando notebook para trabalhar com indicações"
+        src="https://images.pexels.com/photos/1181555/pexels-photo-1181555.jpeg?auto=compress&cs=tinysrgb&w=1200"
+        alt="Indicador acompanhando comissões em um dashboard"
       />
       <div class="lp-hero-tag">
-        Plataforma INDICONS em funcionamento real
+        Painel de indicadores com funil e comissões em tempo real
       </div>
     </div>
   </section>
 
   <section class="lp-section">
-    <h2>Por que trabalhar com indicação via INDICONS?</h2>
+    <h2>Como o INDICONS funciona na prática</h2>
     <div class="lp-grid">
       <div class="lp-card">
-        <h3>5% de comissão real</h3>
-        <p>Venda de R$ 100.000 gera R$ 5.000 de comissão para você. Uma única venda já faz diferença.</p>
+        <h3>1. Gere seu link</h3>
+        <p>Você se cadastra como indicador e escolhe o plano de consórcio. O sistema gera links prontos para compartilhar.</p>
       </div>
       <div class="lp-card">
-        <h3>Você só indica</h3>
-        <p>O parceiro autorizado faz contato, explica o produto, tira dúvidas e fecha a venda.</p>
+        <h3>2. Cliente faz a pré-adesão</h3>
+        <p>O cliente preenche um formulário rápido pelo link. Essa pré-venda aparece instantaneamente no seu painel.</p>
       </div>
       <div class="lp-card">
-        <h3>Links prontos para compartilhar</h3>
-        <p>Você gera links personalizados e envia por WhatsApp, redes sociais ou e-mail.</p>
+        <h3>3. Parceiro finaliza a venda</h3>
+        <p>Um parceiro autorizado faz o atendimento, emite boleto e conclui o contrato diretamente na administradora.</p>
       </div>
       <div class="lp-card">
-        <h3>Plataforma com registro de tudo</h3>
-        <p>Cada pré-adesão fica registrada com data, cliente, produto e indicador.</p>
+        <h3>4. Você recebe comissão</h3>
+        <p>Ao marcar a venda como aprovada, o sistema calcula automaticamente sua comissão de 5%.</p>
       </div>
     </div>
   </section>
@@ -730,7 +973,7 @@ app.post("/indicador/login", async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – DASHBOARD ESTILO LINHA DO TEMPO (5 ETAPAS)
+// INDICADOR – DASHBOARD COM LINHA DO TEMPO + GRÁFICOS
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -768,7 +1011,6 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const statusAprovada    = countStatus("APROVADA");
   const statusNaoFechou   = countStatus("NAO_FECHOU");
 
-  // ordem das etapas para a linha do tempo
   const stageOrder = [
     "PRE_ADESAO",
     "EM_ATENDIMENTO",
@@ -787,7 +1029,77 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
 
   const content = `
     <style>
-      /* Linha do tempo grande (infográfico explicativo) */
+      .dashboard-hero {
+        display:grid;
+        grid-template-columns:minmax(0,2.1fr) minmax(0,1.6fr);
+        gap:16px;
+        align-items:center;
+      }
+      @media (max-width: 900px) {
+        .dashboard-hero {
+          grid-template-columns:1fr;
+        }
+      }
+      .dashboard-hero-metrics {
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+        margin-top:10px;
+      }
+      @media (max-width:600px){
+        .dashboard-hero-metrics {
+          grid-template-columns:1fr;
+        }
+      }
+      .metric-card {
+        border-radius:14px;
+        padding:10px 12px;
+        background:rgba(15,23,42,0.94);
+        border:1px solid rgba(148,163,184,0.55);
+      }
+      .metric-label {
+        font-size:11px;
+        text-transform:uppercase;
+        letter-spacing:.08em;
+        color:#9ca3af;
+      }
+      .metric-value {
+        font-size:20px;
+        font-weight:700;
+        margin-top:4px;
+        color:#f9fafb;
+      }
+      .metric-helper {
+        font-size:11px;
+        color:#6b7280;
+      }
+
+      .hero-img-panel {
+        border-radius:18px;
+        overflow:hidden;
+        position:relative;
+        background:#020617;
+        border:1px solid rgba(148,163,184,0.7);
+        box-shadow:0 20px 55px rgba(15,23,42,1);
+      }
+      .hero-img {
+        width:100%;
+        display:block;
+        object-fit:cover;
+        max-height:240px;
+      }
+      .hero-img-tag {
+        position:absolute;
+        bottom:10px;
+        left:10px;
+        background:rgba(15,23,42,0.96);
+        color:#e5e7eb;
+        padding:6px 10px;
+        border-radius:999px;
+        font-size:11px;
+        border:1px solid rgba(148,163,184,0.8);
+      }
+
       .timeline-wrapper {
         margin-top: 14px;
         overflow-x: auto;
@@ -796,9 +1108,9 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
       .timeline {
         display: flex;
         align-items: flex-start;
-        min-width: 600px;
+        min-width: 650px;
         position: relative;
-        padding: 10px 6px 0 6px;
+        padding: 18px 6px 4px 6px;
       }
       .timeline-step {
         flex: 1;
@@ -810,127 +1122,166 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
         font-size: 12px;
       }
       .timeline-circle {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
         border-radius: 999px;
         border: 3px solid #d1d5db;
-        background: #eef2ff;
+        background: #020617;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        color: #4b5563;
+        color: #e5e7eb;
         z-index: 2;
       }
       .timeline-label {
         margin-top: 6px;
         font-weight: 600;
-        color: #0f172a;
+        color: #f9fafb;
       }
       .timeline-caption {
         margin-top: 2px;
-        color: #6b7280;
+        color: #9ca3af;
         font-size: 11px;
         max-width: 160px;
       }
+
       .timeline-connector {
         position: absolute;
-        top: 25px;
+        top: 32px;
         left: 0;
         right: 0;
         height: 3px;
-        background: #e5e7eb;
+        background: rgba(55,65,81,0.9);
         z-index: 1;
       }
       .timeline-progress {
         position: absolute;
-        top: 25px;
+        top: 32px;
         left: 0;
         height: 3px;
         background: linear-gradient(90deg,#0ea5e9,#22c55e);
         z-index: 1;
+        width:100%;
       }
 
-      /* Linha do tempo mini para cada indicação */
-      .timeline-mini {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 8px;
-        margin-top: 10px;
-        position: relative;
-        padding: 0 4px 6px 4px;
+      .stepper-mini {
+        display:flex;
+        gap:6px;
+        margin-top:8px;
+        flex-wrap:wrap;
       }
-      .timeline-mini::before {
-        content: "";
-        position: absolute;
-        top: 14px;
-        left: 10px;
-        right: 10px;
-        height: 2px;
-        background: #e5e7eb;
-        z-index: 1;
+      .stepper-mini-step {
+        display:flex;
+        align-items:center;
+        gap:4px;
+        font-size:11px;
+        padding:4px 8px;
+        border-radius:999px;
+        border:1px solid #e5e7eb22;
+        background:#020617;
+        color:#9ca3af;
       }
-      .timeline-mini-node {
-        flex: 1;
-        text-align: center;
-        font-size: 10px;
-        color: #6b7280;
-        position: relative;
+      .stepper-mini-step-dot {
+        width:8px;
+        height:8px;
+        border-radius:999px;
+        background:#4b5563;
       }
-      .timeline-mini-circle {
-        width: 18px;
-        height: 18px;
-        border-radius: 999px;
-        border: 2px solid #e5e7eb;
-        background: #ffffff;
-        margin: 0 auto 3px auto;
-        position: relative;
-        z-index: 2;
+      .stepper-mini-step.done {
+        border-color:#22c55e66;
+        background:#022c22;
+        color:#bbf7d0;
       }
-      .timeline-mini-label {
-        font-size: 10px;
-        line-height: 1.2;
+      .stepper-mini-step.done .stepper-mini-step-dot {
+        background:#22c55e;
+      }
+      .stepper-mini-step.current {
+        border-color:#0ea5e966;
+        background:#082f49;
+        color:#e0f2fe;
+      }
+      .stepper-mini-step.current .stepper-mini-step-dot {
+        background:#0ea5e9;
+      }
+      .stepper-mini-step.lost {
+        border-color:#ef444466;
+        background:#450a0a;
+        color:#fecaca;
+      }
+      .stepper-mini-step.lost .stepper-mini-step-dot {
+        background:#ef4444;
       }
 
-      .timeline-mini-node.done .timeline-mini-circle {
-        border-color: #22c55e;
-        background: #dcfce7;
+      .charts-grid {
+        display:grid;
+        grid-template-columns: minmax(0,2fr) minmax(0,1.3fr);
+        gap:14px;
       }
-      .timeline-mini-node.current .timeline-mini-circle {
-        border-color: #0ea5e9;
-        background: #e0f2fe;
-      }
-      .timeline-mini-node.lost .timeline-mini-circle {
-        border-color: #ef4444;
-        background: #fee2e2;
-      }
-      .timeline-mini-node.done .timeline-mini-label {
-        color: #166534;
-        font-weight: 600;
-      }
-      .timeline-mini-node.current .timeline-mini-label {
-        color: #0f172a;
-        font-weight: 600;
-      }
-      .timeline-mini-node.lost .timeline-mini-label {
-        color: #991b1b;
-        font-weight: 600;
+      @media (max-width: 900px) {
+        .charts-grid {
+          grid-template-columns:1fr;
+        }
       }
     </style>
 
     <div class="card">
-      <h2>Painel comercial – ${req.session.indicadorNome}</h2>
-      <p class="muted">
-        Veja abaixo todas as etapas do caminho da indicação, do clique no link até a venda aprovada.
-      </p>
-      <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
+      <div class="dashboard-hero">
+        <div>
+          <h2>Painel do Indicador</h2>
+          <p class="muted">
+            Acompanhe todas as indicações, entenda em que etapa do funil cada cliente está
+            e visualize quanto você já gerou de vendas e comissões.
+          </p>
+          <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
 
-      <!-- Linha do tempo grande (explicativa, fixa) -->
+          <div class="dashboard-hero-metrics">
+            <div class="metric-card">
+              <div class="metric-label">Pré-vendas totais</div>
+              <div class="metric-value">${totalPre}</div>
+              <div class="metric-helper">Clientes que chegaram pelos seus links</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Vendas aprovadas</div>
+              <div class="metric-value">${totalAprovadas}</div>
+              <div class="metric-helper">Contratos confirmados</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Valor vendido (aprovadas)</div>
+              <div class="metric-value">R$ ${valorVendasAprovadas.toFixed(2)}</div>
+              <div class="metric-helper">Somente indicações aprovadas</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Comissões acumuladas</div>
+              <div class="metric-value">R$ ${totalComissao.toFixed(2)}</div>
+              <div class="metric-helper">Baseado em 5% de comissão</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-img-panel">
+          <img
+            src="https://images.pexels.com/photos/669610/pexels-photo-669610.jpeg?auto=compress&cs=tinysrgb&w=1200"
+            class="hero-img"
+            alt="Dashboard de vendas em um notebook"
+          />
+          <div class="hero-img-tag">
+            Funil visual de consórcios gerados pelas suas indicações
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Etapas do funil de indicação</h3>
+      <p class="muted">
+        Todo cliente caminha por estas etapas: do clique no link até a aprovação da venda.
+      </p>
+
       <div class="timeline-wrapper">
         <div class="timeline">
           <div class="timeline-connector"></div>
-          <div class="timeline-progress" style="width:100%;"></div>
+          <div class="timeline-progress"></div>
 
           <div class="timeline-step">
             <div class="timeline-circle">1</div>
@@ -939,7 +1290,6 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               Cliente preenche o formulário pelo seu link.
             </div>
           </div>
-
           <div class="timeline-step">
             <div class="timeline-circle">2</div>
             <div class="timeline-label">Em atendimento</div>
@@ -947,7 +1297,6 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               Parceiro entra em contato (ligação / WhatsApp).
             </div>
           </div>
-
           <div class="timeline-step">
             <div class="timeline-circle">3</div>
             <div class="timeline-label">Boleto emitido</div>
@@ -955,7 +1304,6 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               Boleto é gerado na administradora.
             </div>
           </div>
-
           <div class="timeline-step">
             <div class="timeline-circle">4</div>
             <div class="timeline-label">Venda aprovada</div>
@@ -963,12 +1311,11 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
               Boleto pago e venda confirmada.
             </div>
           </div>
-
           <div class="timeline-step">
             <div class="timeline-circle">5</div>
             <div class="timeline-label">Não fechou</div>
             <div class="timeline-caption">
-              Cliente não segue com a contratação (registro fica salvo).
+              Quando o cliente decide não seguir com a contratação.
             </div>
           </div>
         </div>
@@ -976,62 +1323,59 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
     </div>
 
     <div class="card">
-      <h3>Resumo numérico do funil</h3>
-      <div class="grid">
-        <div class="card">
-          <strong>Total de pré-vendas</strong>
-          <p style="font-size:24px; margin:6px 0;">${totalPre}</p>
-          <p class="muted">Clientes que chegaram pelos seus links.</p>
+      <h3>Visão gráfica do funil</h3>
+      <div class="charts-grid">
+        <div>
+          <p class="muted">Quantidade de pré-vendas em cada etapa.</p>
+          <canvas id="funilBarChart" height="180"></canvas>
         </div>
-        <div class="card">
-          <strong>Vendas aprovadas</strong>
-          <p style="font-size:24px; margin:6px 0;">${totalAprovadas}</p>
-          <p class="muted">Pré-vendas que viraram contrato.</p>
-        </div>
-        <div class="card">
-          <strong>Valor vendido (aprovadas)</strong>
-          <p style="font-size:24px; margin:6px 0;">R$ ${valorVendasAprovadas.toFixed(2)}</p>
-          <p class="muted">Somente vendas com status "APROVADA".</p>
-        </div>
-        <div class="card">
-          <strong>Comissões acumuladas</strong>
-          <p style="font-size:24px; margin:6px 0;">R$ ${totalComissao.toFixed(2)}</p>
-          <p class="muted">Baseado em registros de comissão.</p>
+        <div>
+          <p class="muted">Distribuição percentual das suas indicações.</p>
+          <canvas id="conversionChart" height="180"></canvas>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h3>Funil por etapa (gráfico)</h3>
-      <p class="muted">Quantidade de pré-vendas em cada etapa.</p>
-      <div style="max-width:520px; margin-top:10px;">
-        <canvas id="indicadorChart" height="180"></canvas>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Minhas pré-vendas (linha do tempo de cada indicação)</h3>
+      <h3>Minhas pré-vendas (linha do tempo individual)</h3>
       ${
         pre.length === 0
-          ? `<p class="muted">Nenhuma pré-venda ainda.</p>`
+          ? `<p class="muted">Nenhuma pré-venda ainda. Gere seu primeiro link na área “Meus links de indicação”.</p>`
           : pre
               .map((v) => {
                 const currentStageIndex = stageOrder.indexOf(v.status);
                 const isLost = v.status === "NAO_FECHOU";
 
-                return `
-        <div class="card" style="margin-top:8px;">
-          <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
-          <span class="muted">Status atual: ${stageLabels[v.status] || v.status}</span><br>
-          <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
-          ${
-            v.valor_venda
-              ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span><br>`
-              : ""
-          }
+                function statusBadgeClass(st) {
+                  if (st === "PRE_ADESAO") return "badge-status badge-status--pre";
+                  if (st === "EM_ATENDIMENTO") return "badge-status badge-status--atend";
+                  if (st === "BOLETO_EMITIDO") return "badge-status badge-status--boleto";
+                  if (st === "APROVADA") return "badge-status badge-status--ok";
+                  if (st === "NAO_FECHOU") return "badge-status badge-status--lost";
+                  return "badge-status";
+                }
 
-          <!-- Linha de etapas da indicação -->
-          <div class="timeline-mini">
+                return `
+        <div class="card" style="margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+            <div>
+              <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
+              <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
+              ${
+                v.valor_venda
+                  ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span><br>`
+                  : ""
+              }
+            </div>
+            <div>
+              <span class="${statusBadgeClass(v.status)}">
+                <span class="badge-status-dot"></span>
+                ${stageLabels[v.status] || v.status}
+              </span>
+            </div>
+          </div>
+
+          <div class="stepper-mini">
             ${stageOrder
               .map((st, idx) => {
                 let cls = "";
@@ -1043,9 +1387,9 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
                   cls = "current";
                 }
                 return `
-                  <div class="timeline-mini-node ${cls}">
-                    <div class="timeline-mini-circle"></div>
-                    <div class="timeline-mini-label">${stageLabels[st]}</div>
+                  <div class="stepper-mini-step ${cls}">
+                    <div class="stepper-mini-step-dot"></div>
+                    <span>${stageLabels[st]}</span>
                   </div>
                 `;
               })
@@ -1060,38 +1404,78 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       window.addEventListener('DOMContentLoaded', function () {
-        var ctx = document.getElementById('indicadorChart');
-        if (!ctx) return;
-        ctx = ctx.getContext('2d');
-
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: [
-              'Pré-adesão',
-              'Em atendimento',
-              'Boleto emitido',
-              'Aprovada',
-              'Não fechou'
-            ],
-            datasets: [{
-              label: 'Pré-vendas',
-              data: [
-                ${statusPreAdesao},
-                ${statusEmAtend},
-                ${statusBoleto},
-                ${statusAprovada},
-                ${statusNaoFechou}
+        var ctxBar = document.getElementById('funilBarChart');
+        if (ctxBar) {
+          var bar = new Chart(ctxBar.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: [
+                'Pré-adesão',
+                'Em atendimento',
+                'Boleto emitido',
+                'Aprovada',
+                'Não fechou'
               ],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-          }
-        });
+              datasets: [{
+                label: 'Pré-vendas',
+                data: [
+                  ${statusPreAdesao},
+                  ${statusEmAtend},
+                  ${statusBoleto},
+                  ${statusAprovada},
+                  ${statusNaoFechou}
+                ],
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { color: '#9ca3af', font: { size: 11 } } },
+                y: {
+                  beginAtZero: true,
+                  ticks: { color: '#9ca3af', font: { size: 11 } }
+                }
+              }
+            }
+          });
+        }
+
+        var total = ${totalPre};
+        var ctxPie = document.getElementById('conversionChart');
+        if (ctxPie && total > 0) {
+          var pie = new Chart(ctxPie.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+              labels: [
+                'Pré-adesão',
+                'Em atendimento',
+                'Boleto emitido',
+                'Aprovada',
+                'Não fechou'
+              ],
+              datasets: [{
+                data: [
+                  ${statusPreAdesao},
+                  ${statusEmAtend},
+                  ${statusBoleto},
+                  ${statusAprovada},
+                  ${statusNaoFechou}
+                ],
+                borderWidth: 1
+              }]
+            },
+            options: {
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { color: '#e5e7eb', font: { size: 11 } }
+                }
+              }
+            }
+          });
+        }
       });
     </script>
   `;
@@ -1104,7 +1488,6 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
     )
   );
 });
-
 
 // =============================================================
 // INDICADOR – LINKS (tabela + copiar link)
@@ -1185,8 +1568,8 @@ app.get("/indicador/links", requireIndicador, async (req, res) => {
             msg.style.position = 'fixed';
             msg.style.bottom = '16px';
             msg.style.right = '16px';
-            msg.style.background = '#0ea5e9';
-            msg.style.color = 'white';
+            msg.style.background = '#22c55e';
+            msg.style.color = 'black';
             msg.style.padding = '8px 14px';
             msg.style.borderRadius = '999px';
             msg.style.fontSize = '13px';
@@ -1261,10 +1644,7 @@ app.post("/consorcio", async (req, res) => {
   );
   const preVendaId = result.lastID;
 
-  // Enviar mensagem automática pós pré-adesão para o cliente
   await notifyCustomerPreAdesao(telefone, nome);
-
-  // Notificar parceiro sobre nova pré-venda (se telefone configurado)
   await notifyPartnerNewLead(PARCEIRO_TELEFONE, preVendaId);
 
   res.send(
@@ -1433,7 +1813,7 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
         <h2>Comissões</h2>
         ${
           coms.length === 0
-            ? "<p class='muted'>Nenhuma comissão registrado ainda.</p>"
+            ? "<p class='muted'>Nenhuma comissão registrada ainda.</p>"
             : coms
                 .map(
                   (c) =>
@@ -1452,7 +1832,6 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
         <p class="muted">
           Clique no botão abaixo para enviar mensagens de follow-up para todas as pré-vendas
           em status <strong>PRE_ADESAO</strong> ou <strong>EM_ATENDIMENTO</strong>.
-          O envio usa a integração de WhatsApp configurada.
         </p>
         <form method="POST" action="/admin/disparar-followup">
           <button class="btn">Disparar follow-up para pré-vendas abertas</button>
@@ -1469,7 +1848,6 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
   );
 });
 
-// Follow-up organizado (não massa indiscriminado, só abertas)
 app.post("/admin/disparar-followup", requireAdmin, async (req, res) => {
   const abertas = await dbAll(
     `SELECT * FROM pre_vendas
@@ -1497,7 +1875,7 @@ app.get("/logout", (req, res) => {
 });
 
 // =============================================================
-// IA – ENDPOINTS (SITE / WHATSAPP)
+// IA – ENDPOINTS
 // =============================================================
 app.post("/api/chat/site", async (req, res) => {
   const { mensagem, contexto } = req.body;
@@ -1507,21 +1885,15 @@ app.post("/api/chat/site", async (req, res) => {
 
 app.post("/api/chat/whatsapp-webhook", async (req, res) => {
   console.log("[DEBUG] Webhook WhatsApp IA recebido:", req.body);
-  // Aqui você poderia:
-  // 1. Ler a mensagem vinda do WhatsApp
-  // 2. Chamar askAI(...)
-  // 3. Responder com sendWhatsAppMessage(...)
   res.sendStatus(200);
 });
 
-// =============================================================
-// ENDPOINTS DEMO (mantidos)
-// =============================================================
+// DEMOS
 app.post("/api/ia-demo", (req, res) => {
   const pergunta = req.body.pergunta || "";
   res.json({
     resposta:
-      "Esta é uma resposta automática de demonstração. Em produção, aqui entraria a integração com IA (OpenAI, etc.). Sua pergunta foi: " +
+      "Demo de IA. Em produção, aqui entraria a integração com IA. Pergunta: " +
       pergunta,
   });
 });
@@ -1532,7 +1904,7 @@ app.post("/api/whatsapp-demo", (req, res) => {
   res.json({
     ok: true,
     detalhe:
-      "Envio de WhatsApp simulado. Em produção, aqui entra a integração com um provedor (Cloud API, Z-API, etc.).",
+      "Envio de WhatsApp simulado. Em produção, aqui entra o provedor real.",
   });
 });
 
