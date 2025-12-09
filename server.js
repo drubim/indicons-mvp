@@ -569,21 +569,6 @@ app.get("/", (req, res) => {
       background:#eff6ff;
       color:#1e293b;
     }
-
-    .lp-testimonials {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:14px;
-      margin-top:14px;
-    }
-    .lp-testimonial {
-      border-radius:14px;
-      padding:14px;
-      background:#f9fafb;
-      border:1px solid #e2e8f0;
-      font-size:14px;
-      color:#475569;
-    }
   </style>
 
   <section class="lp-hero">
@@ -745,7 +730,7 @@ app.post("/indicador/login", async (req, res) => {
 });
 
 // =============================================================
-// INDICADOR – DASHBOARD
+// INDICADOR – DASHBOARD DIDÁTICO COM ETAPAS
 // =============================================================
 app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const indicadorId = req.session.indicadorId;
@@ -783,15 +768,136 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
   const statusAprovada    = countStatus("APROVADA");
   const statusNaoFechou   = countStatus("NAO_FECHOU");
 
+  // ordem do funil para usar no "stepper" por pré-venda
+  const stageOrder = [
+    "PRE_ADESAO",
+    "EM_ATENDIMENTO",
+    "BOLETO_EMITIDO",
+    "APROVADA",
+    "NAO_FECHOU"
+  ];
+
+  const stageLabels = {
+    PRE_ADESAO: "Pré-adesão feita",
+    EM_ATENDIMENTO: "Parceiro em atendimento",
+    BOLETO_EMITIDO: "Boleto emitido",
+    APROVADA: "Venda aprovada",
+    NAO_FECHOU: "Não fechou"
+  };
+
   const content = `
+    <style>
+      .funnel-steps {
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+        gap:14px;
+        margin-top:10px;
+      }
+      .funnel-step {
+        border-radius:12px;
+        padding:10px 10px;
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
+        font-size:13px;
+      }
+      .funnel-step strong {
+        display:block;
+        margin-bottom:4px;
+        font-size:13px;
+      }
+      .funnel-step small {
+        color:#6b7280;
+        display:block;
+      }
+
+      .stepper-mini {
+        display:flex;
+        gap:6px;
+        margin-top:8px;
+        flex-wrap:wrap;
+      }
+      .stepper-mini-step {
+        display:flex;
+        align-items:center;
+        gap:4px;
+        font-size:11px;
+        padding:4px 8px;
+        border-radius:999px;
+        border:1px solid #e5e7eb;
+        background:#f9fafb;
+        color:#6b7280;
+      }
+      .stepper-mini-step-dot {
+        width:8px;
+        height:8px;
+        border-radius:999px;
+        background:#e5e7eb;
+      }
+      .stepper-mini-step.done {
+        border-color:#bbf7d0;
+        background:#f0fdf4;
+        color:#166534;
+      }
+      .stepper-mini-step.done .stepper-mini-step-dot {
+        background:#22c55e;
+      }
+      .stepper-mini-step.current {
+        border-color:#7dd3fc;
+        background:#eff6ff;
+        color:#0f172a;
+      }
+      .stepper-mini-step.current .stepper-mini-step-dot {
+        background:#0ea5e9;
+      }
+      .stepper-mini-step.lost {
+        border-color:#fecaca;
+        background:#fef2f2;
+        color:#991b1b;
+      }
+      .stepper-mini-step.lost .stepper-mini-step-dot {
+        background:#ef4444;
+      }
+    </style>
+
     <div class="card">
       <h2>Painel comercial – ${req.session.indicadorNome}</h2>
-      <p class="muted">Resumo das suas indicações, vendas e comissões.</p>
+      <p class="muted">
+        Abaixo você acompanha o funil completo das suas indicações, do clique no link até a venda aprovada.
+      </p>
       <a href="/indicador/links" class="btn" style="margin-top:8px;">Ver meus links de indicação</a>
     </div>
 
     <div class="card">
-      <h3>Resumo rápido</h3>
+      <h3>Como funciona o funil da sua indicação?</h3>
+      <p class="muted">
+        Cada indicação passa, em ordem, por estas etapas. O sistema registra tudo automaticamente:
+      </p>
+      <div class="funnel-steps">
+        <div class="funnel-step">
+          <strong>1. Pré-adesão</strong>
+          <small>O cliente preenche o formulário pelo seu link. Você já enxerga essa pré-venda no painel.</small>
+        </div>
+        <div class="funnel-step">
+          <strong>2. Em atendimento</strong>
+          <small>O parceiro entra em contato (ligação/WhatsApp), tira dúvidas e faz a proposta.</small>
+        </div>
+        <div class="funnel-step">
+          <strong>3. Boleto emitido</strong>
+          <small>O parceiro gera o boleto do consórcio na administradora e aguarda o pagamento.</small>
+        </div>
+        <div class="funnel-step">
+          <strong>4. Venda aprovada</strong>
+          <small>O boleto é pago e o parceiro marca como “APROVADA”. A partir disso, nasce sua comissão.</small>
+        </div>
+        <div class="funnel-step">
+          <strong>5. Não fechou</strong>
+          <small>Quando o cliente não segue com a contratação. Mesmo assim fica registrado para você.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Resumo numérico do funil</h3>
       <div class="grid">
         <div class="card">
           <strong>Total de pré-vendas</strong>
@@ -817,32 +923,55 @@ app.get("/indicador/dashboard", requireIndicador, async (req, res) => {
     </div>
 
     <div class="card">
-      <h3>Funil de atendimento das suas indicações</h3>
-      <p class="muted">Visualização por status de cada pré-venda.</p>
+      <h3>Funil por etapa (gráfico)</h3>
+      <p class="muted">Quantidade de pré-vendas em cada etapa.</p>
       <div style="max-width:520px; margin-top:10px;">
         <canvas id="indicadorChart" height="180"></canvas>
       </div>
     </div>
 
     <div class="card">
-      <h3>Minhas pré-vendas (detalhado)</h3>
+      <h3>Minhas pré-vendas (linha do tempo de cada indicação)</h3>
       ${
         pre.length === 0
           ? `<p class="muted">Nenhuma pré-venda ainda.</p>`
           : pre
-              .map(
-                (v) => `
+              .map((v) => {
+                const currentStageIndex = stageOrder.indexOf(v.status);
+                const isLost = v.status === "NAO_FECHOU";
+                return `
         <div class="card" style="margin-top:8px;">
           <strong>${v.nome_cliente}</strong> – ${v.produto_nome}<br>
-          <span class="muted">Status: ${v.status}</span><br>
+          <span class="muted">Status atual: ${stageLabels[v.status] || v.status}</span><br>
           <span class="muted">Contato: ${v.telefone_cliente} · ${v.email_cliente}</span><br>
           ${
             v.valor_venda
-              ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span>`
+              ? `<span class="muted">Valor da venda: R$ ${Number(v.valor_venda).toFixed(2)}</span><br>`
               : ""
           }
-        </div>`
-              )
+
+          <div class="stepper-mini">
+            ${stageOrder
+              .map((st, idx) => {
+                let cls = "";
+                if (isLost && st === "NAO_FECHOU") {
+                  cls = "lost";
+                } else if (idx < currentStageIndex && v.status !== "NAO_FECHOU") {
+                  cls = "done";
+                } else if (idx === currentStageIndex) {
+                  cls = "current";
+                }
+                return `
+                  <div class="stepper-mini-step ${cls}">
+                    <div class="stepper-mini-step-dot"></div>
+                    <span>${stageLabels[st]}</span>
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+        </div>`;
+              })
               .join("")
       }
     </div>
@@ -1222,7 +1351,7 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
         <h2>Comissões</h2>
         ${
           coms.length === 0
-            ? "<p class='muted'>Nenhuma comissão registrada ainda.</p>"
+            ? "<p class='muted'>Nenhuma comissão registrado ainda.</p>"
             : coms
                 .map(
                   (c) =>
