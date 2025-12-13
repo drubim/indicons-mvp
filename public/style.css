@@ -215,3 +215,11 @@ nav a {
     grid-template-columns: 1fr;
   }
 }
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0 16px 0;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
