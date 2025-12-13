@@ -196,3 +196,42 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* LOGIN */
+.card-login {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+
+.card-login h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.card-login label {
+  display: block;
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+.card-login input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+}
+
+.login-note {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.login-note a {
+  color: #2563eb;
+  font-weight: bold;
+  text-decoration: none;
+}
