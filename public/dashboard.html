@@ -1,1 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>INDICONS — Painel do Indicador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<!-- TOPO -->
+<header class="topbar">
+  <div class="container">
+    <div class="logo">INDICONS</div>
+    <nav class="nav">
+      <a href="/dashboard">Painel</a>
+      <a href="/comparativo">Administradoras</a>
+      <a href="/">Home</a>
+    </nav>
+  </div>
+</header>
+
+<!-- CONTEÚDO -->
+<section class="hero" style="padding-top:40px;">
+  <div class="container">
+
+    <!-- CABEÇALHO -->
+    <div class="dashboard-header">
+      <div>
+        <h1>Painel do Indicador</h1>
+        <p>Acompanhe suas indicações, status e comissões</p>
+      </div>
+      <a href="/comparativo" class="btn-secondary">
+        Ver tabela de comissões
+      </a>
+    </div>
+
+    <!-- MÉTRICAS -->
+    <div class="dashboard-cards">
+      <div class="metric">
+        <h4>Indicações realizadas</h4>
+        <strong>12</strong>
+      </div>
+
+      <div class="metric">
+        <h4>Vendas aprovadas</h4>
+        <strong>4</strong>
+      </div>
+
+      <div class="metric">
+        <h4>Comissão prevista</h4>
+        <strong>R$ 6.800</strong>
+      </div>
+
+      <div class="metric">
+        <h4>Parcelas a receber</h4>
+        <strong>18</strong>
+      </div>
+    </div>
+
+    <!-- LISTA DE INDICAÇÕES -->
+    <div class="card" style="margin-top:40px;">
+      <h3>Minhas indicações</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Administradora</th>
+            <th>Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr>
+            <td>João Silva</td>
+            <td>Embracon</td>
+            <td>R$ 180.000</td>
+            <td>
+              <div class="timeline">
+                <div class="step ok">Pré-adesão</div>
+                <div class="step ok">Atendimento</div>
+                <div class="step ok">Aprovado</div>
+                <div class="step">Pagamento</div>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Maria Santos</td>
+            <td>Ademicon</td>
+            <td>R$ 120.000</td>
+            <td>
+              <div class="timeline">
+                <div class="step ok">Pré-adesão</div>
+                <div class="step ok">Atendimento</div>
+                <div class="step">Aprovado</div>
+                <div class="step">Pagamento</div>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Carlos Pereira</td>
+            <td>Porto</td>
+            <td>R$ 90.000</td>
+            <td>
+              <div class="timeline">
+                <div class="step ok">Pré-adesão</div>
+                <div class="step">Atendimento</div>
+                <div class="step">Aprovado</div>
+                <div class="step">Pagamento</div>
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INFORMAÇÃO LEGAL -->
+    <div class="card" style="margin-top:30px;">
+      <h3>Regras de comissão</h3>
+      <p style="font-size:14px;color:#4b5563;">
+        Comissão máxima de até <strong>1,5%</strong> sobre o valor do contrato.
+        Pagamento em até 6 parcelas (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%).
+        Pode ocorrer estorno de até <strong>0,35%</strong> até a 6ª parcela em caso de
+        inadimplência ou cancelamento do contrato.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    © INDICONS — Painel do Indicador
+  </div>
+</footer>
+
+</body>
+</html>
 
