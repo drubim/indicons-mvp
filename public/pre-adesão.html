@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Pré-adesão • INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container topbar-inner">
+    <div class="logo">INDICONS</div>
+    <nav>
+      <a href="/">Voltar</a>
+    </nav>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container" style="max-width:700px">
+
+    <div class="hero-card">
+      <span class="badge">Pré-adesão sem compromisso</span>
+
+      <h2 style="margin-top:16px">
+        Solicite uma simulação de consórcio
+      </h2>
+
+      <p>
+        Seus dados serão enviados para um parceiro especializado,
+        que entrará em contato para explicar as opções disponíveis.
+      </p>
+
+      <form method="POST" action="/pre-adesao">
+        
+        <label>Nome completo</label>
+        <input type="text" name="nome" required>
+
+        <label>Telefone / WhatsApp</label>
+        <input type="tel" name="telefone" required>
+
+        <label>E-mail</label>
+        <input type="email" name="email">
+
+        <label>Tipo de consórcio</label>
+        <select name="tipo" required>
+          <option value="">Selecione</option>
+          <option>Imóvel</option>
+          <option>Automóvel</option>
+          <option>Serviços</option>
+          <option>Outros</option>
+        </select>
+
+        <label>Valor aproximado desejado</label>
+        <input type="text" name="valor" placeholder="Ex: R$ 150.000">
+
+        <div style="margin:20px 0">
+          <label style="font-size:13px">
+            <input type="checkbox" required>
+            Li e aceito os
+            <a href="/termos-cliente.html" target="_blank">Termos do Cliente</a>
+            e a
+            <a href="/privacidade.html" target="_blank">Política de Privacidade</a>.
+          </label>
+        </div>
+
+        <button class="btn-primary" style="width:100%">
+          Enviar pré-adesão
+        </button>
+
+      </form>
+
+      <p style="font-size:12px; color:#6b7280; margin-top:14px">
+        O INDICONS não comercializa consórcios.  
+        Apenas conecta interessados a parceiros autorizados.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="copyright">
+      © 2025 INDICONS • Todos os direitos reservados
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
