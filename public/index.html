@@ -2,78 +2,130 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>INDICONS • Indicações que geram renda</title>
+  <title>INDICONS • Indicação de Consórcios</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
-<header class="topo">
-  <h1>INDICONS</h1>
-  <nav>
-    <a href="#como-funciona">Como funciona</a>
-    <a href="#cadastro">Cadastro</a>
-    <a href="#contato">Contato</a>
-  </nav>
+<header class="header">
+  <div class="container header-flex">
+    <div class="logo">INDICONS</div>
+    <nav class="menu">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#vantagens">Vantagens</a>
+      <a href="/login.html">Login</a>
+    </nav>
+  </div>
 </header>
 
 <section class="hero">
-  <h2>Transforme sua rede de contatos em renda recorrente</h2>
-  <p>
-    Você indica. Um parceiro especializado faz todo o atendimento,
-    negocia e fecha a venda.  
-    <strong>Comissão de até 1,5%</strong>.
-  </p>
-  <a class="btn-principal" href="#cadastro">Começar como Indicador</a>
-</section>
+  <div class="container hero-grid">
+    <div>
+      <h1>Transforme sua rede de contatos<br>em renda recorrente</h1>
+      <p>
+        Você apenas indica. Um parceiro especializado faz todo o atendimento,
+        negocia e fecha a venda. Em cada consórcio aprovado,
+        você recebe <strong>comissão de até 1,5%</strong>.
+      </p>
+      <a href="/cadastro.html" class="btn-primario">Começar como Indicador</a>
+      <p class="hero-note">
+        Cadastro gratuito • Sem meta mínima • Painel profissional
+      </p>
+    </div>
 
-<section id="como-funciona" class="secao">
-  <h3>Como funciona</h3>
-  <div class="etapas">
-    <div class="etapa">1️⃣ Você indica</div>
-    <div class="etapa">2️⃣ Parceiro atende</div>
-    <div class="etapa">3️⃣ Administradora aprova</div>
-    <div class="etapa">4️⃣ Comissão registrada</div>
-    <div class="etapa">5️⃣ Pagamento em parcelas</div>
+    <div class="hero-box">
+      <ul>
+        <li>✔ Plataforma 100% online</li>
+        <li>✔ Transparência total das etapas</li>
+        <li>✔ Comissão registrada em sistema</li>
+        <li>✔ Parcerias com grandes administradoras</li>
+      </ul>
+    </div>
   </div>
 </section>
 
-<section id="cadastro" class="secao">
-  <h3>Cadastro de Indicador</h3>
+<section id="como-funciona" class="section">
+  <div class="container">
+    <h2>Como funciona o INDICONS</h2>
 
-  <form class="formulario">
-    <input type="text" placeholder="Nome completo" required>
-    <input type="email" placeholder="E-mail" required>
-    <input type="password" placeholder="Senha" required>
+    <div class="steps">
+      <div class="step">
+        <span>1</span>
+        <h3>Você indica</h3>
+        <p>Compartilha seu link exclusivo com sua rede de contatos.</p>
+      </div>
 
-    <div class="termos-box">
-      <label>
-        <input type="checkbox" required>
-        Li e aceito o
-        <a href="/termos-indicador.html" target="_blank">Termo do Indicador</a>
-        e a
-        <a href="/privacidade.html" target="_blank">Política de Privacidade</a>,
-        autorizando contato do INDICONS e administradoras parceiras.
-      </label>
+      <div class="step">
+        <span>2</span>
+        <h3>Contato profissional</h3>
+        <p>Parceiro credenciado entra em contato e faz o atendimento.</p>
+      </div>
+
+      <div class="step">
+        <span>3</span>
+        <h3>Venda aprovada</h3>
+        <p>A administradora aprova o contrato do consórcio.</p>
+      </div>
+
+      <div class="step">
+        <span>4</span>
+        <h3>Comissão registrada</h3>
+        <p>Você acompanha tudo pelo painel do indicador.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="vantagens" class="section bg-light">
+  <div class="container">
+    <h2>Por que usar o INDICONS</h2>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Até 1,5% de comissão</h3>
+        <p>Pagamentos em até 6 parcelas, conforme regras contratuais.</p>
+      </div>
+
+      <div class="card">
+        <h3>Você não vende</h3>
+        <p>O parceiro assume negociação, dúvidas e fechamento.</p>
+      </div>
+
+      <div class="card">
+        <h3>Dashboard completo</h3>
+        <p>Status, valores, histórico e comissões em tempo real.</p>
+      </div>
+
+      <div class="card">
+        <h3>Administradoras parceiras</h3>
+        <p>Embracon, Ademicon e outras grandes do mercado.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <strong>INDICONS</strong>
+      <p>Plataforma de indicação de consórcios.</p>
     </div>
 
-    <button type="submit">Criar conta gratuita</button>
-  </form>
-</section>
+    <div>
+      <a href="/termos-indicador.html">Termo do Indicador</a><br>
+      <a href="/termos-cliente.html">Termo do Cliente</a><br>
+      <a href="/privacidade.html">Política de Privacidade</a>
+    </div>
 
-<section id="contato" class="secao">
-  <h3>Contato</h3>
-  <p>Dúvidas comerciais ou operacionais:</p>
-  <p><strong>Email:</strong> contato@indicons.com.br</p>
-</section>
+    <div>
+      <a href="/contato.html">Contato</a>
+    </div>
+  </div>
 
-<footer class="rodape">
-  <p>© 2025 INDICONS • Plataforma de Indicações</p>
-  <p>
-    <a href="/privacidade.html">Política de Privacidade</a> •
-    <a href="/termos-indicador.html">Termo do Indicador</a> •
-    <a href="/termos-cliente.html">Termo do Cliente</a>
-  </p>
+  <div class="footer-copy">
+    © 2025 INDICONS. Todos os direitos reservados.
+  </div>
 </footer>
 
 </body>
