@@ -1,8 +1,7 @@
 /***************************************************
- * INDICONS — SERVER.JS (MVP FUNCIONAL)
- * Backend + Pré-adesão integrada (ETAPA F)
+ * INDICONS — SERVER.JS
+ * MVP funcional com PRÉ-ADESÃO integrada
  ***************************************************/
-
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
@@ -17,15 +16,14 @@ const PORT = process.env.PORT || 3000;
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-app.use(session({
-  secret: "indicons_secret_2025",
-  resave: false,
-  saveUninitialized: false
-}));
-
-// 🔹 SERVIR ARQUIVOS DA PASTA PUBLIC
-app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  session({
+    secret: "indicons_secret_2025",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(express.static("public"));
 
 /* =========================
    BANCO DE DADOS
@@ -33,7 +31,6 @@ app.use(express.static(path.join(__dirname, "public")));
 const db = new sqlite3.Database("./indicons.db");
 
 db.serialize(() => {
-
   db.run(`
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,177 +64,101 @@ db.serialize(() => {
       data DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS comissoes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      lead_id INTEGER,
-      parcela INTEGER,
-      percentual REAL,
-      valor REAL,
-      status TEXT
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS consentimentos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      usuario_id INTEGER,
-      tipo TEXT,
-      ip TEXT,
-      data DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
 });
 
 /* =========================
-   MIDDLEWARE AUTH
+   AUTENTICAÇÃO
 ========================= */
 function auth(req, res, next) {
-  if (!req.session.usuario) {
-    return res.redirect("/login.html");
-  }
+  if (!req.session.usuario) return res.status(401).json({ erro: "Não autorizado" });
   next();
 }
 
 /* =========================
-   HOME (PUBLIC)
+   HOME
 ========================= */
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
 /* =========================
-   CADASTRO INDICADOR
+   CADASTRO / LOGIN
 ========================= */
-app.post("/api/cadastro", async (req, res) => {
-  const { nome, email, senha } = req.body;
+app.post("/cadastro", async (req, res) => {
+  const hash = await bcrypt.hash(req.body.senha, 10);
+  db.run(
+    `INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,'indicador')`,
+    [req.body.nome, req.body.email, hash],
+    () => res.redirect("/login.html")
+  );
+});
 
-  if (!nome || !email || !senha) {
+app.post("/login", (req, res) => {
+  db.get(
+    `SELECT * FROM usuarios WHERE email=?`,
+    [req.body.email],
+    async (err, u) => {
+      if (!u) return res.send("Usuário não encontrado");
+      if (!(await bcrypt.compare(req.body.senha, u.senha)))
+        return res.send("Senha inválida");
+      req.session.usuario = u;
+      res.redirect("/dashboard.html");
+    }
+  );
+});
+
+/* =========================
+   PRÉ-ADESÃO (ETAPA F)
+========================= */
+app.post("/api/pre-adesao", auth, (req, res) => {
+  const { nome, telefone, email, administradora, valor } = req.body;
+
+  if (!nome || !telefone || !administradora || !valor) {
     return res.status(400).json({ erro: "Dados incompletos" });
   }
 
-  const hash = await bcrypt.hash(senha, 10);
-
   db.run(
-    `INSERT INTO usuarios (nome,email,senha,tipo)
-     VALUES (?,?,?,'indicador')`,
-    [nome, email, hash],
+    `
+    INSERT INTO leads
+    (nome, telefone, email, indicador_id, administradora, valor, status)
+    VALUES (?, ?, ?, ?, ?, ?, 'EM_ATENDIMENTO')
+    `,
+    [
+      nome,
+      telefone,
+      email || "",
+      req.session.usuario.id,
+      administradora,
+      valor,
+    ],
     function (err) {
-      if (err) {
-        return res.status(400).json({ erro: "Email já cadastrado" });
-      }
+      if (err) return res.status(500).json({ erro: "Erro ao salvar lead" });
 
       db.run(
-        `INSERT INTO consentimentos (usuario_id,tipo,ip)
-         VALUES (?,?,?)`,
-        [this.lastID, "INDICADOR", req.ip]
+        `INSERT INTO historico (lead_id, status) VALUES (?, ?)`,
+        [this.lastID, "EM_ATENDIMENTO"]
       );
 
-      res.json({ ok: true });
+      console.log("📩 NOVA PRÉ-ADESÃO:", nome, telefone);
+
+      res.json({ sucesso: true });
     }
   );
 });
 
 /* =========================
-   LOGIN
+   DASHBOARD
 ========================= */
-app.post("/api/login", (req, res) => {
-  const { email, senha } = req.body;
-
-  db.get(
-    `SELECT * FROM usuarios WHERE email=?`,
-    [email],
-    async (err, usuario) => {
-      if (!usuario) {
-        return res.status(401).json({ erro: "Usuário não encontrado" });
-      }
-
-      const ok = await bcrypt.compare(senha, usuario.senha);
-      if (!ok) {
-        return res.status(401).json({ erro: "Senha inválida" });
-      }
-
-      req.session.usuario = usuario;
-      res.json({ ok: true });
-    }
-  );
-});
-
-/* =========================
-   DASHBOARD INDICADOR
-========================= */
-app.get("/dashboard", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
-
-app.get("/api/dashboard/leads", auth, (req, res) => {
+app.get("/api/leads", auth, (req, res) => {
   db.all(
-    `SELECT * FROM leads WHERE indicador_id=? ORDER BY criado_em DESC`,
+    `SELECT * FROM leads WHERE indicador_id=?`,
     [req.session.usuario.id],
     (err, rows) => res.json(rows || [])
   );
 });
 
 /* =========================
-   PRÉ-ADESÃO DO CLIENTE (ETAPA F)
-========================= */
-app.post("/api/pre-adesao", (req, res) => {
-  const {
-    nome,
-    telefone,
-    email,
-    indicador_id,
-    administradora,
-    valor
-  } = req.body;
-
-  if (!nome || !telefone || !email || !indicador_id) {
-    return res.status(400).json({ erro: "Dados incompletos" });
-  }
-
-  db.run(
-    `INSERT INTO leads
-      (nome, telefone, email, indicador_id, administradora, valor, status)
-     VALUES (?, ?, ?, ?, ?, ?, 'PRE_ADESAO')`,
-    [nome, telefone, email, indicador_id, administradora || null, valor || null],
-    function (err) {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ erro: "Erro ao salvar lead" });
-      }
-
-      db.run(
-        `INSERT INTO historico (lead_id, status)
-         VALUES (?, 'PRE_ADESAO')`,
-        [this.lastID]
-      );
-
-      res.json({ ok: true });
-    }
-  );
-});
-
-/* =========================
-   API PARCEIRO (BASE)
-========================= */
-app.get("/api/parceiro", auth, (req, res) => {
-  db.all(
-    `SELECT * FROM leads WHERE status != 'VENDIDO'`,
-    [],
-    (err, leads) => res.json(leads || [])
-  );
-});
-
-/* =========================
-   LOGOUT
-========================= */
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/"));
-});
-
-/* =========================
-   START SERVER
+   SERVIDOR
 ========================= */
 app.listen(PORT, () => {
   console.log("INDICONS rodando na porta " + PORT);
