@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Comissão • INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container header-flex">
+    <strong class="logo">INDICONS</strong>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/cadastro.html" class="btn small">Ser Indicador</a>
+    </nav>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <h1 class="center">Simule sua comissão</h1>
+    <p class="center muted">
+      Informe o valor estimado do consórcio e veja quanto você pode ganhar.
+    </p>
+
+    <div class="simulator-box">
+      <label>Valor do consórcio (R$)</label>
+      <input
+        type="number"
+        id="valor"
+        placeholder="Ex: 100000"
+        min="10000"
+        step="1000"
+      >
+
+      <button class="btn primary" onclick="simular()">
+        Calcular comissão
+      </button>
+
+      <div id="resultado" class="resultado" style="display:none;">
+        <h3>Resultado da simulação</h3>
+
+        <p>
+          Comissão total máxima:
+          <strong id="total"></strong>
+        </p>
+
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Parcela</th>
+              <th>Percentual</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody id="parcelas"></tbody>
+        </table>
+
+        <small class="muted">
+          Valores meramente ilustrativos, considerando comissão máxima de até
+          1,5% sobre o valor do contrato. A comissão é paga em 6 parcelas
+          (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%), com possibilidade de
+          estorno de até 0,35% até a 6ª parcela em caso de inadimplência ou
+          cancelamento do contrato.
+        </small>
+
+        <div class="center" style="margin-top:20px;">
+          <a href="/cadastro.html" class="btn primary">
+            Quero ser Indicador
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-links">
+    <a href="/termos-indicador.html">Termo do Indicador</a>
+    <a href="/termos-cliente.html">Termo do Cliente</a>
+    <a href="/privacidade.html">Política de Privacidade</a>
+  </div>
+  <p>© INDICONS • Plataforma de indicação de consórcios</p>
+</footer>
+
+<script>
+function simular() {
+  const valor = Number(document.getElementById("valor").value);
+  if (!valor || valor <= 0) {
+    alert("Informe um valor válido.");
+    return;
+  }
+
+  const percentuais = [0.005, 0.002, 0.002, 0.002, 0.002, 0.002];
+  const tbody = document.getElementById("parcelas");
+  tbody.innerHTML = "";
+
+  let total = 0;
+
+  percentuais.forEach((p, i) => {
+    const v = valor * p;
+    total += v;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}ª</td>
+      <td>${(p * 100).toFixed(2)}%</td>
+      <td>R$ ${v.toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("total").innerText =
+    "R$ " + total.toFixed(2);
+
+  document.getElementById("resultado").style.display = "block";
+}
+</script>
+
+<style>
+.simulator-box {
+  max-width: 520px;
+  margin: 40px auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 14px;
+}
+
+.simulator-box input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  margin: 10px 0 20px;
+}
+
+.resultado {
+  margin-top: 30px;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.tabela th,
+.tabela td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+}
+</style>
+
+</body>
+</html>
