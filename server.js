@@ -209,7 +209,93 @@ app.post("/login", (req, res) => {
    DASHBOARD
 ========================= */
 app.get("/dashboard", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+  const indicadorId = req.session.usuario.id;
+
+  db.all(
+    `SELECT * FROM leads WHERE indicador_id = ?`,
+    [indicadorId],
+    (err, leads) => {
+
+      if (err) return res.send("Erro ao carregar dados");
+
+      const totalIndicacoes = leads.length;
+
+      const aprovadas = leads.filter(l => l.status === "APROVADA");
+      const totalAprovadas = aprovadas.length;
+
+      const totalVendido = aprovadas.reduce(
+        (s, l) => s + (l.valor || 0), 0
+      );
+
+      db.all(
+        `SELECT * FROM comissoes WHERE lead_id IN
+         (SELECT id FROM leads WHERE indicador_id = ?)`,
+        [indicadorId],
+        (err2, coms) => {
+
+          const totalComissao = coms.reduce(
+            (s, c) => s + (c.valor || 0), 0
+          );
+
+          res.send(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+              <meta charset="UTF-8">
+              <title>Painel do Indicador — INDICONS</title>
+              <link rel="stylesheet" href="/style.css">
+            </head>
+            <body>
+
+            <section class="hero">
+              <div class="container">
+
+                <div class="card">
+                  <h1>Painel do Indicador</h1>
+                  <p>Acompanhe suas indicações e comissões reais</p>
+                </div>
+
+                <div class="dashboard-cards">
+                  <div class="metric">
+                    <h4>Indicações realizadas</h4>
+                    <strong>${totalIndicacoes}</strong>
+                  </div>
+
+                  <div class="metric">
+                    <h4>Vendas aprovadas</h4>
+                    <strong>${totalAprovadas}</strong>
+                  </div>
+
+                  <div class="metric">
+                    <h4>Valor vendido</h4>
+                    <strong>R$ ${totalVendido.toFixed(2)}</strong>
+                  </div>
+
+                  <div class="metric">
+                    <h4>Comissão prevista</h4>
+                    <strong>R$ ${totalComissao.toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                <div class="card" style="margin-top:30px;">
+                  <a href="/comparativo" class="btn-secondary">
+                    Ver tabela de comissões por administradora
+                  </a>
+                  <a href="/logout" class="btn-secondary" style="margin-left:10px;">
+                    Sair
+                  </a>
+                </div>
+
+              </div>
+            </section>
+
+            </body>
+            </html>
+          `);
+        }
+      );
+    }
+  );
 });
 
 /* =========================
