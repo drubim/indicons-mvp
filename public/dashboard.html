@@ -8,69 +8,75 @@
 </head>
 <body>
 
-<header class="topo">
-  <h1>INDICONS</h1>
-  <span>Painel do Indicador</span>
+<header class="header">
+  <div class="container header-flex">
+    <div class="logo">INDICONS</div>
+    <nav class="menu">
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/logout">Sair</a>
+    </nav>
+  </div>
 </header>
 
-<section class="resumo">
-  <div class="card">
-    <strong>12</strong>
-    <span>Indicações feitas</span>
+<section class="dashboard container">
+
+  <div class="cards-resumo">
+    <div class="card-resumo">
+      <strong>18</strong>
+      <span>Indicações feitas</span>
+    </div>
+
+    <div class="card-resumo">
+      <strong>7</strong>
+      <span>Em andamento</span>
+    </div>
+
+    <div class="card-resumo">
+      <strong>4</strong>
+      <span>Aprovadas</span>
+    </div>
+
+    <div class="card-resumo destaque">
+      <strong>R$ 3.250</strong>
+      <span>Comissão prevista</span>
+    </div>
   </div>
-  <div class="card">
-    <strong>5</strong>
-    <span>Em andamento</span>
+
+  <div class="card-dashboard">
+    <h2>Minhas indicações</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Administradora</th>
+          <th>Valor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>João Silva</td>
+          <td>Embracon</td>
+          <td>R$ 120.000</td>
+          <td><span class="tag andamento">Em atendimento</span></td>
+        </tr>
+        <tr>
+          <td>Maria Oliveira</td>
+          <td>Ademicon</td>
+          <td>R$ 180.000</td>
+          <td><span class="tag aprovado">Aprovado</span></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-  <div class="card">
-    <strong>3</strong>
-    <span>Aprovadas</span>
-  </div>
-  <div class="card destaque">
-    <strong>R$ 2.150</strong>
-    <span>Comissão prevista</span>
-  </div>
+
 </section>
 
-<section class="secao">
-  <h2>Status das Indicações</h2>
-
-  <div class="lead">
-    <div class="lead-info">
-      <strong>João Silva</strong>
-      <span>Embracon • R$ 120.000</span>
-    </div>
-
-    <div class="timeline">
-      <div class="step ativo">Indicado</div>
-      <div class="step ativo">Contato</div>
-      <div class="step">Proposta</div>
-      <div class="step">Aprovado</div>
-      <div class="step">Comissão</div>
-    </div>
+<footer class="footer">
+  <div class="footer-copy">
+    Comissão de até 1,5% • Pagamento conforme contrato
   </div>
-
-  <div class="lead">
-    <div class="lead-info">
-      <strong>Maria Oliveira</strong>
-      <span>Ademicon • R$ 180.000</span>
-    </div>
-
-    <div class="timeline">
-      <div class="step ativo">Indicado</div>
-      <div class="step ativo">Contato</div>
-      <div class="step ativo">Proposta</div>
-      <div class="step ativo">Aprovado</div>
-      <div class="step ativo">Comissão</div>
-    </div>
-  </div>
-
-</section>
-
-<footer class="rodape">
-  <p>
-    Comissão de até 1,5% • Pagamento em até 6 parcelas conforme contrato
-  </p>
 </footer>
 
 </body>
