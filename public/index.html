@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>INDICONS | Monetize suas indicações de consórcio</title>
+  <title>INDICONS | Monetize indicações de consórcio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -14,7 +14,7 @@
     <div class="logo">INDICONS</div>
     <nav>
       <a href="#como-funciona">Como funciona</a>
-      <a href="#vantagens">Vantagens</a>
+      <a href="#simulador">Simulador</a>
       <a href="/login.html" class="btn-outline">Entrar</a>
       <a href="/cadastro.html" class="btn-primary">Criar conta</a>
     </nav>
@@ -25,47 +25,29 @@
 <section class="hero">
   <div class="container hero-grid">
     <div class="hero-text">
-      <h1>
-        Transforme indicações<br>
-        em renda recorrente
-      </h1>
-
+      <h1>Transforme indicações<br>em renda recorrente</h1>
       <p class="subtitle">
-        Indique clientes para consórcios.  
-        Parceiros especializados fazem todo o atendimento e fechamento.
+        Você apenas indica clientes para consórcios.  
+        Parceiros especializados fazem todo o atendimento e o fechamento.
       </p>
 
       <div class="hero-metrics">
-        <div>
-          <strong>Até 1,5%</strong>
-          <span>comissão máxima</span>
-        </div>
-        <div>
-          <strong>100%</strong>
-          <span>online</span>
-        </div>
-        <div>
-          <strong>Sem custo</strong>
-          <span>para começar</span>
-        </div>
+        <div><strong>Até 1,5%</strong><span>comissão máxima</span></div>
+        <div><strong>100%</strong><span>online</span></div>
+        <div><strong>Sem custo</strong><span>para começar</span></div>
       </div>
 
       <div class="hero-cta">
         <a href="/cadastro.html" class="btn-primary large">
           Começar como Indicador
         </a>
-        <small>
-          Cadastro gratuito • Sem meta mínima • Painel profissional
-        </small>
+        <small>Cadastro gratuito • Sem meta mínima • Painel profissional</small>
       </div>
     </div>
 
     <div class="hero-box">
-      <h3>Simulação rápida</h3>
-      <p>
-        Um consórcio de <strong>R$ 100.000</strong><br>
-        pode gerar até:
-      </p>
+      <h3>Exemplo rápido</h3>
+      <p>Um consórcio de <strong>R$ 100.000</strong> pode gerar até:</p>
       <div class="valor">R$ 1.500</div>
       <small>* comissão máxima conforme regras contratuais</small>
     </div>
@@ -75,57 +57,56 @@
 <!-- COMO FUNCIONA -->
 <section id="como-funciona" class="section">
   <div class="container">
-    <h2>Como o INDICONS funciona</h2>
+    <h2>Como funciona o INDICONS</h2>
 
     <div class="steps">
-      <div class="step">
-        <span>1</span>
-        <h4>Você indica</h4>
-        <p>Compartilha seu link com clientes interessados.</p>
-      </div>
-      <div class="step">
-        <span>2</span>
-        <h4>Pré-adesão</h4>
-        <p>O cliente preenche os dados no site.</p>
-      </div>
-      <div class="step">
-        <span>3</span>
-        <h4>Parceiro atende</h4>
-        <p>Especialista entra em contato e conduz a venda.</p>
-      </div>
-      <div class="step">
-        <span>4</span>
-        <h4>Você recebe</h4>
-        <p>Acompanhe tudo no painel e receba comissões.</p>
-      </div>
+      <div class="step"><span>1</span><h4>Você indica</h4><p>Compartilha seu link com interessados.</p></div>
+      <div class="step"><span>2</span><h4>Pré-adesão</h4><p>O cliente envia os dados no site.</p></div>
+      <div class="step"><span>3</span><h4>Parceiro atende</h4><p>Especialista conduz a venda.</p></div>
+      <div class="step"><span>4</span><h4>Você recebe</h4><p>Acompanhe tudo no painel.</p></div>
     </div>
   </div>
 </section>
 
-<!-- VANTAGENS -->
-<section id="vantagens" class="section light">
-  <div class="container grid-3">
-    <div class="card">
-      <h3>Transparência total</h3>
+<!-- SIMULADOR -->
+<section id="simulador" class="section light">
+  <div class="container simulador-grid">
+
+    <div>
+      <h2>Simule sua comissão</h2>
       <p>
-        Cada pré-adesão, venda e comissão fica registrada
-        no seu painel.
+        Digite o valor aproximado do consórcio e veja quanto você pode ganhar
+        considerando a <strong>comissão máxima de até 1,5%</strong>.
       </p>
+
+      <label>Valor do consórcio (R$)</label>
+      <input type="number" id="valorConsorcio" class="input-sim" placeholder="Ex: 100000">
+
+      <div class="resultado">
+        <span>Comissão estimada:</span>
+        <strong id="resultadoComissao">R$ 0,00</strong>
+      </div>
+
+      <small class="info">
+        Pagamento em até 6 parcelas (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%).  
+        Pode haver estorno conforme regras contratuais.
+      </small>
     </div>
-    <div class="card">
-      <h3>Administradoras consolidadas</h3>
-      <p>
-        Atuação com Embracon, Ademicon, Porto
-        e outras parceiras.
-      </p>
+
+    <div class="simulador-box">
+      <h3>Você só indica</h3>
+      <ul>
+        <li>✔ Não vende</li>
+        <li>✔ Não negocia</li>
+        <li>✔ Não cobra cliente</li>
+        <li>✔ Só acompanha no painel</li>
+      </ul>
+
+      <a href="/cadastro.html" class="btn-primary large">
+        Quero começar agora
+      </a>
     </div>
-    <div class="card">
-      <h3>Pagamento organizado</h3>
-      <p>
-        Comissão paga em até 6 parcelas,
-        conforme contrato e regras do consórcio.
-      </p>
-    </div>
+
   </div>
 </section>
 
@@ -133,13 +114,8 @@
 <section class="cta">
   <div class="container">
     <h2>Comece agora como indicador</h2>
-    <p>
-      Sem investimento inicial, sem metas obrigatórias
-      e com total controle.
-    </p>
-    <a href="/cadastro.html" class="btn-primary large">
-      Criar minha conta
-    </a>
+    <p>Sem investimento inicial, sem metas obrigatórias.</p>
+    <a href="/cadastro.html" class="btn-primary large">Criar minha conta</a>
   </div>
 </section>
 
@@ -154,6 +130,24 @@
     </p>
   </div>
 </footer>
+
+<script>
+  const input = document.getElementById("valorConsorcio");
+  const resultado = document.getElementById("resultadoComissao");
+
+  input.addEventListener("input", () => {
+    const valor = Number(input.value);
+    if (!valor || valor <= 0) {
+      resultado.textContent = "R$ 0,00";
+      return;
+    }
+    const comissao = valor * 0.015;
+    resultado.textContent = comissao.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+  });
+</script>
 
 </body>
 </html>
