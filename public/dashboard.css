@@ -1,91 +1,66 @@
-* {
-  box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+@import url("/style.css");
+
+.dashboard {
+  padding: 40px 0;
 }
 
-body {
-  margin: 0;
-  background: #f4f6f8;
-  color: #1f2937;
-}
-
-.topo {
-  background: #ffffff;
-  padding: 18px 28px;
-  border-bottom: 1px solid #d1d5db;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.resumo {
+.cards-resumo {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.card-resumo {
+  background: #ffffff;
+  border-radius: 16px;
   padding: 24px;
-  max-width: 1200px;
-  margin: auto;
-}
-
-.card {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 14px;
   text-align: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,.06);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
 }
 
-.card strong {
-  font-size: 28px;
+.card-resumo strong {
   display: block;
+  font-size: 28px;
 }
 
-.card.destaque {
-  background: #eef2ff;
+.card-resumo.destaque {
   border: 2px solid #2563eb;
+  background: #eef2ff;
 }
 
-.secao {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
-}
-
-.lead {
+.card-dashboard {
   background: #ffffff;
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 18px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.06);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
 }
 
-.lead-info {
-  margin-bottom: 12px;
+.card-dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
 }
 
-.timeline {
-  display: flex;
-  gap: 8px;
+.card-dashboard th,
+.card-dashboard td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
 }
 
-.step {
-  flex: 1;
-  padding: 8px;
-  border-radius: 20px;
-  background: #e5e7eb;
+.tag {
+  padding: 6px 12px;
+  border-radius: 999px;
   font-size: 12px;
-  text-align: center;
+  font-weight: bold;
 }
 
-.step.ativo {
-  background: #2563eb;
-  color: white;
+.tag.andamento {
+  background: #fde68a;
 }
 
-.rodape {
-  text-align: center;
-  padding: 20px;
-  font-size: 13px;
-  color: #6b7280;
+.tag.aprovado {
+  background: #bbf7d0;
+  color: #065f46;
 }
-
