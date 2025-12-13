@@ -1,116 +1,119 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>INDICONS • Plataforma de Indicação de Consórcios</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>INDICONS • Indicação de Consórcios</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
-<header class="header">
-  <div class="container header-flex">
+<header class="topbar">
+  <div class="container topbar-inner">
     <div class="logo">INDICONS</div>
-    <nav class="menu">
+    <nav>
+      <a href="/login.html">Login</a>
       <a href="#como-funciona">Como funciona</a>
       <a href="#vantagens">Vantagens</a>
-      <a href="/login.html">Login</a>
+      <a href="/login.html" class="btn-outline">Área do Indicador</a>
     </nav>
   </div>
 </header>
 
-<!-- HERO -->
 <section class="hero">
   <div class="container hero-grid">
-    <div class="hero-text">
-      <h1>Transforme sua rede de contatos<br>em renda recorrente</h1>
+    <div>
+      <span class="badge">Plataforma de indicação de consórcios</span>
+      <h1>
+        Transforme sua rede de contatos<br>
+        <strong>em renda recorrente</strong>
+      </h1>
       <p>
-        Você apenas indica. Um parceiro especializado realiza todo o atendimento,
-        negocia e fecha a venda. Em cada consórcio aprovado,
-        você recebe <strong>comissão de até 1,5%</strong>.
+        Você apenas indica. Um parceiro especializado faz todo o atendimento,
+        negocia e fecha a venda. Em cada consórcio aprovado, você recebe
+        <strong>comissão de até 1,5%</strong>.
       </p>
 
-      <a href="/cadastro.html" class="btn-primario">
-        Começar como Indicador
-      </a>
-
-      <p class="hero-note">
-        Cadastro gratuito • Sem meta mínima • Painel profissional
-      </p>
+      <div class="hero-actions">
+        <a href="/login.html" class="btn-primary">Começar como Indicador</a>
+        <span class="note">Cadastro gratuito · Sem meta mínima</span>
+      </div>
     </div>
 
-    <div class="hero-image">
-      <img src="https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg" alt="Trabalho online profissional">
+    <div class="hero-card">
+      <h3>Exemplo real</h3>
+      <p>Um consórcio de <strong>R$ 100.000</strong></p>
+      <div class="highlight">Pode gerar até R$ 1.500 em comissão</div>
+      <span class="small">
+        Comissão máxima, conforme regras contratuais.
+      </span>
     </div>
   </div>
 </section>
 
-<!-- COMO FUNCIONA -->
 <section id="como-funciona" class="section">
   <div class="container">
-    <h2>Como funciona o INDICONS</h2>
+    <h2>Como funciona na prática</h2>
 
     <div class="steps">
       <div class="step">
-        <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png">
+        <span>1</span>
         <h3>Você indica</h3>
-        <p>Compartilhe seu link exclusivo com seus contatos.</p>
+        <p>Compartilhe o link do INDICONS com seus contatos.</p>
       </div>
-
       <div class="step">
-        <img src="https://cdn-icons-png.flaticon.com/512/724/724715.png">
-        <h3>Contato profissional</h3>
-        <p>Parceiros credenciados fazem todo o atendimento.</p>
+        <span>2</span>
+        <h3>Pré-adesão</h3>
+        <p>O cliente preenche os dados iniciais.</p>
       </div>
-
       <div class="step">
-        <img src="https://cdn-icons-png.flaticon.com/512/942/942748.png">
+        <span>3</span>
+        <h3>Parceiro atende</h3>
+        <p>Um especialista humano faz todo o atendimento.</p>
+      </div>
+      <div class="step">
+        <span>4</span>
         <h3>Venda aprovada</h3>
-        <p>A administradora analisa e aprova o contrato.</p>
+        <p>A administradora aprova o contrato.</p>
       </div>
-
       <div class="step">
-        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828919.png">
-        <h3>Comissão registrada</h3>
-        <p>Acompanhe tudo em um painel transparente.</p>
+        <span>5</span>
+        <h3>Você recebe</h3>
+        <p>Comissão paga em até 6 parcelas.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- VANTAGENS -->
-<section id="vantagens" class="section bg-light">
+<section id="vantagens" class="section section-light">
   <div class="container">
     <h2>Por que usar o INDICONS</h2>
 
-    <div class="vantagens-grid">
-      <div class="vantagem">
-        <img src="https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg">
-        <h3>Até 1,5% de comissão</h3>
-        <p>Pagamentos em até 6 parcelas, conforme contrato.</p>
-      </div>
-
-      <div class="vantagem">
-        <img src="https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg">
+    <div class="grid-3">
+      <div class="box">
         <h3>Você não vende</h3>
-        <p>O parceiro assume negociação e fechamento.</p>
+        <p>
+          Nada de negociação, propostas ou explicações técnicas.
+          Você apenas indica.
+        </p>
       </div>
 
-      <div class="vantagem">
-        <img src="https://images.pexels.com/photos/3184357/pexels-photo-3184357.jpeg">
-        <h3>Painel profissional</h3>
-        <p>Status, valores e histórico claros.</p>
+      <div class="box">
+        <h3>Painel transparente</h3>
+        <p>
+          Acompanhe cada etapa da indicação em um painel profissional.
+        </p>
+      </div>
+
+      <div class="box">
+        <h3>Diversas administradoras</h3>
+        <p>
+          Embracon, Ademicon, Porto e outras parceiras.
+        </p>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- CTA FINAL -->
-<section class="cta">
-  <div class="container">
-    <h2>Comece agora como Indicador</h2>
-    <p>Crie sua conta gratuitamente e acompanhe tudo pelo painel.</p>
-    <a href="/cadastro.html" class="btn-secundario">Criar conta</a>
   </div>
 </section>
 
@@ -118,22 +121,19 @@
   <div class="container footer-grid">
     <div>
       <strong>INDICONS</strong>
-      <p>Plataforma de indicação de consórcios.</p>
+      <p>Plataforma de indicação de consórcios</p>
     </div>
 
     <div>
-      <a href="/termos-indicador.html">Termo do Indicador</a><br>
-      <a href="/termos-cliente.html">Termo do Cliente</a><br>
-      <a href="/privacidade.html">Política de Privacidade</a>
-    </div>
-
-    <div>
-      <a href="/contato.html">Contato</a>
+      <a href="/login.html">Login</a><br>
+      <a href="#">Termos do Indicador</a><br>
+      <a href="#">Termos do Cliente</a><br>
+      <a href="#">Política de Privacidade</a>
     </div>
   </div>
 
-  <div class="footer-copy">
-    © 2025 INDICONS. Todos os direitos reservados.
+  <div class="copyright">
+    © 2025 INDICONS • Todos os direitos reservados
   </div>
 </footer>
 
