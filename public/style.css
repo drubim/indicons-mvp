@@ -5,9 +5,7 @@
   --fundo: #f3f4f6;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -16,10 +14,7 @@ body {
   color: #111827;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
-}
+a { text-decoration: none; color: inherit; }
 
 .container {
   max-width: 1200px;
@@ -40,14 +35,9 @@ a {
   height: 72px;
 }
 
-.logo {
-  font-weight: bold;
-  font-size: 22px;
-}
+.logo { font-weight: bold; font-size: 22px; }
 
-nav a {
-  margin-left: 16px;
-}
+nav a { margin-left: 16px; }
 
 /* BOTÕES */
 .btn-primary {
@@ -81,15 +71,9 @@ nav a {
   gap: 40px;
 }
 
-.hero h1 {
-  font-size: 42px;
-  margin-bottom: 20px;
-}
+.hero h1 { font-size: 42px; margin-bottom: 20px; }
 
-.subtitle {
-  font-size: 18px;
-  color: #e5e7eb;
-}
+.subtitle { font-size: 18px; color: #e5e7eb; }
 
 .hero-metrics {
   display: flex;
@@ -118,15 +102,12 @@ nav a {
   margin: 10px 0;
 }
 
-/* SECTIONS */
-.section {
-  padding: 80px 0;
-}
+/* SEÇÕES */
+.section { padding: 80px 0; }
 
-.section h2 {
-  text-align: center;
-  margin-bottom: 50px;
-}
+.section h2 { text-align: center; margin-bottom: 50px; }
+
+.section.light { background: #fff; }
 
 .steps {
   display: grid;
@@ -152,21 +133,57 @@ nav a {
   margin-bottom: 10px;
 }
 
-/* VANTAGENS */
-.section.light {
-  background: #fff;
-}
-
-.grid-3 {
+/* SIMULADOR */
+.simulador-grid {
   display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 24px;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 40px;
+  align-items: center;
 }
 
-.card {
-  background: var(--fundo);
-  padding: 28px;
-  border-radius: 18px;
+.input-sim {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  margin: 12px 0 20px;
+}
+
+.resultado {
+  background: #e0e7ff;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+}
+
+.resultado span { color: #1e3a8a; }
+
+.resultado strong {
+  font-size: 28px;
+  color: #1e40af;
+}
+
+.simulador-box {
+  background: #111827;
+  color: #fff;
+  padding: 32px;
+  border-radius: 20px;
+}
+
+.simulador-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.simulador-box li { margin-bottom: 10px; }
+
+.info {
+  display: block;
+  margin-top: 10px;
+  color: #374151;
+  font-size: 13px;
 }
 
 /* CTA */
