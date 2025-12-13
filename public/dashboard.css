@@ -1,1 +1,91 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f8;
+  color: #1f2937;
+}
+
+.topo {
+  background: #ffffff;
+  padding: 18px 28px;
+  border-bottom: 1px solid #d1d5db;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,.06);
+}
+
+.card strong {
+  font-size: 28px;
+  display: block;
+}
+
+.card.destaque {
+  background: #eef2ff;
+  border: 2px solid #2563eb;
+}
+
+.secao {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+}
+
+.lead {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.06);
+}
+
+.lead-info {
+  margin-bottom: 12px;
+}
+
+.timeline {
+  display: flex;
+  gap: 8px;
+}
+
+.step {
+  flex: 1;
+  padding: 8px;
+  border-radius: 20px;
+  background: #e5e7eb;
+  font-size: 12px;
+  text-align: center;
+}
+
+.step.ativo {
+  background: #2563eb;
+  color: white;
+}
+
+.rodape {
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+  color: #6b7280;
+}
 
