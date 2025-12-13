@@ -1,6 +1,6 @@
 /***************************************************
  * INDICONS — SERVER.JS
- * Backend funcional + login + dashboard conectado
+ * Backend funcional + Indicador + Parceiro
  ***************************************************/
 
 const express = require("express");
@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =========================
-   MIDDLEWARES BÁSICOS
+   MIDDLEWARES
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -27,8 +27,7 @@ app.use(
 );
 
 /* =========================
-   SERVIR ARQUIVOS ESTÁTICOS
-   (HTML / CSS / JS)
+   ARQUIVOS ESTÁTICOS
 ========================= */
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -65,7 +64,7 @@ db.serialize(() => {
 });
 
 /* =========================
-   FUNÇÃO DE AUTENTICAÇÃO
+   AUTH
 ========================= */
 function auth(req, res, next) {
   if (!req.session.usuario) {
@@ -75,10 +74,8 @@ function auth(req, res, next) {
 }
 
 /* =========================
-   ROTAS DE AUTENTICAÇÃO
+   LOGIN
 ========================= */
-
-// LOGIN
 app.post("/login", (req, res) => {
   const { email, senha } = req.body;
 
@@ -106,7 +103,9 @@ app.post("/login", (req, res) => {
   );
 });
 
-// LOGOUT
+/* =========================
+   LOGOUT
+========================= */
 app.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.redirect("/login.html");
@@ -114,15 +113,21 @@ app.get("/logout", (req, res) => {
 });
 
 /* =========================
-   DASHBOARD (PROTEGIDO)
+   DASHBOARD INDICADOR
 ========================= */
 app.get("/dashboard", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
 /* =========================
-   API — PASSO 6
-   DADOS REAIS DO DASHBOARD
+   DASHBOARD PARCEIRO
+========================= */
+app.get("/parceiro", auth, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "parceiro.html"));
+});
+
+/* =========================
+   API — INDICADOR
 ========================= */
 app.get("/api/dashboard", auth, (req, res) => {
   const indicadorId = req.session.usuario.id;
@@ -131,10 +136,22 @@ app.get("/api/dashboard", auth, (req, res) => {
     "SELECT * FROM leads WHERE indicador_id = ?",
     [indicadorId],
     (err, leads) => {
-      if (err) {
-        return res.json([]);
-      }
-      res.json(leads);
+      if (err) return res.json([]);
+      res.json(leads || []);
+    }
+  );
+});
+
+/* =========================
+   API — PARCEIRO  ✅ (NOVO)
+========================= */
+app.get("/api/parceiro", auth, (req, res) => {
+  db.all(
+    "SELECT * FROM leads WHERE status != 'VENDIDO' OR status IS NULL",
+    [],
+    (err, leads) => {
+      if (err) return res.json([]);
+      res.json(leads || []);
     }
   );
 });
