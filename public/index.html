@@ -1,153 +1,143 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>INDICONS | Monetize indicações de consórcio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>INDICONS — Indique consórcios e ganhe comissão</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
   <div class="container header-flex">
     <div class="logo">INDICONS</div>
     <nav>
       <a href="#como-funciona">Como funciona</a>
-      <a href="#simulador">Simulador</a>
+      <a href="#vantagens">Vantagens</a>
       <a href="/login.html" class="btn-outline">Entrar</a>
-      <a href="/cadastro.html" class="btn-primary">Criar conta</a>
+      <a href="/cadastro.html" class="btn">Cadastrar</a>
     </nav>
   </div>
 </header>
 
-<!-- HERO -->
 <section class="hero">
   <div class="container hero-grid">
-    <div class="hero-text">
-      <h1>Transforme indicações<br>em renda recorrente</h1>
-      <p class="subtitle">
-        Você apenas indica clientes para consórcios.  
-        Parceiros especializados fazem todo o atendimento e o fechamento.
+    <div>
+      <h1>Transforme sua rede de contatos em renda recorrente</h1>
+      <p>
+        Você indica. Um parceiro especializado faz o atendimento,
+        negocia e fecha a venda.  
+        <strong>Você recebe comissão de até 1,5%.</strong>
       </p>
 
-      <div class="hero-metrics">
-        <div><strong>Até 1,5%</strong><span>comissão máxima</span></div>
-        <div><strong>100%</strong><span>online</span></div>
-        <div><strong>Sem custo</strong><span>para começar</span></div>
+      <div class="hero-actions">
+        <a href="/cadastro.html" class="btn btn-large">Começar como Indicador</a>
+        <a href="/login.html" class="btn-outline btn-large">Já tenho conta</a>
       </div>
 
-      <div class="hero-cta">
-        <a href="/cadastro.html" class="btn-primary large">
-          Começar como Indicador
-        </a>
-        <small>Cadastro gratuito • Sem meta mínima • Painel profissional</small>
-      </div>
+      <p class="small">
+        Cadastro gratuito • Sem metas • 100% online
+      </p>
     </div>
 
-    <div class="hero-box">
-      <h3>Exemplo rápido</h3>
-      <p>Um consórcio de <strong>R$ 100.000</strong> pode gerar até:</p>
-      <div class="valor">R$ 1.500</div>
-      <small>* comissão máxima conforme regras contratuais</small>
+    <div class="hero-card">
+      <h3>Exemplo de ganho</h3>
+      <p><strong>Contrato de R$ 100.000</strong></p>
+      <p class="highlight">Até R$ 1.500 em comissão</p>
+      <span class="note">
+        Valores ilustrativos. Pagamento em até 6 parcelas conforme contrato.
+      </span>
     </div>
   </div>
 </section>
 
-<!-- COMO FUNCIONA -->
 <section id="como-funciona" class="section">
   <div class="container">
     <h2>Como funciona o INDICONS</h2>
 
     <div class="steps">
-      <div class="step"><span>1</span><h4>Você indica</h4><p>Compartilha seu link com interessados.</p></div>
-      <div class="step"><span>2</span><h4>Pré-adesão</h4><p>O cliente envia os dados no site.</p></div>
-      <div class="step"><span>3</span><h4>Parceiro atende</h4><p>Especialista conduz a venda.</p></div>
-      <div class="step"><span>4</span><h4>Você recebe</h4><p>Acompanhe tudo no painel.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- SIMULADOR -->
-<section id="simulador" class="section light">
-  <div class="container simulador-grid">
-
-    <div>
-      <h2>Simule sua comissão</h2>
-      <p>
-        Digite o valor aproximado do consórcio e veja quanto você pode ganhar
-        considerando a <strong>comissão máxima de até 1,5%</strong>.
-      </p>
-
-      <label>Valor do consórcio (R$)</label>
-      <input type="number" id="valorConsorcio" class="input-sim" placeholder="Ex: 100000">
-
-      <div class="resultado">
-        <span>Comissão estimada:</span>
-        <strong id="resultadoComissao">R$ 0,00</strong>
+      <div class="step">
+        <span>1</span>
+        <h4>Você indica</h4>
+        <p>Gera seu link e envia para seus contatos.</p>
       </div>
-
-      <small class="info">
-        Pagamento em até 6 parcelas (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%).  
-        Pode haver estorno conforme regras contratuais.
-      </small>
+      <div class="step">
+        <span>2</span>
+        <h4>Pré-adesão</h4>
+        <p>O cliente se cadastra pelo seu link.</p>
+      </div>
+      <div class="step">
+        <span>3</span>
+        <h4>Parceiro atende</h4>
+        <p>Especialista faz todo o atendimento.</p>
+      </div>
+      <div class="step">
+        <span>4</span>
+        <h4>Venda aprovada</h4>
+        <p>Contrato aprovado pela administradora.</p>
+      </div>
+      <div class="step">
+        <span>5</span>
+        <h4>Você recebe</h4>
+        <p>Comissão registrada e paga em parcelas.</p>
+      </div>
     </div>
-
-    <div class="simulador-box">
-      <h3>Você só indica</h3>
-      <ul>
-        <li>✔ Não vende</li>
-        <li>✔ Não negocia</li>
-        <li>✔ Não cobra cliente</li>
-        <li>✔ Só acompanha no painel</li>
-      </ul>
-
-      <a href="/cadastro.html" class="btn-primary large">
-        Quero começar agora
-      </a>
-    </div>
-
   </div>
 </section>
 
-<!-- CTA FINAL -->
+<section id="vantagens" class="section light">
+  <div class="container">
+    <h2>Por que usar o INDICONS</h2>
+
+    <div class="grid">
+      <div class="card">
+        <h4>Até 1,5% de comissão</h4>
+        <p>Ganhe sem precisar vender ou atender.</p>
+      </div>
+      <div class="card">
+        <h4>Sem risco</h4>
+        <p>Você não lida com cobrança nem contratos.</p>
+      </div>
+      <div class="card">
+        <h4>Painel transparente</h4>
+        <p>Acompanhe status, valores e comissões.</p>
+      </div>
+      <div class="card">
+        <h4>Administradoras consolidadas</h4>
+        <p>Embracon, Ademicon e outras.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="cta">
   <div class="container">
-    <h2>Comece agora como indicador</h2>
-    <p>Sem investimento inicial, sem metas obrigatórias.</p>
-    <a href="/cadastro.html" class="btn-primary large">Criar minha conta</a>
+    <h2>Comece agora mesmo</h2>
+    <p>
+      Cadastre-se gratuitamente e comece a indicar consórcios hoje.
+    </p>
+    <a href="/cadastro.html" class="btn btn-large">Criar conta de Indicador</a>
   </div>
 </section>
 
-<!-- FOOTER -->
 <footer class="footer">
-  <div class="container">
-    <p>
-      © INDICONS — Plataforma de indicação de consórcios<br>
-      <a href="/termos-indicador.html">Termos do Indicador</a> •
-      <a href="/termos-cliente.html">Termos do Cliente</a> •
+  <div class="container footer-grid">
+    <div>
+      <strong>INDICONS</strong>
+      <p>Plataforma de indicação de consórcios.</p>
+    </div>
+
+    <div>
+      <a href="/termos-indicador.html">Termo do Indicador</a><br>
+      <a href="/termos-cliente.html">Termo do Cliente</a><br>
       <a href="/privacidade.html">Política de Privacidade</a>
-    </p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 INDICONS. Todos os direitos reservados.
   </div>
 </footer>
-
-<script>
-  const input = document.getElementById("valorConsorcio");
-  const resultado = document.getElementById("resultadoComissao");
-
-  input.addEventListener("input", () => {
-    const valor = Number(input.value);
-    if (!valor || valor <= 0) {
-      resultado.textContent = "R$ 0,00";
-      return;
-    }
-    const comissao = valor * 0.015;
-    resultado.textContent = comissao.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    });
-  });
-</script>
 
 </body>
 </html>
