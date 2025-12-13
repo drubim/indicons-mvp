@@ -1,35 +1,28 @@
 /***************************************************
- * INDICONS — SERVER.JS (MVP COMPLETO)
- * - Cadastro com LGPD
- * - Pré-adesão real (leads)
- * - Dashboard com dados reais
- * - Timeline visual por lead
+ * INDICONS — SERVER.JS
+ * Versão visual + comparativa (inspirada Turn2c)
+ * MVP profissional, transparente e didático
  ***************************************************/
+
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
 const session = require("express-session");
-const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =========================
-   CONFIGURAÇÕES GERAIS
+   CONFIGURAÇÕES
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
+app.use(express.static("public"));  // Para servir arquivos estáticos da pasta public
 app.use(session({
   secret: "indicons_secret_2025",
   resave: false,
   saveUninitialized: false
 }));
-
-/* =========================
-   ARQUIVOS ESTÁTICOS
-========================= */
-app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================
    BANCO DE DADOS
@@ -63,6 +56,15 @@ db.serialize(() => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS historico (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lead_id INTEGER,
+      status TEXT,
+      data DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS comissoes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       lead_id INTEGER,
@@ -92,243 +94,190 @@ function auth(req, res, next) {
   next();
 }
 
-function timeline(status) {
-  const etapas = ["PRE_ADESAO", "EM_ATENDIMENTO", "APROVADA"];
-  let html = `<div class="timeline">`;
+function registrarHistorico(leadId, status) {
+  db.run(`INSERT INTO historico (lead_id, status) VALUES (?, ?)`, [leadId, status]);
+}
 
-  etapas.forEach(e => {
-    const ok = etapas.indexOf(e) <= etapas.indexOf(status);
-    html += `<div class="step ${ok ? "ok" : ""}">${e.replace("_", " ")}</div>`;
+function gerarParcelas(leadId, valor) {
+  const parcelas = [
+    { p: 1, perc: 0.005 },
+    { p: 2, perc: 0.002 },
+    { p: 3, perc: 0.002 },
+    { p: 4, perc: 0.002 },
+    { p: 5, perc: 0.002 },
+    { p: 6, perc: 0.002 },
+  ];
+
+  parcelas.forEach(parc => {
+    db.run(`
+      INSERT INTO comissoes (lead_id, parcela, percentual, valor, status)
+      VALUES (?, ?, ?, ?, 'PREVISTA')
+    `, [leadId, parc.p, parc.perc * 100, valor * parc.perc]);
   });
+}
 
-  html += `</div>`;
-  return html;
+/* =========================
+   ESTILO BASE
+========================= */
+function layout(titulo, conteudo) {
+  return `
+  <html>
+  <head>
+    <title>${titulo}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/style.css">  <!-- Link para o style.css -->
+  </head>
+  <body>
+    <header>
+      <h1>INDICONS</h1>
+    </header>
+    <main>
+      ${conteudo}
+    </main>
+    <footer>
+      Plataforma de indicação de consórcios • Termos e condições aplicáveis
+    </footer>
+  </body>
+  </html>
+  `;
 }
 
 /* =========================
    HOME
 ========================= */
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.send(layout("INDICONS", `
+    <div class="card">
+      <h2>Transforme sua rede de contatos em renda recorrente</h2>
+      <p>Você apenas indica. Um parceiro especializado faz todo o atendimento e fecha a venda.</p>
+      <h3>Comissão de até 1,5%</h3>
+      <p>Valores pagos em até 6 parcelas, conforme regras contratuais.</p>
+      <a class="btn" href="/cadastro">Começar como Indicador</a>
+    </div>
+
+    <div class="card">
+      <h3>Como funciona</h3>
+      <div class="timeline">
+        <div class="step ok">1. Você indica</div>
+        <div class="step ok">2. Parceiro atende</div>
+        <div class="step ok">3. Administradora aprova</div>
+        <div class="step ok">4. Comissão registrada</div>
+        <div class="step ok">5. Pagamento em parcelas</div>
+      </div>
+    </div>
+  `));
 });
 
 /* =========================
-   CADASTRO INDICADOR
+   TABELA COMPARATIVA
+========================= */
+app.get("/comparativo", auth, (req, res) => {
+  res.send(layout("Comparativo", `
+    <div class="card">
+      <h2>Administradoras parceiras</h2>
+      <p>Informações referenciais. Condições podem variar conforme campanha.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Administradora</th>
+            <th>Comissão máxima</th>
+            <th>Forma de pagamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Embracon</td><td>Até 1,5%</td><td>6 parcelas</td></tr>
+          <tr><td>Ademicon</td><td>Até 1,5%</td><td>6 parcelas</td></tr>
+          <tr><td>Porto</td><td>Até 1,5%</td><td>6 parcelas</td></tr>
+          <tr><td>Outras</td><td>Variável</td><td>Conforme contrato</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `));
+});
+
+/* =========================
+   CADASTRO / LOGIN
 ========================= */
 app.get("/cadastro", (req, res) => {
-  res.send(`
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Cadastro — INDICONS</title>
-      <link rel="stylesheet" href="/style.css">
-    </head>
-    <body>
-      <section class="hero">
-        <div class="container">
-          <div class="card">
-            <h2>Cadastro de Indicador</h2>
-            <form method="POST">
-              <input name="nome" placeholder="Nome completo" required><br><br>
-              <input name="email" type="email" placeholder="E-mail" required><br><br>
-              <input name="senha" type="password" placeholder="Senha" required><br><br>
-
-              <label style="font-size:14px;">
-                <input type="checkbox" name="aceite" required>
-                Li e aceito o
-                <a href="/termo-indicador.html" target="_blank">
-                  Termo de Adesão do Indicador
-                </a>
-                e autorizo contato do INDICONS e administradoras.
-              </label><br><br>
-
-              <button class="btn-primary">Criar conta</button>
-            </form>
-          </div>
-        </div>
-      </section>
-    </body>
-    </html>
-  `);
+  res.send(layout("Cadastro", `
+    <div class="card">
+      <h2>Cadastro de Indicador</h2>
+      <form method="POST">
+        <input name="nome" placeholder="Nome" required><br><br>
+        <input name="email" placeholder="Email" required><br><br>
+        <input type="password" name="senha" placeholder="Senha" required><br><br>
+        <label>
+          <input type="checkbox" required>
+          Li e aceito os termos e autorizo contato do INDICONS e administradoras.
+        </label><br><br>
+        <button class="btn">Criar conta</button>
+      </form>
+    </div>
+  `));
 });
 
 app.post("/cadastro", async (req, res) => {
-  if (!req.body.aceite) return res.send("Aceite obrigatório.");
-
   const hash = await bcrypt.hash(req.body.senha, 10);
-
-  db.run(
-    `INSERT INTO usuarios (nome,email,senha,tipo)
-     VALUES (?,?,?,'indicador')`,
-    [req.body.nome, req.body.email, hash],
-    function (err) {
-      if (err) return res.send("Erro ao cadastrar.");
-
-      db.run(
-        `INSERT INTO consentimentos (usuario_id,tipo,ip)
-         VALUES (?,?,?)`,
-        [this.lastID, "INDICADOR", req.ip]
-      );
-
-      res.redirect("/login");
-    }
-  );
+  db.run(`
+    INSERT INTO usuarios (nome,email,senha,tipo)
+    VALUES (?,?,?,'indicador')
+  `, [req.body.nome, req.body.email, hash], function () {
+    db.run(`INSERT INTO consentimentos (usuario_id,tipo,ip) VALUES (?,?,?)`,
+      [this.lastID, "INDICADOR", req.ip]);
+    res.redirect("/login");
+  });
 });
 
-/* =========================
-   LOGIN
-========================= */
 app.get("/login", (req, res) => {
-  res.send(`
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Login — INDICONS</title>
-      <link rel="stylesheet" href="/style.css">
-    </head>
-    <body>
-      <section class="hero">
-        <div class="container">
-          <div class="card">
-            <h2>Login</h2>
-            <form method="POST">
-              <input name="email" placeholder="Email" required><br><br>
-              <input type="password" name="senha" placeholder="Senha" required><br><br>
-              <button class="btn-primary">Entrar</button>
-            </form>
-          </div>
-        </div>
-      </section>
-    </body>
-    </html>
-  `);
+  res.send(layout("Login", `
+    <div class="card">
+      <h2>Login</h2>
+      <form method="POST">
+        <input name="email" placeholder="Email" required><br><br>
+        <input type="password" name="senha" placeholder="Senha" required><br><br>
+        <button class="btn">Entrar</button>
+      </form>
+    </div>
+  `));
 });
 
 app.post("/login", (req, res) => {
-  db.get(`SELECT * FROM usuarios WHERE email=?`, [req.body.email], async (err, u) => {
-    if (!u) return res.send("Usuário não encontrado");
-    if (!(await bcrypt.compare(req.body.senha, u.senha))) return res.send("Senha inválida");
-
+  db.get(`SELECT * FROM usuarios WHERE email=?`, [req.body.email], async (e,u)=>{
+    if(!u) return res.send("Usuário não encontrado");
+    if(!(await bcrypt.compare(req.body.senha,u.senha))) return res.send("Senha inválida");
     req.session.usuario = u;
     res.redirect("/dashboard");
   });
 });
 
 /* =========================
-   DASHBOARD REAL
+   DASHBOARD
 ========================= */
 app.get("/dashboard", auth, (req, res) => {
-  const indicadorId = req.session.usuario.id;
-
-  db.all(
-    `SELECT * FROM leads WHERE indicador_id=?`,
-    [indicadorId],
-    (err, leads) => {
-
-      const totalIndicacoes = leads.length;
-      const aprovadas = leads.filter(l => l.status === "APROVADA");
-      const totalAprovadas = aprovadas.length;
-      const totalVendido = aprovadas.reduce((s, l) => s + (l.valor || 0), 0);
-
-      res.send(`
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Painel — INDICONS</title>
-          <link rel="stylesheet" href="/style.css">
-        </head>
-        <body>
-          <section class="hero">
-            <div class="container">
-
-              <div class="dashboard-cards">
-                <div class="metric"><h4>Indicações</h4><strong>${totalIndicacoes}</strong></div>
-                <div class="metric"><h4>Aprovadas</h4><strong>${totalAprovadas}</strong></div>
-                <div class="metric"><h4>Valor vendido</h4><strong>R$ ${totalVendido.toFixed(2)}</strong></div>
-              </div>
-
-              ${leads.map(l => `
-                <div class="card">
-                  <strong>${l.nome}</strong><br>
-                  ${l.administradora} • R$ ${l.valor}<br>
-                  ${timeline(l.status)}
-                </div>
-              `).join("")}
-
-              <a href="/logout" class="btn-secondary">Sair</a>
-
-            </div>
-          </section>
-        </body>
-        </html>
-      `);
-    }
-  );
-});
-
-/* =========================
-   PRÉ-ADESÃO DO CLIENTE
-========================= */
-app.get("/indicar", (req, res) => {
-  res.send(`
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Pré-adesão — INDICONS</title>
-      <link rel="stylesheet" href="/style.css">
-    </head>
-    <body>
-      <section class="hero">
-        <div class="container">
-          <div class="card">
-            <h2>Pré-adesão</h2>
-            <form method="POST">
-              <input name="nome" placeholder="Nome" required><br><br>
-              <input name="telefone" placeholder="Telefone" required><br><br>
-              <input name="email" type="email" placeholder="E-mail" required><br><br>
-              <select name="administradora" required>
-                <option>Embracon</option>
-                <option>Ademicon</option>
-                <option>Porto</option>
-              </select><br><br>
-              <input name="valor" placeholder="Valor do crédito" required><br><br>
-
-              <label>
-                <input type="checkbox" name="aceite" required>
-                Autorizo contato conforme
-                <a href="/termo-cliente.html" target="_blank">Termo</a>
-              </label><br><br>
-
-              <button class="btn-primary">Enviar</button>
-            </form>
-          </div>
+  db.all(`SELECT * FROM leads WHERE indicador_id=?`, [req.session.usuario.id], (e,leads)=>{
+    let html = `
+      <div class="card">
+        <h2>Painel do Indicador</h2>
+        <a class="btn sec" href="/comparativo">Ver comissões por administradora</a>
+      </div>
+    `;
+    leads.forEach(l=>{
+      html+=`
+        <div class="card">
+          <strong>${l.nome}</strong><br>
+          Administradora: ${l.administradora}<br>
+          Valor: R$ ${l.valor}<br>
+          Status: ${l.status}
         </div>
-      </section>
-    </body>
-    </html>
-  `);
-});
-
-app.post("/indicar", (req, res) => {
-  if (!req.body.aceite) return res.send("Aceite obrigatório.");
-
-  db.run(
-    `INSERT INTO leads (nome,telefone,email,administradora,valor,status)
-     VALUES (?,?,?,?,?,'PRE_ADESAO')`,
-    [req.body.nome, req.body.telefone, req.body.email, req.body.administradora, req.body.valor],
-    () => res.send("Pré-adesão enviada com sucesso.")
-  );
+      `;
+    });
+    res.send(layout("Dashboard",html));
+  });
 });
 
 /* =========================
-   LOGOUT
-========================= */
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/"));
-});
-
-/* =========================
-   START
+   SERVIDOR
 ========================= */
 app.listen(PORT, () => {
   console.log("INDICONS rodando na porta " + PORT);
