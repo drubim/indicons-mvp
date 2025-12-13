@@ -1,33 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Pré-adesão – INDICONS</title>
+  <title>Pré-adesão — INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="container">
-  <h1>Pré-adesão ao Consórcio</h1>
+<header class="topo">
+  <div class="container flex">
+    <div class="logo">INDICONS</div>
+    <nav>
+      <a href="/">Início</a>
+      <a href="/login.html" class="btn-sec">Área do Indicador</a>
+    </nav>
+  </div>
+</header>
 
-  <form id="formPreAdesao">
-    <input name="nome" placeholder="Nome completo" required />
-    <input name="telefone" placeholder="Telefone / WhatsApp" required />
-    <input name="email" placeholder="E-mail (opcional)" />
+<section class="section">
+  <div class="container" style="max-width:680px">
+    
+    <div class="card">
+      <h2>Pré-adesão ao consórcio</h2>
+      <p>
+        Preencha os dados abaixo.  
+        Um parceiro autorizado entrará em contato para explicar as condições e finalizar o processo.
+      </p>
 
-    <select name="administradora" required>
-      <option value="">Administradora</option>
-      <option>Embracon</option>
-      <option>Ademicon</option>
-      <option>Porto</option>
-    </select>
+      <form id="formPreAdesao">
 
-    <input name="valor" placeholder="Valor do crédito (R$)" required />
+        <label>Nome completo</label>
+        <input name="nome" required>
 
-    <button>Enviar pré-adesão</button>
-  </form>
-</div>
+        <label>Telefone / WhatsApp</label>
+        <input name="telefone" required>
 
-<script src="app.js"></script>
+        <label>E-mail</label>
+        <input name="email" type="email">
+
+        <label>Administradora de interesse</label>
+        <select name="administradora" required>
+          <option value="">Selecione</option>
+          <option>Embracon</option>
+          <option>Ademicon</option>
+          <option>Porto</option>
+          <option>Outra</option>
+        </select>
+
+        <label>Valor aproximado do consórcio</label>
+        <input name="valor" type="number" placeholder="Ex: 100000" required>
+
+        <label class="checkbox">
+          <input type="checkbox" required>
+          Li e aceito os 
+          <a href="/termos-cliente.html" target="_blank">Termos do Cliente</a> e autorizo
+          contato do INDICONS e das administradoras parceiras.
+        </label>
+
+        <button class="btn grande" type="submit">
+          Enviar pré-adesão
+        </button>
+
+        <p class="muted" style="margin-top:10px">
+          Seus dados serão usados apenas para esta finalidade.
+        </p>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    © INDICONS • 
+    <a href="/privacidade.html">Política de Privacidade</a>
+  </div>
+</footer>
+
+<script src="pre-adesao.js"></script>
 </body>
 </html>
