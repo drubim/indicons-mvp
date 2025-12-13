@@ -1,5 +1,9 @@
 /***************************************************
- * INDICONS — SERVER.JS (MVP CONSOLIDADO)
+ * INDICONS — SERVER.JS (MVP COMPLETO)
+ * - Cadastro com LGPD
+ * - Pré-adesão real (leads)
+ * - Dashboard com dados reais
+ * - Timeline visual por lead
  ***************************************************/
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
@@ -81,15 +85,28 @@ db.serialize(() => {
 });
 
 /* =========================
-   MIDDLEWARE AUTH
+   FUNÇÕES AUXILIARES
 ========================= */
 function auth(req, res, next) {
   if (!req.session.usuario) return res.redirect("/login");
   next();
 }
 
+function timeline(status) {
+  const etapas = ["PRE_ADESAO", "EM_ATENDIMENTO", "APROVADA"];
+  let html = `<div class="timeline">`;
+
+  etapas.forEach(e => {
+    const ok = etapas.indexOf(e) <= etapas.indexOf(status);
+    html += `<div class="step ${ok ? "ok" : ""}">${e.replace("_", " ")}</div>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
 /* =========================
-   HOME (FRONTEND)
+   HOME
 ========================= */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
@@ -100,8 +117,7 @@ app.get("/", (req, res) => {
 ========================= */
 app.get("/cadastro", (req, res) => {
   res.send(`
-    <!DOCTYPE html>
-    <html lang="pt-BR">
+    <html>
     <head>
       <meta charset="UTF-8">
       <title>Cadastro — INDICONS</title>
@@ -112,11 +128,10 @@ app.get("/cadastro", (req, res) => {
         <div class="container">
           <div class="card">
             <h2>Cadastro de Indicador</h2>
-
-            <form method="POST" action="/cadastro">
+            <form method="POST">
               <input name="nome" placeholder="Nome completo" required><br><br>
-              <input type="email" name="email" placeholder="E-mail" required><br><br>
-              <input type="password" name="senha" placeholder="Senha" required><br><br>
+              <input name="email" type="email" placeholder="E-mail" required><br><br>
+              <input name="senha" type="password" placeholder="Senha" required><br><br>
 
               <label style="font-size:14px;">
                 <input type="checkbox" name="aceite" required>
@@ -124,13 +139,11 @@ app.get("/cadastro", (req, res) => {
                 <a href="/termo-indicador.html" target="_blank">
                   Termo de Adesão do Indicador
                 </a>
-                e autorizo o contato do INDICONS e administradoras parceiras.
-              </label>
+                e autorizo contato do INDICONS e administradoras.
+              </label><br><br>
 
-              <br><br>
               <button class="btn-primary">Criar conta</button>
             </form>
-
           </div>
         </div>
       </section>
@@ -140,9 +153,7 @@ app.get("/cadastro", (req, res) => {
 });
 
 app.post("/cadastro", async (req, res) => {
-  if (!req.body.aceite) {
-    return res.send("É obrigatório aceitar o Termo de Adesão.");
-  }
+  if (!req.body.aceite) return res.send("Aceite obrigatório.");
 
   const hash = await bcrypt.hash(req.body.senha, 10);
 
@@ -151,7 +162,7 @@ app.post("/cadastro", async (req, res) => {
      VALUES (?,?,?,'indicador')`,
     [req.body.nome, req.body.email, hash],
     function (err) {
-      if (err) return res.send("Erro ao cadastrar (email já existe).");
+      if (err) return res.send("Erro ao cadastrar.");
 
       db.run(
         `INSERT INTO consentimentos (usuario_id,tipo,ip)
@@ -169,7 +180,6 @@ app.post("/cadastro", async (req, res) => {
 ========================= */
 app.get("/login", (req, res) => {
   res.send(`
-    <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
@@ -197,136 +207,117 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   db.get(`SELECT * FROM usuarios WHERE email=?`, [req.body.email], async (err, u) => {
     if (!u) return res.send("Usuário não encontrado");
-    if (!(await bcrypt.compare(req.body.senha, u.senha))) {
-      return res.send("Senha inválida");
-    }
+    if (!(await bcrypt.compare(req.body.senha, u.senha))) return res.send("Senha inválida");
+
     req.session.usuario = u;
     res.redirect("/dashboard");
   });
 });
 
 /* =========================
-   DASHBOARD
+   DASHBOARD REAL
 ========================= */
 app.get("/dashboard", auth, (req, res) => {
   const indicadorId = req.session.usuario.id;
 
   db.all(
-    `SELECT * FROM leads WHERE indicador_id = ?`,
+    `SELECT * FROM leads WHERE indicador_id=?`,
     [indicadorId],
     (err, leads) => {
 
-      if (err) return res.send("Erro ao carregar dados");
-
       const totalIndicacoes = leads.length;
-
       const aprovadas = leads.filter(l => l.status === "APROVADA");
       const totalAprovadas = aprovadas.length;
+      const totalVendido = aprovadas.reduce((s, l) => s + (l.valor || 0), 0);
 
-      const totalVendido = aprovadas.reduce(
-        (s, l) => s + (l.valor || 0), 0
-      );
+      res.send(`
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Painel — INDICONS</title>
+          <link rel="stylesheet" href="/style.css">
+        </head>
+        <body>
+          <section class="hero">
+            <div class="container">
 
-      db.all(
-        `SELECT * FROM comissoes WHERE lead_id IN
-         (SELECT id FROM leads WHERE indicador_id = ?)`,
-        [indicadorId],
-        (err2, coms) => {
-
-          const totalComissao = coms.reduce(
-            (s, c) => s + (c.valor || 0), 0
-          );
-
-          res.send(`
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head>
-              <meta charset="UTF-8">
-              <title>Painel do Indicador — INDICONS</title>
-              <link rel="stylesheet" href="/style.css">
-            </head>
-            <body>
-
-            <section class="hero">
-              <div class="container">
-
-                <div class="card">
-                  <h1>Painel do Indicador</h1>
-                  <p>Acompanhe suas indicações e comissões reais</p>
-                </div>
-
-                <div class="dashboard-cards">
-                  <div class="metric">
-                    <h4>Indicações realizadas</h4>
-                    <strong>${totalIndicacoes}</strong>
-                  </div>
-
-                  <div class="metric">
-                    <h4>Vendas aprovadas</h4>
-                    <strong>${totalAprovadas}</strong>
-                  </div>
-
-                  <div class="metric">
-                    <h4>Valor vendido</h4>
-                    <strong>R$ ${totalVendido.toFixed(2)}</strong>
-                  </div>
-
-                  <div class="metric">
-                    <h4>Comissão prevista</h4>
-                    <strong>R$ ${totalComissao.toFixed(2)}</strong>
-                  </div>
-                </div>
-
-                <div class="card" style="margin-top:30px;">
-                  <a href="/comparativo" class="btn-secondary">
-                    Ver tabela de comissões por administradora
-                  </a>
-                  <a href="/logout" class="btn-secondary" style="margin-left:10px;">
-                    Sair
-                  </a>
-                </div>
-
+              <div class="dashboard-cards">
+                <div class="metric"><h4>Indicações</h4><strong>${totalIndicacoes}</strong></div>
+                <div class="metric"><h4>Aprovadas</h4><strong>${totalAprovadas}</strong></div>
+                <div class="metric"><h4>Valor vendido</h4><strong>R$ ${totalVendido.toFixed(2)}</strong></div>
               </div>
-            </section>
 
-            </body>
-            </html>
-          `);
-        }
-      );
+              ${leads.map(l => `
+                <div class="card">
+                  <strong>${l.nome}</strong><br>
+                  ${l.administradora} • R$ ${l.valor}<br>
+                  ${timeline(l.status)}
+                </div>
+              `).join("")}
+
+              <a href="/logout" class="btn-secondary">Sair</a>
+
+            </div>
+          </section>
+        </body>
+        </html>
+      `);
     }
   );
 });
 
 /* =========================
-   COMPARATIVO
+   PRÉ-ADESÃO DO CLIENTE
 ========================= */
-app.get("/comparativo", auth, (req, res) => {
+app.get("/indicar", (req, res) => {
   res.send(`
-    <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>Comparativo — INDICONS</title>
+      <title>Pré-adesão — INDICONS</title>
       <link rel="stylesheet" href="/style.css">
     </head>
     <body>
       <section class="hero">
         <div class="container">
           <div class="card">
-            <h2>Administradoras Parceiras</h2>
-            <table>
-              <tr><th>Administradora</th><th>Comissão Máxima</th><th>Pagamento</th></tr>
-              <tr><td>Embracon</td><td>Até 1,5%</td><td>6 parcelas</td></tr>
-              <tr><td>Ademicon</td><td>Até 1,5%</td><td>6 parcelas</td></tr>
-              <tr><td>Porto</td><td>Até 1,5%</td><td>6 parcelas</td></tr>
-            </table>
+            <h2>Pré-adesão</h2>
+            <form method="POST">
+              <input name="nome" placeholder="Nome" required><br><br>
+              <input name="telefone" placeholder="Telefone" required><br><br>
+              <input name="email" type="email" placeholder="E-mail" required><br><br>
+              <select name="administradora" required>
+                <option>Embracon</option>
+                <option>Ademicon</option>
+                <option>Porto</option>
+              </select><br><br>
+              <input name="valor" placeholder="Valor do crédito" required><br><br>
+
+              <label>
+                <input type="checkbox" name="aceite" required>
+                Autorizo contato conforme
+                <a href="/termo-cliente.html" target="_blank">Termo</a>
+              </label><br><br>
+
+              <button class="btn-primary">Enviar</button>
+            </form>
           </div>
         </div>
       </section>
     </body>
     </html>
   `);
+});
+
+app.post("/indicar", (req, res) => {
+  if (!req.body.aceite) return res.send("Aceite obrigatório.");
+
+  db.run(
+    `INSERT INTO leads (nome,telefone,email,administradora,valor,status)
+     VALUES (?,?,?,?,?,'PRE_ADESAO')`,
+    [req.body.nome, req.body.telefone, req.body.email, req.body.administradora, req.body.valor],
+    () => res.send("Pré-adesão enviada com sucesso.")
+  );
 });
 
 /* =========================
