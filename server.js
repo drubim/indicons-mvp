@@ -1,7 +1,11 @@
 /***************************************************
- * INDICONS — SERVER.JS
- * MVP funcional com PRÉ-ADESÃO integrada
+ * INDICONS — SERVER.JS (VERSÃO ESTÁVEL)
+ * Corrigido para:
+ * - Site estático (/public)
+ * - Cadastro e login funcionando
+ * - Sessão persistente no Render
  ***************************************************/
+
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
@@ -12,18 +16,26 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =========================
-   CONFIGURAÇÕES
+   MIDDLEWARES
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+/* 👉 SERVIR ARQUIVOS ESTÁTICOS */
+app.use(express.static("public"));
+
+/* 👉 SESSÃO (Render compatível) */
 app.use(
   session({
     secret: "indicons_secret_2025",
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: false, // OBRIGATÓRIO no Render
+      httpOnly: true,
+    },
   })
 );
-app.use(express.static("public"));
 
 /* =========================
    BANCO DE DADOS
@@ -37,7 +49,7 @@ db.serialize(() => {
       nome TEXT,
       email TEXT UNIQUE,
       senha TEXT,
-      tipo TEXT,
+      tipo TEXT DEFAULT 'indicador',
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -49,99 +61,72 @@ db.serialize(() => {
       telefone TEXT,
       email TEXT,
       indicador_id INTEGER,
-      administradora TEXT,
-      valor REAL,
-      status TEXT,
+      status TEXT DEFAULT 'PRE-ADESAO',
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS historico (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      lead_id INTEGER,
-      status TEXT,
-      data DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
 });
 
 /* =========================
-   AUTENTICAÇÃO
+   AUTH
 ========================= */
 function auth(req, res, next) {
-  if (!req.session.usuario) return res.status(401).json({ erro: "Não autorizado" });
+  if (!req.session.usuario) {
+    return res.redirect("/login.html");
+  }
   next();
 }
 
 /* =========================
-   HOME
-========================= */
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
-
-/* =========================
-   CADASTRO / LOGIN
+   CADASTRO
 ========================= */
 app.post("/cadastro", async (req, res) => {
-  const hash = await bcrypt.hash(req.body.senha, 10);
-  db.run(
-    `INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,'indicador')`,
-    [req.body.nome, req.body.email, hash],
-    () => res.redirect("/login.html")
-  );
-});
+  const { nome, email, senha } = req.body;
 
-app.post("/login", (req, res) => {
-  db.get(
-    `SELECT * FROM usuarios WHERE email=?`,
-    [req.body.email],
-    async (err, u) => {
-      if (!u) return res.send("Usuário não encontrado");
-      if (!(await bcrypt.compare(req.body.senha, u.senha)))
-        return res.send("Senha inválida");
-      req.session.usuario = u;
-      res.redirect("/dashboard.html");
+  if (!nome || !email || !senha) {
+    return res.send("Dados incompletos");
+  }
+
+  const hash = await bcrypt.hash(senha, 10);
+
+  db.run(
+    `INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)`,
+    [nome, email, hash],
+    function (err) {
+      if (err) {
+        return res.send("E-mail já cadastrado");
+      }
+      res.redirect("/login.html");
     }
   );
 });
 
 /* =========================
-   PRÉ-ADESÃO (ETAPA F)
+   LOGIN
 ========================= */
-app.post("/api/pre-adesao", auth, (req, res) => {
-  const { nome, telefone, email, administradora, valor } = req.body;
+app.post("/login", (req, res) => {
+  const { email, senha } = req.body;
 
-  if (!nome || !telefone || !administradora || !valor) {
-    return res.status(400).json({ erro: "Dados incompletos" });
-  }
+  db.get(
+    `SELECT * FROM usuarios WHERE email = ?`,
+    [email],
+    async (err, usuario) => {
+      if (!usuario) {
+        return res.send("Usuário não encontrado");
+      }
 
-  db.run(
-    `
-    INSERT INTO leads
-    (nome, telefone, email, indicador_id, administradora, valor, status)
-    VALUES (?, ?, ?, ?, ?, ?, 'EM_ATENDIMENTO')
-    `,
-    [
-      nome,
-      telefone,
-      email || "",
-      req.session.usuario.id,
-      administradora,
-      valor,
-    ],
-    function (err) {
-      if (err) return res.status(500).json({ erro: "Erro ao salvar lead" });
+      const ok = await bcrypt.compare(senha, usuario.senha);
+      if (!ok) {
+        return res.send("Senha inválida");
+      }
 
-      db.run(
-        `INSERT INTO historico (lead_id, status) VALUES (?, ?)`,
-        [this.lastID, "EM_ATENDIMENTO"]
-      );
+      req.session.usuario = {
+        id: usuario.id,
+        nome: usuario.nome,
+        tipo: usuario.tipo,
+      };
 
-      console.log("📩 NOVA PRÉ-ADESÃO:", nome, telefone);
-
-      res.json({ sucesso: true });
+      res.redirect("/dashboard");
     }
   );
 });
@@ -149,16 +134,34 @@ app.post("/api/pre-adesao", auth, (req, res) => {
 /* =========================
    DASHBOARD
 ========================= */
+app.get("/dashboard", auth, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+/* =========================
+   API LEADS (exemplo)
+========================= */
 app.get("/api/leads", auth, (req, res) => {
   db.all(
-    `SELECT * FROM leads WHERE indicador_id=?`,
+    `SELECT * FROM leads WHERE indicador_id = ?`,
     [req.session.usuario.id],
-    (err, rows) => res.json(rows || [])
+    (err, rows) => {
+      res.json(rows || []);
+    }
   );
 });
 
 /* =========================
-   SERVIDOR
+   LOGOUT
+========================= */
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.redirect("/login.html");
+  });
+});
+
+/* =========================
+   START
 ========================= */
 app.listen(PORT, () => {
   console.log("INDICONS rodando na porta " + PORT);
