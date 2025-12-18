@@ -1,54 +1,185 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Quem Somos • INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Quem Somos | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<header class="topo">
-  <div class="container">
+<header class="header">
+  <div class="container header-flex">
     <div class="logo">INDICONS</div>
     <nav>
-      <a href="index.html">Home</a>
-      <a href="/login" class="btn-outline">Área do Indicador</a>
+      <a href="/">Home</a>
+      <a href="/simulador.html">Simulador</a>
+      <a href="/login.html" class="btn-outline">Entrar</a>
+      <a href="/cadastro.html" class="btn">Cadastrar</a>
     </nav>
   </div>
 </header>
 
-<section class="section">
-  <div class="container">
-    <h2>Quem Somos</h2>
+<main class="container">
 
+  <!-- HERO -->
+  <section class="section">
+    <h1>Quem somos</h1>
+    <p class="muted">
+      Transparência, simplicidade e oportunidade para quem quer gerar renda
+      indicando consórcios.
+    </p>
+  </section>
+
+  <!-- SOBRE -->
+  <section class="section grid">
     <div class="card">
+      <h3>O que é o INDICONS</h3>
       <p>
-        O <strong>INDICONS</strong> é uma plataforma digital que conecta pessoas interessadas
-        em gerar renda por indicação a parceiros especializados na comercialização de consórcios.
+        O <strong>INDICONS</strong> é uma plataforma digital que conecta pessoas
+        interessadas em indicar consórcios a parceiros especializados no
+        atendimento e fechamento das vendas.
       </p>
-
       <p>
-        Nosso papel é exclusivamente o de <strong>intermediação de indicações</strong>.
-        Não realizamos vendas, não negociamos valores, não prometemos contemplação
-        e não atuamos como administradora de consórcios.
-      </p>
-
-      <p>
-        Toda a etapa comercial, análise, contratação e gestão do consórcio é realizada
-        diretamente pelas <strong>administradoras parceiras</strong>, devidamente autorizadas.
-      </p>
-
-      <p>
-        O INDICONS existe para trazer <strong>transparência, rastreabilidade e organização</strong>
-        ao processo de indicação, permitindo que o indicador acompanhe suas pré-adesões,
-        vendas aprovadas e comissões de forma clara e segura.
+        Nosso papel é registrar as indicações, organizar o fluxo de atendimento
+        e garantir transparência no acompanhamento das comissões.
       </p>
     </div>
 
-    <div class="cards" style="margin-top:40px;">
+    <div class="card">
+      <h3>Nosso propósito</h3>
+      <p>
+        Tornar o processo de indicação simples, rastreável e seguro, permitindo
+        que qualquer pessoa possa transformar sua rede de contatos em uma
+        fonte de renda recorrente.
+      </p>
+      <p>
+        Você indica. O parceiro atende. A administradora aprova.
+        O INDICONS registra e acompanha tudo.
+      </p>
+    </div>
+  </section>
+
+  <!-- COMO GANHAMOS -->
+  <section class="section">
+    <h2>Como funciona o modelo</h2>
+
+    <div class="timeline">
+      <div class="step ok">
+        <span>1</span>
+        <p>Indicação</p>
+      </div>
+      <div class="step ok">
+        <span>2</span>
+        <p>Atendimento por parceiro autorizado</p>
+      </div>
+      <div class="step ok">
+        <span>3</span>
+        <p>Venda aprovada pela administradora</p>
+      </div>
+      <div class="step ok">
+        <span>4</span>
+        <p>Comissão registrada e paga ao indicador</p>
+      </div>
+    </div>
+
+    <p class="note">
+      O INDICONS não vende consórcios, não realiza atendimento comercial direto
+      ao cliente final e não substitui as administradoras.
+    </p>
+  </section>
+
+  <!-- PARCEIROS -->
+  <section class="section light">
+    <h2>Administradoras parceiras</h2>
+
+    <div class="grid">
+      <div class="card center">
+        <strong>Embracon</strong>
+        <p>Administradora de consórcios com atuação nacional.</p>
+      </div>
+
+      <div class="card center">
+        <strong>Ademicon</strong>
+        <p>Referência em consórcios de imóveis e serviços.</p>
+      </div>
+
+      <div class="card center">
+        <strong>Outras administradoras</strong>
+        <p>Conforme campanhas e parcerias vigentes.</p>
+      </div>
+    </div>
+
+    <p class="note">
+      As condições comerciais e percentuais podem variar conforme administradora,
+      produto e campanha vigente.
+    </p>
+  </section>
+
+  <!-- COMPLIANCE -->
+  <section class="section">
+    <h2>Compromisso com transparência</h2>
+
+    <div class="grid">
       <div class="card">
-        <h3>Nosso objetivo</h3>
+        <h4>LGPD</h4>
         <p>
-          Simplificar o processo de indicação e permitir que qualquer pessoa,
-          física ou
+          Todos os dados são coletados mediante consentimento e utilizados
+          exclusivamente para fins de contato e acompanhamento das indicações.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>Autorização de contato</h4>
+        <p>
+          Ao se cadastrar, o indicador e o cliente autorizam o contato do
+          INDICONS, parceiros e administradoras envolvidas no processo.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>Regras de comissão</h4>
+        <p>
+          A comissão do indicador pode chegar a até 1,5% do valor do contrato,
+          paga em até 6 parcelas, conforme regras descritas nos termos.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="card center">
+      <h3>Quer fazer parte?</h3>
+      <p>
+        Cadastre-se gratuitamente e comece a indicar consórcios hoje mesmo.
+      </p>
+      <a href="/cadastro.html" class="btn btn-large">
+        Criar conta de Indicador
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <strong>INDICONS</strong>
+      <p>Plataforma de indicação de consórcios.</p>
+    </div>
+
+    <div>
+      <a href="/termos-indicador.html">Termos do Indicador</a><br>
+      <a href="/termos-cliente.html">Termos do Cliente</a><br>
+      <a href="/privacidade.html">Política de Privacidade</a>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 INDICONS
+  </div>
+</footer>
+
+</body>
+</html>
