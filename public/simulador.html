@@ -1,20 +1,152 @@
-const input = document.getElementById("valorConsorcio");
-const resultado = document.getElementById("resultadoComissao");
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulador de Comissão | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
-if (input) {
-  input.addEventListener("input", () => {
-    const valor = Number(input.value);
+<header class="header">
+  <div class="container header-flex">
+    <div class="logo">INDICONS</div>
+    <nav>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/comparativo.html">Parceiros</a>
+      <a href="/logout" class="btn-outline">Sair</a>
+    </nav>
+  </div>
+</header>
 
-    if (!valor || valor <= 0) {
-      resultado.textContent = "R$ 0,00";
-      return;
-    }
+<main class="container">
 
-    const comissao = valor * 0.015;
+  <!-- TÍTULO -->
+  <section class="section">
+    <h1>Simulador de Comissão</h1>
+    <p class="muted">
+      Veja quanto você pode ganhar indicando consórcios pelo INDICONS.
+    </p>
+  </section>
 
-    resultado.textContent = comissao.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    });
+  <!-- SIMULADOR -->
+  <section class="grid">
+
+    <!-- FORM -->
+    <div class="card">
+      <h3>Informe os dados</h3>
+
+      <label>Valor do contrato (R$)</label>
+      <input
+        type="number"
+        id="valorContrato"
+        placeholder="Ex: 100000"
+        class="input"
+      />
+
+      <label>Comissão máxima</label>
+      <input
+        type="text"
+        value="Até 1,5%"
+        disabled
+        class="input"
+      />
+
+      <button class="btn" onclick="simular()">Simular ganhos</button>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="card highlight-card">
+      <h3>Resultado da simulação</h3>
+
+      <p>
+        Comissão total estimada:
+      </p>
+      <h2 id="total">R$ 0,00</h2>
+
+      <hr>
+
+      <p><strong>Pagamento em até 6 parcelas</strong></p>
+
+      <ul class="parcelas">
+        <li>1ª parcela (0,50%): <span id="p1">R$ 0,00</span></li>
+        <li>2ª parcela (0,20%): <span id="p2">R$ 0,00</span></li>
+        <li>3ª parcela (0,20%): <span id="p3">R$ 0,00</span></li>
+        <li>4ª parcela (0,20%): <span id="p4">R$ 0,00</span></li>
+        <li>5ª parcela (0,20%): <span id="p5">R$ 0,00</span></li>
+        <li>6ª parcela (0,20%): <span id="p6">R$ 0,00</span></li>
+      </ul>
+
+      <p class="note">
+        * Valores ilustrativos. Pode haver estorno de até 0,35% até a 6ª parcela
+        em caso de inadimplência ou cancelamento do contrato.
+      </p>
+    </div>
+
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="card center">
+      <h3>Pronto para começar?</h3>
+      <p>
+        Cadastre-se como indicador e acompanhe tudo em um painel profissional.
+      </p>
+      <a href="/cadastro.html" class="btn btn-large">
+        Criar conta de Indicador
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <strong>INDICONS</strong>
+      <p>Plataforma de indicação de consórcios.</p>
+    </div>
+    <div>
+      <a href="/termos-indicador.html">Termos do Indicador</a><br>
+      <a href="/privacidade.html">Política de Privacidade</a>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 INDICONS
+  </div>
+</footer>
+
+<script>
+function formatar(valor) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
   });
 }
+
+function simular() {
+  const valor = Number(document.getElementById("valorContrato").value);
+
+  if (!valor || valor <= 0) {
+    alert("Informe um valor válido.");
+    return;
+  }
+
+  const p1 = valor * 0.005;
+  const p = valor * 0.002;
+
+  const total = p1 + (p * 5);
+
+  document.getElementById("total").innerText = formatar(total);
+  document.getElementById("p1").innerText = formatar(p1);
+  document.getElementById("p2").innerText = formatar(p);
+  document.getElementById("p3").innerText = formatar(p);
+  document.getElementById("p4").innerText = formatar(p);
+  document.getElementById("p5").innerText = formatar(p);
+  document.getElementById("p6").innerText = formatar(p);
+}
+</script>
+
+</body>
+</html>
