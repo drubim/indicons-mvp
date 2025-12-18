@@ -188,3 +188,41 @@ nav a {
   font-size: 12px;
   color: #9ca3af;
 }
+/* PROVA SOCIAL */
+.testimonial {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 220px;
+}
+
+.testimonial .quote {
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.testimonial .author {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.metrics h3 {
+  font-size: 32px;
+  margin-bottom: 6px;
+  color: #2563eb;
+}
+
+.notice {
+  background: #fff7ed;
+  border-left: 6px solid #fb923c;
+}
+
+.highlight {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+}
+
+.highlight p {
+  color: #e5e7eb;
+}
