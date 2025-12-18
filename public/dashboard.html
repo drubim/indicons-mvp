@@ -1,71 +1,64 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel do Indicador | INDICONS</title>
+  <title>Dashboard | INDICONS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<header class="header">
-  <div class="container header-flex">
-    <div class="logo">INDICONS</div>
-    <nav>
-      <a href="/simulador.html">Simulador</a>
-      <a href="/logout">Sair</a>
-    </nav>
-  </div>
+<header class="topbar">
+  <div class="logo">INDICONS</div>
+  <a href="/logout" class="logout">Sair</a>
 </header>
 
 <main class="container">
 
-  <h1>Painel do Indicador</h1>
-
-  <div class="grid-3">
+  <!-- RESUMO -->
+  <section class="cards">
     <div class="card">
       <h4>Pré-adesões</h4>
-      <strong id="pre">0</strong>
+      <strong id="totalLeads">0</strong>
     </div>
     <div class="card">
       <h4>Vendas aprovadas</h4>
-      <strong id="vend">0</strong>
+      <strong id="totalVendas">0</strong>
     </div>
     <div class="card">
-      <h4>Comissões previstas</h4>
-      <strong id="com">R$ 0</strong>
+      <h4>Comissão estimada</h4>
+      <strong id="totalComissao">R$ 0</strong>
     </div>
-  </div>
+  </section>
 
-  <div class="card">
+  <!-- GRÁFICO FUNIL -->
+  <section class="panel">
     <h3>Funil de indicações</h3>
-    <canvas id="funil"></canvas>
-  </div>
+    <canvas id="funilChart"></canvas>
+  </section>
+
+  <!-- PAINEL FINANCEIRO -->
+  <section class="panel">
+    <h3>Painel financeiro</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Administradora</th>
+          <th>Valor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="financeiroTabela">
+        <!-- JS -->
+      </tbody>
+    </table>
+  </section>
 
 </main>
 
-<script>
-fetch("/api/dashboard")
-  .then(r => r.json())
-  .then(d => {
-    document.getElementById("pre").innerText = d.pre;
-    document.getElementById("vend").innerText = d.vendas;
-    document.getElementById("com").innerText = "R$ " + d.comissao.toFixed(2);
-
-    new Chart(document.getElementById("funil"), {
-      type: "bar",
-      data: {
-        labels: ["Pré-adesão", "Atendimento", "Venda", "Pagamento"],
-        datasets: [{
-          label: "Quantidade",
-          data: d.funil,
-          backgroundColor: "#2563eb"
-        }]
-      }
-    });
-  });
-</script>
-
+<script src="dashboard.js"></script>
 </body>
 </html>
