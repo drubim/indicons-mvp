@@ -1,48 +1,64 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Login • INDICONS</title>
+  <title>Entrar | INDICONS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header class="header">
   <div class="container header-flex">
     <div class="logo">INDICONS</div>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/simulador.html">Simulador</a>
+      <a href="/cadastro.html" class="btn-outline">Criar conta</a>
+    </nav>
   </div>
 </header>
 
-<section class="section bg-light">
-  <div class="container" style="max-width:420px;">
-    <div class="card-login">
-      <h2>Acessar plataforma</h2>
+<main class="container center">
 
-      <form>
-        <label>E-mail</label>
-        <input type="email" placeholder="seu@email.com" required>
+  <section class="card login-card">
+    <h1>Acessar plataforma</h1>
 
-        <label>Senha</label>
-        <input type="password" placeholder="********" required>
+    <!-- FORMULÁRIO CORRETO -->
+    <form method="POST" action="/login">
 
-        <button class="btn-primario" style="width:100%; margin-top:20px;">
-          Entrar
-        </button>
-      </form>
+      <label>E-mail</label>
+      <input
+        type="email"
+        name="email"
+        placeholder="seu@email.com"
+        required
+      >
 
-      <p class="login-note">
-        Ainda não é indicador?
-        <a href="/cadastro.html">Criar conta</a>
-      </p>
-    </div>
-  </div>
-</section>
+      <label>Senha</label>
+      <input
+        type="password"
+        name="senha"
+        placeholder="••••••••"
+        required
+      >
 
-<footer class="footer">
-  <div class="footer-copy">
-    © 2025 INDICONS
-  </div>
+      <button class="btn btn-large" type="submit">
+        Entrar
+      </button>
+
+    </form>
+
+    <p class="muted">
+      Ainda não é indicador?
+      <a href="/cadastro.html"><strong>Criar conta</strong></a>
+    </p>
+  </section>
+
+</main>
+
+<footer class="footer-simple">
+  © 2025 INDICONS • Plataforma de indicação de consórcios
 </footer>
 
 </body>
