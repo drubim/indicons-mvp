@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Simulador de Comissão | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -13,103 +14,49 @@
     <div class="logo">INDICONS</div>
     <nav>
       <a href="/">Home</a>
-      <a href="/quem-somos.html">Quem Somos</a>
-      <a href="/prova-social.html">Prova Social</a>
-      <a href="/login.html" class="btn-outline">Entrar</a>
-      <a href="/cadastro.html" class="btn">Cadastrar</a>
+      <a href="/cadastro.html">Cadastrar</a>
     </nav>
   </div>
 </header>
 
-<main class="container">
+<main class="container center">
 
-  <!-- HERO -->
-  <section class="section center">
-    <h1>Simule sua comissão</h1>
-    <p class="muted">
-      Veja de forma clara e transparente como funciona o pagamento das comissões.
-    </p>
-  </section>
+  <h1>Simule sua comissão</h1>
 
-  <!-- SIMULADOR -->
-  <section class="section grid-2">
+  <div class="card" style="max-width:500px;margin:auto">
+    <label>Valor do contrato</label>
+    <input id="valor" type="number" placeholder="Ex: 100000">
 
-    <!-- INPUTS -->
-    <div class="card">
-      <h2>Dados da simulação</h2>
+    <button class="btn btn-large" onclick="simular()">
+      Simular
+    </button>
 
-      <label>Valor do consórcio (R$)</label>
-      <input id="valor" type="number" placeholder="Ex: 100000" />
-
-      <label>Administradora</label>
-      <select id="adm">
-        <option value="embracon">Embracon</option>
-        <option value="ademicon">Ademicon</option>
-        <option value="porto">Porto</option>
-        <option value="outras">Outras</option>
-      </select>
-
-      <button class="btn btn-large" onclick="simular()">
-        Simular comissão
-      </button>
-    </div>
-
-    <!-- RESULTADO -->
-    <div class="card highlight">
-      <h2>Resultado da simulação</h2>
-
-      <p>Comissão máxima estimada:</p>
-      <h3 id="total">R$ 0,00</h3>
-
-      <div id="parcelas" class="parcelas"></div>
-    </div>
-
-  </section>
-
-  <!-- AVISO LEGAL -->
-  <section class="section">
-    <div class="card notice">
-      <strong>Aviso importante</strong>
-      <p>
-        Valores meramente ilustrativos, considerando comissão máxima de até 1,5%.
-        O pagamento ao indicador ocorre em até 6 parcelas
-        (0,50% / 0,20% / 0,20% / 0,20% / 0,20% / 0,20%),
-        com possibilidade de estorno de até 0,35% até a 6ª parcela
-        em caso de inadimplência ou cancelamento do contrato.
-      </p>
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="section">
-    <div class="card center">
-      <h2>Gostou da transparência?</h2>
-      <p>Cadastre-se gratuitamente e comece a indicar.</p>
-      <a href="/cadastro.html" class="btn btn-large">
-        Quero ser Indicador
-      </a>
-    </div>
-  </section>
+    <canvas id="grafico" style="margin-top:20px"></canvas>
+  </div>
 
 </main>
 
-<footer class="footer">
-  <div class="container footer-grid">
-    <div>
-      <strong>INDICONS</strong>
-      <p>Plataforma de indicação de consórcios.</p>
-    </div>
-    <div>
-      <a href="/termos-indicador.html">Termos do Indicador</a><br>
-      <a href="/termos-cliente.html">Termos do Cliente</a><br>
-      <a href="/privacidade.html">Política de Privacidade</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    © 2025 INDICONS
-  </div>
-</footer>
+<script>
+function simular() {
+  const valor = Number(document.getElementById("valor").value);
+  if (!valor) return alert("Informe um valor");
 
-<script src="simulador.js"></script>
+  const parcelas = [0.5,0.2,0.2,0.2,0.2,0.2].map(p => valor * (p/100));
+
+  new Chart(document.getElementById("grafico"), {
+    type: "pie",
+    data: {
+      labels: ["1ª","2ª","3ª","4ª","5ª","6ª parcela"],
+      datasets: [{
+        data: parcelas,
+        backgroundColor: [
+          "#2563eb","#3b82f6","#60a5fa","#93c5fd","#bfdbfe","#dbeafe"
+        ]
+      }]
+    }
+  });
+}
+</script>
+
 </body>
 </html>
