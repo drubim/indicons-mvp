@@ -1,37 +1,84 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>Cadastro | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Criar conta | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="container">
-    <h1>Cadastro de Indicador</h1>
-    <p>Crie sua conta para começar a indicar e ganhar comissão.</p>
+<header class="header">
+  <div class="container header-flex">
+    <div class="logo">INDICONS</div>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/simulador.html">Simulador</a>
+      <a href="/login.html" class="btn-outline">Entrar</a>
+    </nav>
+  </div>
+</header>
 
-    <form method="POST" action="/cadastro" class="form">
-      <input type="text" name="nome" placeholder="Nome completo" required />
-      <input type="email" name="email" placeholder="E-mail" required />
-      <input type="password" name="senha" placeholder="Senha" required />
+<main class="container center">
 
-      <label class="terms">
-        <input type="checkbox" required />
-        Li e aceito os
-        <a href="/termos-indicador.html" target="_blank">Termos do Indicador</a>
+  <section class="card login-card">
+    <h1>Criar conta de Indicador</h1>
+
+    <!-- FORMULÁRIO CORRETO -->
+    <form method="POST" action="/cadastro">
+
+      <label>Nome completo</label>
+      <input
+        type="text"
+        name="nome"
+        placeholder="Seu nome"
+        required
+      >
+
+      <label>E-mail</label>
+      <input
+        type="email"
+        name="email"
+        placeholder="seu@email.com"
+        required
+      >
+
+      <label>Senha</label>
+      <input
+        type="password"
+        name="senha"
+        placeholder="Crie uma senha segura"
+        required
+      >
+
+      <label class="checkbox">
+        <input type="checkbox" required>
+        Li e aceito o
+        <a href="/termos-indicador.html" target="_blank">Termo do Indicador</a>,
+        o
+        <a href="/termos-cliente.html" target="_blank">Termo do Cliente</a>
         e a
-        <a href="/privacidade.html" target="_blank">Política de Privacidade</a>
+        <a href="/privacidade.html" target="_blank">Política de Privacidade</a>,
+        autorizando contato do INDICONS e das administradoras parceiras.
       </label>
 
-      <button type="submit" class="btn">Criar conta</button>
+      <button class="btn btn-large" type="submit">
+        Criar conta
+      </button>
+
     </form>
 
-    <p class="small">
-      Já tem conta? <a href="/login.html">Entrar</a>
+    <p class="muted">
+      Já possui conta?
+      <a href="/login.html"><strong>Entrar</strong></a>
     </p>
-  </div>
+  </section>
+
+</main>
+
+<footer class="footer-simple">
+  © 2025 INDICONS • Plataforma de indicação de consórcios
+</footer>
 
 </body>
 </html>
