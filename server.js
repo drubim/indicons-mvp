@@ -1,41 +1,35 @@
 /***************************************************
- * INDICONS — SERVER.JS (VERSÃO ESTÁVEL)
- * Corrigido para:
- * - Site estático (/public)
- * - Cadastro e login funcionando
- * - Sessão persistente no Render
+ * INDICONS — SERVER.JS (VERSÃO FINAL)
+ * Landing + Sistema + Dashboard + Financeiro
  ***************************************************/
 
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
-const bcrypt = require("bcrypt");
 const session = require("express-session");
+const bcrypt = require("bcrypt");
 const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =========================
-   MIDDLEWARES
+   CONFIGURAÇÕES BÁSICAS
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-/* 👉 SERVIR ARQUIVOS ESTÁTICOS */
-app.use(express.static("public"));
-
-/* 👉 SESSÃO (Render compatível) */
 app.use(
   session({
     secret: "indicons_secret_2025",
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      secure: false, // OBRIGATÓRIO no Render
-      httpOnly: true,
-    },
   })
 );
+
+/* =========================
+   ARQUIVOS ESTÁTICOS
+========================= */
+app.use(express.static("public"));
 
 /* =========================
    BANCO DE DADOS
@@ -49,7 +43,7 @@ db.serialize(() => {
       nome TEXT,
       email TEXT UNIQUE,
       senha TEXT,
-      tipo TEXT DEFAULT 'indicador',
+      tipo TEXT,
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -61,16 +55,29 @@ db.serialize(() => {
       telefone TEXT,
       email TEXT,
       indicador_id INTEGER,
-      status TEXT DEFAULT 'PRE-ADESAO',
+      administradora TEXT,
+      valor REAL,
+      status TEXT,
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS comissoes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      indicador_id INTEGER,
+      parcela INTEGER,
+      percentual REAL,
+      valor REAL,
+      status TEXT
     )
   `);
 });
 
 /* =========================
-   AUTH
+   MIDDLEWARE LOGIN
 ========================= */
-function auth(req, res, next) {
+function requireLogin(req, res, next) {
   if (!req.session.usuario) {
     return res.redirect("/login.html");
   }
@@ -78,90 +85,153 @@ function auth(req, res, next) {
 }
 
 /* =========================
-   CADASTRO
+   ROTAS PÚBLICAS
 ========================= */
+
+// Landing page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+// Cadastro
 app.post("/cadastro", async (req, res) => {
   const { nome, email, senha } = req.body;
-
-  if (!nome || !email || !senha) {
-    return res.send("Dados incompletos");
-  }
-
   const hash = await bcrypt.hash(senha, 10);
 
   db.run(
-    `INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)`,
+    `INSERT INTO usuarios (nome, email, senha, tipo)
+     VALUES (?, ?, ?, 'indicador')`,
     [nome, email, hash],
     function (err) {
       if (err) {
-        return res.send("E-mail já cadastrado");
+        return res.send("Erro ao cadastrar. Email já existe.");
       }
       res.redirect("/login.html");
     }
   );
 });
 
-/* =========================
-   LOGIN
-========================= */
+// Login
 app.post("/login", (req, res) => {
   const { email, senha } = req.body;
 
   db.get(
-    `SELECT * FROM usuarios WHERE email = ?`,
+    "SELECT * FROM usuarios WHERE email = ?",
     [email],
-    async (err, usuario) => {
-      if (!usuario) {
-        return res.send("Usuário não encontrado");
-      }
+    async (err, user) => {
+      if (!user) return res.send("Usuário não encontrado");
 
-      const ok = await bcrypt.compare(senha, usuario.senha);
-      if (!ok) {
-        return res.send("Senha inválida");
-      }
+      const ok = await bcrypt.compare(senha, user.senha);
+      if (!ok) return res.send("Senha inválida");
 
-      req.session.usuario = {
-        id: usuario.id,
-        nome: usuario.nome,
-        tipo: usuario.tipo,
-      };
-
+      req.session.usuario = user;
       res.redirect("/dashboard");
     }
   );
 });
 
-/* =========================
-   DASHBOARD
-========================= */
-app.get("/dashboard", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+// Logout
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.redirect("/");
+  });
 });
 
 /* =========================
-   API LEADS (exemplo)
+   DASHBOARD PROTEGIDO
 ========================= */
-app.get("/api/leads", auth, (req, res) => {
+app.get("/dashboard", requireLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, "public/dashboard.html"));
+});
+
+/* =========================
+   API — DASHBOARD (GRÁFICOS)
+========================= */
+app.get("/api/dashboard", requireLogin, (req, res) => {
+  const indicadorId = req.session.usuario.id;
+
   db.all(
-    `SELECT * FROM leads WHERE indicador_id = ?`,
-    [req.session.usuario.id],
+    "SELECT status, COUNT(*) as total FROM leads WHERE indicador_id = ? GROUP BY status",
+    [indicadorId],
     (err, rows) => {
-      res.json(rows || []);
+      let funil = [0, 0, 0, 0];
+      rows.forEach((r) => {
+        if (r.status === "PRE_ADESAO") funil[0] = r.total;
+        if (r.status === "ATENDIMENTO") funil[1] = r.total;
+        if (r.status === "VENDIDO") funil[2] = r.total;
+        if (r.status === "PAGO") funil[3] = r.total;
+      });
+
+      db.get(
+        "SELECT COUNT(*) as pre FROM leads WHERE indicador_id = ?",
+        [indicadorId],
+        (e, p) => {
+          db.get(
+            "SELECT COUNT(*) as v FROM leads WHERE indicador_id = ? AND status = 'VENDIDO'",
+            [indicadorId],
+            (e2, v) => {
+              db.get(
+                "SELECT SUM(valor) as total FROM comissoes WHERE indicador_id = ?",
+                [indicadorId],
+                (e3, c) => {
+                  res.json({
+                    pre: p.pre || 0,
+                    vendas: v.v || 0,
+                    comissao: c.total || 0,
+                    funil,
+                  });
+                }
+              );
+            }
+          );
+        }
+      );
     }
   );
 });
 
 /* =========================
-   LOGOUT
+   API — FINANCEIRO
 ========================= */
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/login.html");
+app.get("/api/financeiro", requireLogin, (req, res) => {
+  const indicadorId = req.session.usuario.id;
+
+  db.all(
+    "SELECT * FROM comissoes WHERE indicador_id = ?",
+    [indicadorId],
+    (err, rows) => {
+      const totalPrevisto = rows.reduce((s, r) => s + r.valor, 0);
+      const totalPago = rows
+        .filter((r) => r.status === "PAGA")
+        .reduce((s, r) => s + r.valor, 0);
+
+      res.json({
+        totalPrevisto,
+        totalPago,
+        parcelas: rows,
+      });
+    }
+  );
+});
+
+/* =========================
+   API — WHATSAPP (SIMULAÇÃO)
+========================= */
+app.post("/api/whatsapp", requireLogin, (req, res) => {
+  const { telefone, mensagem } = req.body;
+
+  console.log("WHATSAPP AUTOMÁTICO");
+  console.log("Telefone:", telefone);
+  console.log("Mensagem:", mensagem);
+
+  res.json({
+    ok: true,
+    status: "Mensagem enviada (simulação)",
   });
 });
 
 /* =========================
-   START
+   SERVIDOR
 ========================= */
 app.listen(PORT, () => {
   console.log("INDICONS rodando na porta " + PORT);
