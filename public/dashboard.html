@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>Dashboard | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Painel do Indicador | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -13,115 +13,58 @@
   <div class="container header-flex">
     <div class="logo">INDICONS</div>
     <nav>
-      <a href="/">Home</a>
       <a href="/simulador.html">Simulador</a>
-      <a href="/logout" class="btn-outline">Sair</a>
+      <a href="/logout">Sair</a>
     </nav>
   </div>
 </header>
 
 <main class="container">
 
-  <!-- TÍTULO -->
-  <section class="section">
-    <h1>Painel do Indicador</h1>
-    <p class="muted">Visualize o desempenho das suas indicações.</p>
-  </section>
+  <h1>Painel do Indicador</h1>
 
-  <!-- RESUMO -->
-  <section class="grid">
+  <div class="grid-3">
     <div class="card">
-      <strong>Total de indicações</strong>
-      <h2>12</h2>
-    </div>
-    <div class="card">
-      <strong>Em atendimento</strong>
-      <h2>7</h2>
+      <h4>Pré-adesões</h4>
+      <strong id="pre">0</strong>
     </div>
     <div class="card">
-      <strong>Vendas aprovadas</strong>
-      <h2>3</h2>
+      <h4>Vendas aprovadas</h4>
+      <strong id="vend">0</strong>
     </div>
-    <div class="card highlight-card">
-      <strong>Comissão estimada</strong>
-      <h2>R$ 4.500,00</h2>
-      <span class="note">até 1,5%</span>
+    <div class="card">
+      <h4>Comissões previstas</h4>
+      <strong id="com">R$ 0</strong>
     </div>
-  </section>
+  </div>
 
-  <!-- GRÁFICOS -->
-  <section class="section grid">
-    <div class="card">
-      <h3>Status das indicações</h3>
-      <canvas id="barChart"></canvas>
-    </div>
-
-    <div class="card">
-      <h3>Distribuição</h3>
-      <canvas id="pieChart"></canvas>
-    </div>
-  </section>
-
-  <!-- FUNIL -->
-  <section class="section">
-    <h2>Funil de Indicação</h2>
-    <div class="timeline">
-      <div class="step ok">Indicação<br><strong>12</strong></div>
-      <div class="step ok">Atendimento<br><strong>7</strong></div>
-      <div class="step">Proposta<br><strong>4</strong></div>
-      <div class="step">Venda<br><strong>3</strong></div>
-      <div class="step">Comissão</div>
-    </div>
-  </section>
+  <div class="card">
+    <h3>Funil de indicações</h3>
+    <canvas id="funil"></canvas>
+  </div>
 
 </main>
 
-<footer class="footer">
-  <div class="container footer-grid">
-    <div>
-      <strong>INDICONS</strong>
-      <p>Plataforma de indicação de consórcios.</p>
-    </div>
-    <div>
-      <a href="/termos-indicador.html">Termos</a><br>
-      <a href="/privacidade.html">Privacidade</a>
-    </div>
-  </div>
-  <div class="footer-bottom">© 2025 INDICONS</div>
-</footer>
-
 <script>
-/* GRÁFICO DE BARRAS */
-new Chart(document.getElementById("barChart"), {
-  type: "bar",
-  data: {
-    labels: ["Indicações", "Atendimento", "Proposta", "Vendas"],
-    datasets: [{
-      label: "Quantidade",
-      data: [12, 7, 4, 3],
-      backgroundColor: "#2563eb"
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: { legend: { display: false } }
-  }
-});
+fetch("/api/dashboard")
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById("pre").innerText = d.pre;
+    document.getElementById("vend").innerText = d.vendas;
+    document.getElementById("com").innerText = "R$ " + d.comissao.toFixed(2);
 
-/* GRÁFICO DE PIZZA */
-new Chart(document.getElementById("pieChart"), {
-  type: "doughnut",
-  data: {
-    labels: ["Em atendimento", "Vendidas", "Outras"],
-    datasets: [{
-      data: [7, 3, 2],
-      backgroundColor: ["#facc15", "#22c55e", "#e5e7eb"]
-    }]
-  },
-  options: {
-    responsive: true
-  }
-});
+    new Chart(document.getElementById("funil"), {
+      type: "bar",
+      data: {
+        labels: ["Pré-adesão", "Atendimento", "Venda", "Pagamento"],
+        datasets: [{
+          label: "Quantidade",
+          data: d.funil,
+          backgroundColor: "#2563eb"
+        }]
+      }
+    });
+  });
 </script>
 
 </body>
