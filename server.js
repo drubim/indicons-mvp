@@ -1,5 +1,6 @@
 /***************************************************
- * INDICONS — SERVER.JS (VERSÃO COMPLETA FINAL)
+ * INDICONS — SERVER.JS
+ * MVP funcional com Admin e Parceiro automáticos
  ***************************************************/
 
 const express = require("express");
@@ -12,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =========================
-   MIDDLEWARES
+   CONFIGURAÇÕES BÁSICAS
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -25,7 +26,7 @@ app.use(
   })
 );
 
-/* arquivos estáticos */
+// arquivos estáticos (HTML/CSS/JS)
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================
@@ -54,57 +55,60 @@ db.serialize(() => {
       indicador_id INTEGER,
       administradora TEXT,
       valor REAL,
-      status TEXT,
+      status TEXT DEFAULT 'PRE_ADESAO',
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS comissoes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      lead_id INTEGER,
-      parcela INTEGER,
-      percentual REAL,
-      valor REAL,
-      status TEXT
-    )
-  `);
+  /* =========================
+     CRIAR ADMIN PADRÃO
+  ========================= */
+  db.get(
+    "SELECT * FROM usuarios WHERE email = ?",
+    ["admin@indicons.com.br"],
+    async (err, row) => {
+      if (!row) {
+        const hash = await bcrypt.hash("admin123", 10);
+        db.run(
+          "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
+          ["Administrador", "admin@indicons.com.br", hash, "admin"]
+        );
+        console.log("✔ Admin criado: admin@indicons.com.br / admin123");
+      }
+    }
+  );
+
+  /* =========================
+     CRIAR PARCEIRO PADRÃO
+  ========================= */
+  db.get(
+    "SELECT * FROM usuarios WHERE email = ?",
+    ["parceiro@indicons.com.br"],
+    async (err, row) => {
+      if (!row) {
+        const hash = await bcrypt.hash("parceiro123", 10);
+        db.run(
+          "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
+          ["Parceiro Padrão", "parceiro@indicons.com.br", hash, "parceiro"]
+        );
+        console.log("✔ Parceiro criado: parceiro@indicons.com.br / parceiro123");
+      }
+    }
+  );
 });
 
 /* =========================
-   CONTAS PADRÃO (ADMIN)
-========================= */
-db.get(
-  "SELECT * FROM usuarios WHERE email = ?",
-  ["admin@indicons.com.br"],
-  async (err, row) => {
-    if (!row) {
-      const hash = await bcrypt.hash("admin123", 10);
-      db.run(
-        "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
-        ["Administrador", "admin@indicons.com.br", hash, "admin"]
-      );
-      console.log("✔ Admin padrão criado: admin@indicons.com.br / admin123");
-    }
-  }
-);
-
-/* =========================
-   AUTENTICAÇÃO
+   MIDDLEWARE AUTH
 ========================= */
 function auth(req, res, next) {
-  if (!req.session.usuario) return res.redirect("/login.html");
-  next();
-}
-
-function requireAdmin(req, res, next) {
-  if (!req.session.usuario || req.session.usuario.tipo !== "admin")
-    return res.status(403).send("Acesso negado");
+  if (!req.session.usuario) {
+    return res.redirect("/login.html");
+  }
   next();
 }
 
 /* =========================
-   ROTAS BÁSICAS
+   LOGIN / LOGOUT
 ========================= */
 app.post("/login", (req, res) => {
   const { email, senha } = req.body;
@@ -112,22 +116,30 @@ app.post("/login", (req, res) => {
   db.get(
     "SELECT * FROM usuarios WHERE email = ?",
     [email],
-    async (err, user) => {
-      if (!user) return res.redirect("/login.html?erro=1");
+    async (err, usuario) => {
+      if (!usuario) {
+        return res.send("Usuário não encontrado");
+      }
 
-      const ok = await bcrypt.compare(senha, user.senha);
-      if (!ok) return res.redirect("/login.html?erro=1");
+      const ok = await bcrypt.compare(senha, usuario.senha);
+      if (!ok) {
+        return res.send("Senha incorreta");
+      }
 
-      req.session.usuario = user;
+      req.session.usuario = usuario;
 
-      if (user.tipo === "admin") return res.redirect("/admin.html");
-      return res.redirect("/dashboard.html");
+      // redirecionamento por tipo
+      if (usuario.tipo === "admin") return res.redirect("/admin");
+      if (usuario.tipo === "parceiro") return res.redirect("/parceiro");
+      return res.redirect("/dashboard");
     }
   );
 });
 
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/login.html"));
+  req.session.destroy(() => {
+    res.redirect("/login.html");
+  });
 });
 
 /* =========================
@@ -140,59 +152,55 @@ app.post("/cadastro", async (req, res) => {
   db.run(
     "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
     [nome, email, hash, "indicador"],
-    () => res.redirect("/login.html")
+    (err) => {
+      if (err) return res.send("Erro ao cadastrar");
+      res.redirect("/login.html");
+    }
   );
 });
 
 /* =========================
-   DASHBOARD INDICADOR (API)
+   ÁREAS PROTEGIDAS
 ========================= */
-app.get("/api/dashboard", auth, (req, res) => {
-  db.all(
-    "SELECT * FROM leads WHERE indicador_id = ?",
-    [req.session.usuario.id],
-    (err, leads) => res.json(leads || [])
-  );
+
+// INDICADOR
+app.get("/dashboard", auth, (req, res) => {
+  if (req.session.usuario.tipo !== "indicador") {
+    return res.send("Acesso negado");
+  }
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+// PARCEIRO
+app.get("/parceiro", auth, (req, res) => {
+  if (req.session.usuario.tipo !== "parceiro") {
+    return res.send("Acesso negado");
+  }
+  res.sendFile(path.join(__dirname, "public", "dashboard-parceiro.html"));
+});
+
+// ADMIN
+app.get("/admin", auth, (req, res) => {
+  if (req.session.usuario.tipo !== "admin") {
+    return res.send("Acesso negado");
+  }
+  res.sendFile(path.join(__dirname, "public", "dashboard-admin.html"));
 });
 
 /* =========================
-   ADMIN — MÉTRICAS
+   API PARCEIRO (LEADS)
 ========================= */
-app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
-  db.serialize(() => {
-    db.get("SELECT COUNT(*) as total FROM usuarios", [], (e, u) => {
-      db.get("SELECT COUNT(*) as total FROM leads", [], (e, l) => {
-        db.get(
-          "SELECT SUM(valor) as total FROM comissoes",
-          [],
-          (e, c) => {
-            res.json({
-              usuarios: u.total || 0,
-              leads: l.total || 0,
-              comissao: c.total || 0,
-            });
-          }
-        );
-      });
-    });
-  });
-});
+app.get("/api/parceiro/leads", auth, (req, res) => {
+  if (req.session.usuario.tipo !== "parceiro") {
+    return res.status(403).json([]);
+  }
 
-/* =========================
-   ADMIN — LISTAS (IMPORTANTE)
-   👉 ROTAS PEDIDAS
-========================= */
-app.get("/api/admin/usuarios", requireAdmin, (req, res) => {
   db.all(
-    "SELECT nome,email,tipo FROM usuarios",
+    "SELECT * FROM leads WHERE status != 'VENDIDO'",
     [],
-    (err, rows) => res.json(rows || [])
-  );
-});
-
-app.get("/api/admin/leads", requireAdmin, (req, res) => {
-  db.all("SELECT * FROM leads", [], (err, rows) =>
-    res.json(rows || [])
+    (err, leads) => {
+      res.json(leads || []);
+    }
   );
 });
 
