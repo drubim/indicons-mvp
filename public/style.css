@@ -226,3 +226,24 @@ nav a {
 .highlight p {
   color: #e5e7eb;
 }
+
+/* SIMULADOR */
+.parcelas {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.parcela {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.15);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.parcela span {
+  font-weight: 500;
+}
