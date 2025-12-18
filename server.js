@@ -1,7 +1,6 @@
 /***************************************************
- * INDICONS — SERVER.JS (VERSÃO ESTÁVEL)
+ * INDICONS — SERVER.JS (COM CONTAS PADRÃO)
  ***************************************************/
-
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
@@ -12,17 +11,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =========================
-   CONFIGURAÇÕES BÁSICAS
+   CONFIGURAÇÕES
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 app.use(session({
   secret: "indicons_secret_2025",
   resave: false,
   saveUninitialized: false
 }));
-
 app.use(express.static("public"));
 
 /* =========================
@@ -30,7 +27,7 @@ app.use(express.static("public"));
 ========================= */
 const db = new sqlite3.Database("./indicons.db");
 
-db.serialize(() => {
+db.serialize(async () => {
 
   db.run(`
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -67,6 +64,41 @@ db.serialize(() => {
       status TEXT
     )
   `);
+
+  /* =========================
+     CRIAR CONTAS PADRÃO
+  ========================= */
+  const adminHash = await bcrypt.hash("admin123", 10);
+  const parceiroHash = await bcrypt.hash("parceiro123", 10);
+
+  db.get(
+    "SELECT id FROM usuarios WHERE tipo='admin'",
+    [],
+    (err, row) => {
+      if (!row) {
+        db.run(
+          "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
+          ["Administrador", "admin@indicons.com", adminHash, "admin"]
+        );
+        console.log("✔ Admin padrão criado");
+      }
+    }
+  );
+
+  db.get(
+    "SELECT id FROM usuarios WHERE tipo='parceiro'",
+    [],
+    (err, row) => {
+      if (!row) {
+        db.run(
+          "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
+          ["Parceiro", "parceiro@indicons.com", parceiroHash, "parceiro"]
+        );
+        console.log("✔ Parceiro padrão criado");
+      }
+    }
+  );
+
 });
 
 /* =========================
@@ -76,14 +108,12 @@ function auth(req, res, next) {
   if (!req.session.usuario) return res.redirect("/login.html");
   next();
 }
-
 function requireParceiro(req, res, next) {
   if (!req.session.usuario || req.session.usuario.tipo !== "parceiro") {
     return res.redirect("/login.html");
   }
   next();
 }
-
 function requireAdmin(req, res, next) {
   if (!req.session.usuario || req.session.usuario.tipo !== "admin") {
     return res.redirect("/login.html");
@@ -92,123 +122,53 @@ function requireAdmin(req, res, next) {
 }
 
 /* =========================
-   ROTAS PRINCIPAIS
+   ROTAS
 ========================= */
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public/index.html"))
+);
 
-/* =========================
-   CADASTRO / LOGIN
-========================= */
 app.post("/cadastro", async (req, res) => {
-  const { nome, email, senha } = req.body;
-  const hash = await bcrypt.hash(senha, 10);
-
+  const hash = await bcrypt.hash(req.body.senha, 10);
   db.run(
     "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
-    [nome, email, hash, "indicador"],
-    err => {
-      if (err) return res.send("Erro ao cadastrar");
-      res.redirect("/login.html");
-    }
+    [req.body.nome, req.body.email, hash, "indicador"],
+    () => res.redirect("/login.html")
   );
 });
 
 app.post("/login", (req, res) => {
-  const { email, senha } = req.body;
-
   db.get(
     "SELECT * FROM usuarios WHERE email=?",
-    [email],
-    async (err, user) => {
-      if (!user) return res.send("Usuário não encontrado");
-      const ok = await bcrypt.compare(senha, user.senha);
-      if (!ok) return res.send("Senha inválida");
+    [req.body.email],
+    async (err, u) => {
+      if (!u) return res.send("Usuário não encontrado");
+      if (!(await bcrypt.compare(req.body.senha, u.senha)))
+        return res.send("Senha inválida");
 
-      req.session.usuario = user;
-
-      if (user.tipo === "admin") return res.redirect("/admin");
-      if (user.tipo === "parceiro") return res.redirect("/parceiro");
-      return res.redirect("/dashboard");
+      req.session.usuario = u;
+      if (u.tipo === "admin") return res.redirect("/admin");
+      if (u.tipo === "parceiro") return res.redirect("/parceiro");
+      res.redirect("/dashboard");
     }
   );
 });
 
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/"));
-});
+app.get("/dashboard", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "public/dashboard.html"))
+);
 
-/* =========================
-   DASHBOARD INDICADOR
-========================= */
-app.get("/dashboard", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "public/dashboard.html"));
-});
+app.get("/parceiro", requireParceiro, (req, res) =>
+  res.sendFile(path.join(__dirname, "public/parceiro.html"))
+);
 
-app.get("/api/dashboard", auth, (req, res) => {
-  db.all(
-    "SELECT * FROM leads WHERE indicador_id=?",
-    [req.session.usuario.id],
-    (err, rows) => res.json(rows || [])
-  );
-});
+app.get("/admin", requireAdmin, (req, res) =>
+  res.sendFile(path.join(__dirname, "public/admin.html"))
+);
 
-/* =========================
-   PRÉ-ADESÃO (CLIENTE)
-========================= */
-app.post("/api/pre-adesao", (req, res) => {
-  const { nome, telefone, email, administradora, valor, indicador } = req.body;
-
-  db.run(
-    `INSERT INTO leads (nome,telefone,email,administradora,valor,indicador_id)
-     VALUES (?,?,?,?,?,?)`,
-    [nome, telefone, email, administradora, valor, indicador],
-    () => res.json({ ok: true })
-  );
-});
-
-/* =========================
-   ÁREA PARCEIRO
-========================= */
-app.get("/parceiro", requireParceiro, (req, res) => {
-  res.sendFile(path.join(__dirname, "public/parceiro.html"));
-});
-
-app.get("/api/parceiro/leads", requireParceiro, (req, res) => {
-  db.all(
-    "SELECT * FROM leads WHERE status != 'VENDIDO'",
-    [],
-    (err, rows) => res.json(rows || [])
-  );
-});
-
-app.post("/api/parceiro/status", requireParceiro, (req, res) => {
-  const { leadId, status } = req.body;
-  db.run(
-    "UPDATE leads SET status=? WHERE id=?",
-    [status, leadId],
-    () => res.json({ ok: true })
-  );
-});
-
-/* =========================
-   ÁREA ADMIN
-========================= */
-app.get("/admin", requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, "public/admin.html"));
-});
-
-app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
-  db.get("SELECT COUNT(*) as u FROM usuarios", [], (e, u) => {
-    db.get("SELECT COUNT(*) as l FROM leads", [], (e2, l) => {
-      res.json({
-        usuarios: u.u,
-        leads: l.l
-      });
-    });
-  });
-});
+app.get("/logout", (req, res) =>
+  req.session.destroy(() => res.redirect("/"))
+);
 
 /* =========================
    SERVIDOR
