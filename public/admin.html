@@ -1,28 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Admin | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
 
-<h1>Administração INDICONS</h1>
+<header class="topbar">
+  <div class="logo">INDICONS · Admin</div>
+  <a href="/logout" class="logout">Sair</a>
+</header>
 
-<div class="cards">
-  <div class="card">
-    <h3>Usuários</h3>
-    <span id="usuarios">0</span>
-  </div>
-  <div class="card">
-    <h3>Leads</h3>
-    <span id="leads">0</span>
-  </div>
-  <div class="card">
-    <h3>Comissões</h3>
-    <span id="comissao">R$ 0</span>
-  </div>
-</div>
+<main class="container">
+
+  <!-- MÉTRICAS -->
+  <section class="cards">
+    <div class="card">
+      <h4>Usuários</h4>
+      <strong id="totalUsuarios">0</strong>
+    </div>
+    <div class="card">
+      <h4>Leads</h4>
+      <strong id="totalLeads">0</strong>
+    </div>
+    <div class="card">
+      <h4>Comissões (R$)</h4>
+      <strong id="totalComissao">0</strong>
+    </div>
+  </section>
+
+  <!-- USUÁRIOS -->
+  <section class="panel">
+    <h3>Usuários cadastrados</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="usuariosTabela"></tbody>
+    </table>
+  </section>
+
+  <!-- LEADS -->
+  <section class="panel">
+    <h3>Leads registrados</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Email</th>
+          <th>Valor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="leadsTabela"></tbody>
+    </table>
+  </section>
+
+</main>
 
 <script src="admin.js"></script>
 </body>
