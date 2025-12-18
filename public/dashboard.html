@@ -1,189 +1,170 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Painel do Indicador • INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8" />
+  <title>Dashboard | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<header class="topbar">
+<header class="header">
   <div class="container header-flex">
-    <strong class="logo">INDICONS</strong>
+    <div class="logo">INDICONS</div>
     <nav>
+      <a href="/">Home</a>
       <a href="/simulador.html">Simulador</a>
-      <a href="/comparativo">Comparativo</a>
-      <a href="/logout" class="btn small">Sair</a>
+      <a href="/comparativo.html">Parceiros</a>
+      <a href="/logout" class="btn-outline">Sair</a>
     </nav>
   </div>
 </header>
 
-<section class="section">
-  <div class="container">
+<main class="container">
+
+  <!-- TÍTULO -->
+  <section class="section">
     <h1>Painel do Indicador</h1>
-    <p class="muted">Acompanhe seus resultados em tempo real</p>
+    <p class="muted">
+      Acompanhe suas indicações, status e comissões estimadas.
+    </p>
+  </section>
 
-    <!-- CARDS -->
-    <div class="grid-4">
-      <div class="card">
-        <h4>Total de Leads</h4>
-        <strong id="totalLeads">0</strong>
+  <!-- CARDS DE RESUMO -->
+  <section class="grid">
+    <div class="card">
+      <strong>Total de indicações</strong>
+      <h2>12</h2>
+    </div>
+
+    <div class="card">
+      <strong>Em atendimento</strong>
+      <h2>7</h2>
+    </div>
+
+    <div class="card">
+      <strong>Vendas aprovadas</strong>
+      <h2>3</h2>
+    </div>
+
+    <div class="card highlight-card">
+      <strong>Comissão estimada</strong>
+      <h2>R$ 4.500,00</h2>
+      <span class="note">Até 1,5%</span>
+    </div>
+  </section>
+
+  <!-- FUNIL VISUAL -->
+  <section class="section">
+    <h2>Funil de Indicação</h2>
+
+    <div class="timeline">
+      <div class="step ok">
+        <span>1</span>
+        <p>Indicação</p>
+        <strong>12</strong>
       </div>
-      <div class="card">
-        <h4>Em andamento</h4>
-        <strong id="emAndamento">0</strong>
+      <div class="step ok">
+        <span>2</span>
+        <p>Atendimento</p>
+        <strong>7</strong>
       </div>
-      <div class="card">
-        <h4>Vendidos</h4>
-        <strong id="vendidos">0</strong>
+      <div class="step">
+        <span>3</span>
+        <p>Proposta</p>
+        <strong>4</strong>
       </div>
-      <div class="card">
-        <h4>Comissão prevista</h4>
-        <strong id="comissao">R$ 0,00</strong>
+      <div class="step">
+        <span>4</span>
+        <p>Venda</p>
+        <strong>3</strong>
+      </div>
+      <div class="step">
+        <span>5</span>
+        <p>Comissão</p>
+        <strong>✔</strong>
       </div>
     </div>
 
-    <!-- FUNIL -->
-    <div class="card">
-      <h3>Funil de Indicações</h3>
-      <div class="funil">
-        <div class="funil-step">
-          <span>Indicados</span>
-          <strong id="fIndicados">0</strong>
-        </div>
-        <div class="funil-step">
-          <span>Atendimento</span>
-          <strong id="fAtendimento">0</strong>
-        </div>
-        <div class="funil-step">
-          <span>Vendidos</span>
-          <strong id="fVendidos">0</strong>
-        </div>
-        <div class="funil-step">
-          <span>Comissão</span>
-          <strong>Até 1,5%</strong>
-        </div>
-      </div>
-    </div>
+    <p class="note">
+      O status das indicações é atualizado conforme o andamento do atendimento
+      realizado pelo parceiro autorizado.
+    </p>
+  </section>
 
-    <!-- GRÁFICO -->
-    <div class="card">
-      <h3>Status dos Leads</h3>
-      <canvas id="grafico" height="120"></canvas>
-    </div>
+  <!-- LISTA DE INDICAÇÕES -->
+  <section class="section">
+    <h2>Minhas Indicações</h2>
 
-    <!-- LISTA -->
     <div class="card">
-      <h3>Meus Leads</h3>
-      <table class="tabela">
+      <table class="table">
         <thead>
           <tr>
-            <th>Nome</th>
+            <th>Cliente</th>
             <th>Administradora</th>
-            <th>Valor</th>
             <th>Status</th>
+            <th>Valor</th>
           </tr>
         </thead>
-        <tbody id="listaLeads"></tbody>
+        <tbody>
+          <tr>
+            <td>João Silva</td>
+            <td>Embracon</td>
+            <td><span class="status atend">Em atendimento</span></td>
+            <td>R$ 80.000</td>
+          </tr>
+          <tr>
+            <td>Ana Costa</td>
+            <td>Ademicon</td>
+            <td><span class="status vendido">Venda aprovada</span></td>
+            <td>R$ 120.000</td>
+          </tr>
+          <tr>
+            <td>Pedro Lima</td>
+            <td>Porto</td>
+            <td><span class="status vendido">Venda aprovada</span></td>
+            <td>R$ 100.000</td>
+          </tr>
+        </tbody>
       </table>
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- AÇÕES -->
+  <section class="section">
+    <div class="grid">
+      <div class="card">
+        <h3>Simule seus ganhos</h3>
+        <p>Veja quanto você pode ganhar indicando novos clientes.</p>
+        <a href="/simulador.html" class="btn">Abrir simulador</a>
+      </div>
+
+      <div class="card">
+        <h3>Ver parceiros</h3>
+        <p>Confira as administradoras disponíveis e condições.</p>
+        <a href="/comparativo.html" class="btn-outline">Ver parceiros</a>
+      </div>
+    </div>
+  </section>
+
+</main>
 
 <footer class="footer">
-  <p>© INDICONS • Plataforma profissional de indicações</p>
+  <div class="container footer-grid">
+    <div>
+      <strong>INDICONS</strong>
+      <p>Plataforma de indicação de consórcios.</p>
+    </div>
+    <div>
+      <a href="/termos-indicador.html">Termos do Indicador</a><br>
+      <a href="/privacidade.html">Política de Privacidade</a>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 INDICONS
+  </div>
 </footer>
-
-<script>
-async function carregarDashboard() {
-  const res = await fetch("/api/leads");
-  const leads = await res.json();
-
-  let total = leads.length;
-  let andamento = 0;
-  let vendidos = 0;
-  let comissao = 0;
-
-  const tbody = document.getElementById("listaLeads");
-  tbody.innerHTML = "";
-
-  leads.forEach(l => {
-    if (l.status === "VENDIDO") {
-      vendidos++;
-      comissao += l.valor * 0.015;
-    } else {
-      andamento++;
-    }
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${l.nome}</td>
-      <td>${l.administradora}</td>
-      <td>R$ ${Number(l.valor).toFixed(2)}</td>
-      <td>${l.status}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById("totalLeads").innerText = total;
-  document.getElementById("emAndamento").innerText = andamento;
-  document.getElementById("vendidos").innerText = vendidos;
-  document.getElementById("comissao").innerText =
-    "R$ " + comissao.toFixed(2);
-
-  document.getElementById("fIndicados").innerText = total;
-  document.getElementById("fAtendimento").innerText = andamento;
-  document.getElementById("fVendidos").innerText = vendidos;
-
-  desenharGrafico(andamento, vendidos);
-}
-
-function desenharGrafico(andamento, vendidos) {
-  const c = document.getElementById("grafico");
-  const ctx = c.getContext("2d");
-
-  const total = andamento + vendidos;
-  const a = (andamento / total) * c.width;
-  const v = (vendidos / total) * c.width;
-
-  ctx.clearRect(0, 0, c.width, c.height);
-
-  ctx.fillStyle = "#2563eb";
-  ctx.fillRect(0, 30, a, 40);
-
-  ctx.fillStyle = "#16a34a";
-  ctx.fillRect(a, 30, v, 40);
-
-  ctx.fillStyle = "#111827";
-  ctx.fillText("Em andamento", 10, 20);
-  ctx.fillText("Vendidos", a + 10, 20);
-}
-
-carregarDashboard();
-</script>
-
-<style>
-.grid-4 {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.funil {
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.funil-step {
-  flex: 1;
-  background: #f3f4f6;
-  border-radius: 10px;
-  padding: 16px;
-  text-align: center;
-}
-</style>
 
 </body>
 </html>
