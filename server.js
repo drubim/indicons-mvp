@@ -36,3 +36,28 @@ app.post('/cadastro', (req, res) => {
   const { email, senha } = req.body;
 
   if (!email || !senha) {
+    return res.status(400).json({ error: 'Dados incompletos' });
+  }
+
+  const existe = usuarios.find(u => u.email === email);
+  if (existe) {
+    return res.status(409).json({ error: 'Usuário já existe' });
+  }
+
+  usuarios.push({
+    email,
+    senha,
+    role: 'indicador'
+  });
+
+  res.json({ success: true });
+});
+
+/* ROTAS */
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/login.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
