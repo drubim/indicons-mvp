@@ -2,23 +2,55 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Simulação Gratuita | INDICONS</title>
+  <title>Indicação | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      padding: 20px;
+    }
+    .box {
+      max-width: 400px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h2 { margin-bottom: 10px; }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-<h2>Planeje sua conquista sem juros abusivos</h2>
-<p>Simulação gratuita e sem compromisso</p>
+<div class="box">
+  <h2>Receba uma proposta</h2>
+  <p>Preencha os dados para falarmos com você.</p>
 
-<form id="indicacaoForm">
-  <input type="text" id="nome" placeholder="Seu nome" required><br><br>
-  <input type="tel" id="whatsapp" placeholder="WhatsApp com DDD" required><br><br>
-  <button type="submit">Quero entender meu consórcio</button>
-</form>
+  <form id="form">
+    <input type="text" id="nome" placeholder="Seu nome" required>
+    <input type="tel" id="whatsapp" placeholder="WhatsApp" required>
+    <button type="submit">Enviar</button>
+  </form>
+</div>
 
 <script>
+  // 🔴 ESSENCIAL: pega o código da URL
   const codigoIndicador = window.location.pathname.split('/').pop();
 
-  document.getElementById('indicacaoForm').addEventListener('submit', async function(e) {
+  document.getElementById('form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const nome = document.getElementById('nome').value;
@@ -27,12 +59,16 @@
     const res = await fetch('/indicacao', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, whatsapp, codigoIndicador })
+      body: JSON.stringify({
+        nome,
+        whatsapp,
+        codigoIndicador
+      })
     });
 
     if (res.ok) {
       alert('Recebemos seus dados! Em breve entraremos em contato.');
-      document.getElementById('indicacaoForm').reset();
+      document.getElementById('form').reset();
     } else {
       alert('Erro ao enviar. Tente novamente.');
     }
