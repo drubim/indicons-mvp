@@ -1,5 +1,48 @@
-<h2>Parceiro</h2>
-<input id="cliente" placeholder="Cliente ID">
-<input id="valor" placeholder="Valor carta">
-<button onclick="fechar()">Fechar venda</button>
-<script src="js/parceiro.js"></script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel do Parceiro | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="parceiro.css">
+</head>
+<body> 
+
+<header class="topbar">
+  <div class="logo">INDICONS · Parceiro</div>
+  <a href="/logout" class="logout">Sair</a>
+</header>
+
+<main class="container">
+
+  <section class="panel">
+    <h2>Leads para atendimento</h2>
+    <p class="muted">
+      Leads recebidos via indicadores. Atualize o status conforme o atendimento.
+    </p>
+  </section>
+
+  <section class="panel">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Administradora</th>
+          <th>Valor</th>
+          <th>Status</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="leadsTable">
+        <!-- preenchido via JS -->
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<script src="parceiro.js"></script>
+</body>
+</html>
