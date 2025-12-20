@@ -1,12 +1,12 @@
 // ========================================
-// INDICONS - SERVER.JS FINAL COMPATÍVEL
+// INDICONS - SERVER.JS FINAL FUNCIONAL
 // ========================================
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
-const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const cors = require('cors');
 const path = require('path');
 
 const app = express();
@@ -44,7 +44,7 @@ db.serialize(() => {
 });
 
 // ========================================
-// CRIAR USUÁRIOS PADRÃO (ADMIN / PARCEIRO)
+// CRIA USUÁRIOS PADRÃO (SE NÃO EXISTIREM)
 // ========================================
 function criarUsuario(email, senha, role, nome) {
   db.get(`SELECT id FROM users WHERE email = ?`, [email], (err, row) => {
@@ -55,13 +55,14 @@ function criarUsuario(email, senha, role, nome) {
          VALUES (?, ?, ?, ?, 1)`,
         [nome, email, hash, role]
       );
-      console.log(`✅ Usuário criado: ${email}`);
+      console.log(`✅ Usuário criado: ${email} / ${senha}`);
     }
   });
 }
 
 criarUsuario('admin@indicons.com.br', 'admin123', 'admin', 'Administrador');
 criarUsuario('parceiro@indicons.com.br', 'parceiro123', 'parceiro', 'Parceiro');
+criarUsuario('indicador@indicons.com.br', 'indicador123', 'indicador', 'Indicador');
 
 // ========================================
 // ROTAS DE PÁGINA
@@ -93,7 +94,7 @@ app.post('/api/login', (req, res) => {
     [email],
     (err, user) => {
       if (!user) {
-        return res.status(401).json({ error: 'Usuário inválido' });
+        return res.status(401).json({ error: 'Usuário não encontrado' });
       }
 
       if (!bcrypt.compareSync(senha, user.senha_hash)) {
@@ -106,7 +107,7 @@ app.post('/api/login', (req, res) => {
         { expiresIn: '8h' }
       );
 
-      res.json({
+      return res.json({
         token,
         role: user.role
       });
@@ -115,7 +116,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // ========================================
-// CADASTRO DE INDICADOR (FORM HTML)
+// CADASTRO DE INDICADOR
 // ========================================
 app.post('/cadastro', (req, res) => {
   const { nome, email, senha } = req.body;
@@ -135,14 +136,10 @@ app.post('/cadastro', (req, res) => {
       const hash = bcrypt.hashSync(senha, 10);
 
       db.run(
-        `
-        INSERT INTO users (nome, email, senha_hash, role, ativo)
-        VALUES (?, ?, ?, 'indicador', 1)
-        `,
+        `INSERT INTO users (nome, email, senha_hash, role, ativo)
+         VALUES (?, ?, ?, 'indicador', 1)`,
         [nome, email, hash],
-        () => {
-          return res.redirect('/login.html');
-        }
+        () => res.redirect('/login.html')
       );
     }
   );
