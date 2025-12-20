@@ -1,6 +1,6 @@
-// ===================================
-// INDICONS - SERVER.JS COMPATÍVEL
-// ===================================
+// ========================================
+// INDICONS - SERVER.JS ESTÁVEL
+// ========================================
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
@@ -11,22 +11,24 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===================================
-// MIDDLEWARES
-// ===================================
+// ========================================
+// MIDDLEWARES (ORDEM IMPORTA)
+// ========================================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
 
-// ===================================
+// 🔴 SERVE A PASTA /public CORRETAMENTE
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ========================================
 // DATABASE
-// ===================================
+// ========================================
 const db = new sqlite3.Database('./indicons.db');
 
-// ===================================
+// ========================================
 // DATABASE SETUP (SEGURO)
-// ===================================
+// ========================================
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -52,9 +54,17 @@ db.serialize(() => {
   `);
 });
 
-// ===================================
-// ROTAS DE PÁGINA (CRÍTICAS)
-// ===================================
+// ========================================
+// ROTAS DE PÁGINA (GARANTIA TOTAL)
+// ========================================
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
@@ -71,9 +81,9 @@ app.get('/cadastro', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'cadastro.html'));
 });
 
-// ===================================
+// ========================================
 // LOGIN ANTIGO (FORM POST /login)
-// ===================================
+// ========================================
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
 
@@ -81,31 +91,33 @@ app.post('/login', (req, res) => {
     `SELECT * FROM users WHERE email = ? AND ativo = 1`,
     [email],
     (err, user) => {
-      if (!user) return res.redirect('/login.html');
+      if (!user) {
+        return res.redirect('/login');
+      }
 
       if (!bcrypt.compareSync(senha, user.senha_hash)) {
-        return res.redirect('/login.html');
+        return res.redirect('/login');
       }
 
-      // REDIRECIONA CONFORME PERFIL
+      // REDIRECIONAMENTO POR PERFIL
       if (user.role === 'admin') {
-        return res.redirect('/admin.html');
+        return res.redirect('/admin');
       }
       if (user.role === 'parceiro') {
-        return res.redirect('/parceiro.html');
+        return res.redirect('/parceiro');
       }
       if (user.role === 'indicador') {
-        return res.redirect('/indicador.html');
+        return res.redirect('/indicador');
       }
 
-      return res.redirect('/login.html');
+      return res.redirect('/login');
     }
   );
 });
 
-// ===================================
+// ========================================
 // CADASTRO PÚBLICO (FORM ANTIGO)
-// ===================================
+// ========================================
 app.post('/cadastro', (req, res) => {
   const { nome, telefone, produto, indicador_id } = req.body;
 
@@ -121,9 +133,9 @@ app.post('/cadastro', (req, res) => {
   );
 });
 
-// ===================================
+// ========================================
 // API SIMPLES (NÃO BLOQUEIA TELAS)
-// ===================================
+// ========================================
 app.get('/api/clientes', (req, res) => {
   db.all(
     `SELECT * FROM clientes ORDER BY created_at DESC`,
@@ -134,9 +146,9 @@ app.get('/api/clientes', (req, res) => {
   );
 });
 
-// ===================================
+// ========================================
 // SERVER START
-// ===================================
+// ========================================
 app.listen(PORT, () => {
   console.log(`✅ INDICONS rodando corretamente na porta ${PORT}`);
 });
