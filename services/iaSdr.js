@@ -12,5 +12,5 @@ async function classificarLead({ nome, whatsapp }) {
     resumo: 'Objetivo claro e abertura para conversa'
   };
 }
-
+ 
 module.exports = { classificarLead };
