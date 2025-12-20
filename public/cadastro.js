@@ -1,21 +1,20 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>Cadastro Indicador | INDICONS</title>
-</head>
-<body>
+document.getElementById('cadastroForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-<h2>Cadastro de Indicador</h2>
+  const email = document.getElementById('email').value;
+  const senha = document.getElementById('senha').value;
 
-<form id="cadastroForm">
-  <input type="email" id="email" placeholder="E-mail" required>
-  <br><br>
-  <input type="password" id="senha" placeholder="Senha" required>
-  <br><br>
-  <button type="submit">Cadastrar</button>
-</form>
+  const response = await fetch('/cadastro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, senha })
+  });
 
-<script src="cadastro.js"></script>
-</body>
-</html>
+  if (response.ok) {
+    alert('Cadastro realizado com sucesso');
+    window.location.href = 'login.html';
+  } else {
+    const erro = await response.json();
+    alert(erro.error || 'Erro ao cadastrar');
+  }
+});
