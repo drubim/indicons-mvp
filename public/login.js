@@ -4,25 +4,36 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const email = document.getElementById('email').value;
   const senha = document.getElementById('senha').value;
 
-  try {
-    const response = await fetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    });
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, senha })
+  });
 
-    if (!response.ok) {
-      alert('Usuário ou senha inválidos');
+  if (!res.ok) {
+    alert('Usuário ou senha inválidos');
+    return;
+  }
+
+  const data = await res.json();
+
+  // 🔴 AQUI É O PONTO CRÍTICO
+  if (data.role === 'indicador') {
+    if (!data.codigo) {
+      alert('Erro: indicador sem código');
       return;
     }
+    window.location.href = `/indicador.html?codigo=${data.codigo}`;
+    return;
+  }
 
-    const data = await response.json();
+  if (data.role === 'parceiro') {
+    window.location.href = '/parceiro.html';
+    return;
+  }
 
-    if (data.role === 'admin') window.location.href = 'admin.html';
-    if (data.role === 'parceiro') window.location.href = 'parceiro.html';
-    if (data.role === 'indicador') window.location.href = 'indicador.html';
-
-  } catch (error) {
-    alert('Erro ao conectar no servidor');
+  if (data.role === 'admin') {
+    window.location.href = '/admin.html';
+    return;
   }
 });
