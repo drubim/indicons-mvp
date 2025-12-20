@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { agendarComDuplicacao } = require('./services/googleAgenda');
+const { classificarLead } = require('./services/iaSdr');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,7 +17,6 @@ app.use(express.static(path.join(__dirname, 'public')));
    DADOS EM MEMÓRIA (MVP)
 ================================ */
 
-// Admin e parceiro
 const usuarios = [
   {
     email: 'admin@indicons.com.br',
@@ -29,14 +29,11 @@ const usuarios = [
     senha: 'parceiro123',
     role: 'parceiro',
     nome: 'Parceiro',
-    calendarId: null // 🔹 futuramente agenda do parceiro
+    calendarId: null // futura agenda do parceiro
   }
 ];
 
-// Indicadores
 const indicadores = [];
-
-// Indicações (leads)
 const indicacoes = [];
 
 /* ===============================
@@ -66,10 +63,6 @@ app.post('/login', (req, res) => {
 app.post('/cadastro', (req, res) => {
   const { email, senha, nome } = req.body;
 
-  if (!email || !senha) {
-    return res.status(400).json({ error: 'Dados incompletos' });
-  }
-
   const existe =
     usuarios.find(u => u.email === email) ||
     indicadores.find(i => i.email === email);
@@ -78,41 +71,33 @@ app.post('/cadastro', (req, res) => {
     return res.status(409).json({ error: 'Usuário já existe' });
   }
 
-  const codigoIndicador = Math.random()
-    .toString(36)
-    .substring(2, 8)
-    .toUpperCase();
+  const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
 
   indicadores.push({
     email,
     senha,
     nome: nome || 'Indicador',
     role: 'indicador',
-    codigo: codigoIndicador,
+    codigo,
     nivel: 'Ativo',
     vendas: 0
   });
 
-  res.json({ success: true, codigo: codigoIndicador });
+  res.json({ success: true, codigo });
 });
 
 /* ===============================
-   LINK ÚNICO DO INDICADOR
+   LINK DO INDICADOR
 ================================ */
 app.get('/i/:codigo', (req, res) => {
-  const { codigo } = req.params;
-
-  const indicador = indicadores.find(i => i.codigo === codigo);
-  if (!indicador) {
-    return res.status(404).send('Link inválido');
-  }
+  const indicador = indicadores.find(i => i.codigo === req.params.codigo);
+  if (!indicador) return res.status(404).send('Link inválido');
 
   res.sendFile(path.join(__dirname, 'public/indicacao.html'));
 });
 
 /* ===============================
-   REGISTRO DA INDICAÇÃO
-   (LEAD QUALIFICADO → AGENDA REAL)
+   REGISTRO + IA + DECISÃO
 ================================ */
 app.post('/indicacao', async (req, res) => {
   try {
@@ -123,104 +108,76 @@ app.post('/indicacao', async (req, res) => {
       return res.status(400).json({ error: 'Indicador inválido' });
     }
 
-    // 🔹 horário exemplo (depois vem da IA)
-    const horarioISO = new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    ).toISOString(); // amanhã
+    // 1️⃣ IA classifica o lead
+    const resultadoIA = await classificarLead({ nome, whatsapp });
 
-    const parceiro = usuarios.find(u => u.role === 'parceiro');
-
-    // 🔹 AQUI ACONTECE O AGENDAMENTO REAL
-    const evento = await agendarComDuplicacao({
-      nome,
-      whatsapp,
-      inicio: horarioISO,
-      parceiroCalendarId: parceiro.calendarId // null por enquanto
-    });
-
-    indicacoes.push({
+    const lead = {
       id: Date.now(),
       nome,
       whatsapp,
       indicadorCodigo: indicador.codigo,
       indicadorNome: indicador.nome,
-      status: 'Em atendimento',
-      horarioAgendado: evento.inicio,
-      meetLink: evento.meetLink,
+      classificacaoIA: resultadoIA.classificacao,
+      resumoIA: resultadoIA.resumo,
+      status: 'Registrado',
       criadaEm: new Date()
-    });
+    };
 
-    console.log(`📅 Agendado + Meet criado para ${nome}`);
+    // 2️⃣ DECISÃO DA IA
+    if (resultadoIA.classificacao === 'QUENTE') {
+      const parceiro = usuarios.find(u => u.role === 'parceiro');
+
+      const horarioISO = new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+      ).toISOString(); // amanhã (exemplo)
+
+      const evento = await agendarComDuplicacao({
+        nome,
+        whatsapp,
+        inicio: horarioISO,
+        parceiroCalendarId: parceiro.calendarId
+      });
+
+      lead.status = 'Em atendimento';
+      lead.horarioAgendado = evento.inicio;
+      lead.meetLink = evento.meetLink;
+    }
+
+    indicacoes.push(lead);
+
+    console.log(`🤖 IA: ${resultadoIA.classificacao} → ${lead.status}`);
 
     res.json({ success: true });
   } catch (err) {
-    console.error('Erro ao agendar:', err);
-    res.status(500).json({ error: 'Erro ao agendar reunião' });
+    console.error(err);
+    res.status(500).json({ error: 'Erro no processamento do lead' });
   }
 });
 
 /* ===============================
-   PAINEL DO INDICADOR (API)
+   PAINEL INDICADOR
 ================================ */
 app.get('/indicador/:codigo', (req, res) => {
-  const { codigo } = req.params;
-
-  const indicador = indicadores.find(i => i.codigo === codigo);
-  if (!indicador) {
-    return res.status(404).json({ error: 'Indicador não encontrado' });
-  }
-
-  const minhasIndicacoes = indicacoes.filter(
-    i => i.indicadorCodigo === codigo
-  );
+  const indicador = indicadores.find(i => i.codigo === req.params.codigo);
+  if (!indicador) return res.status(404).json({ error: 'Não encontrado' });
 
   res.json({
     nome: indicador.nome,
     codigo: indicador.codigo,
     nivel: indicador.nivel,
-    indicacoes: minhasIndicacoes
+    indicacoes: indicacoes.filter(i => i.indicadorCodigo === indicador.codigo)
   });
 });
 
 /* ===============================
-   PAINEL DO PARCEIRO
+   PAINEL PARCEIRO
 ================================ */
 app.get('/parceiro/leads', (req, res) => {
-  const leads = indicacoes.filter(
-    i => i.status === 'Em atendimento'
-  );
-  res.json(leads);
-});
-
-app.post('/parceiro/status', (req, res) => {
-  const { id, status } = req.body;
-
-  const lead = indicacoes.find(i => i.id === id);
-  if (!lead) {
-    return res.status(404).json({ error: 'Lead não encontrado' });
-  }
-
-  lead.status = status;
-
-  if (status === 'Venda concluída') {
-    const indicador = indicadores.find(
-      i => i.codigo === lead.indicadorCodigo
-    );
-
-    if (indicador) {
-      indicador.vendas += 1;
-
-      if (indicador.vendas >= 3) indicador.nivel = 'Premium';
-      else if (indicador.vendas >= 1) indicador.nivel = 'Destaque';
-      else indicador.nivel = 'Ativo';
-    }
-  }
-
-  res.json({ success: true });
+  res.json(indicacoes.filter(i => i.status === 'Em atendimento'));
 });
 
 /* ===============================
-   START SERVER
+   START
 ================================ */
 app.listen(PORT, () => {
   console.log(`🚀 INDICONS rodando na porta ${PORT}`);
