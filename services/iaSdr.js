@@ -1,10 +1,16 @@
 // services/iaSdr.js
-async function qualificarLead(contexto) {
-  // MOCK seguro – não quebra deploy
+
+async function classificarLead({ nome, whatsapp }) {
+  /**
+   * REGRA MOCK (SEGURA):
+   * - Sempre retorna QUENTE por enquanto
+   * - Depois entra OpenAI / WhatsApp / perguntas
+   */
+
   return {
-    classificacao: "QUENTE",
-    resumo: "Interesse confirmado em consórcio"
+    classificacao: 'QUENTE', // FRIO | MORNO | QUENTE
+    resumo: 'Objetivo claro e abertura para conversa'
   };
 }
 
-module.exports = { qualificarLead };
+module.exports = { classificarLead };
