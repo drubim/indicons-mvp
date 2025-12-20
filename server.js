@@ -1,15 +1,10 @@
 const express = require('express');
 const path = require('path');
-const { classificarLead } = require('./services/iaSdr');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ===============================
-   MIDDLEWARE
-================================ */
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ===============================
@@ -48,22 +43,15 @@ app.post('/login', (req, res) => {
 app.post('/cadastro', (req, res) => {
   const { email, senha, nome } = req.body;
 
-  const existe =
-    usuarios.find(u => u.email === email) ||
-    indicadores.find(i => i.email === email);
-
-  if (existe) return res.status(409).json({ error: 'Usuário já existe' });
-
   const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
 
   indicadores.push({
     email,
     senha,
-    nome: nome || 'Indicador',
+    nome,
     role: 'indicador',
     codigo,
-    nivel: 'Ativo',
-    vendas: 0
+    nivel: 'Ativo'
   });
 
   res.json({ success: true, codigo });
@@ -73,34 +61,18 @@ app.post('/cadastro', (req, res) => {
    LINK INDICADOR
 ================================ */
 app.get('/i/:codigo', (req, res) => {
-  const indicador = indicadores.find(i => i.codigo === req.params.codigo);
-  if (!indicador) return res.status(404).send('Link inválido');
-
   res.sendFile(path.join(__dirname, 'public/indicacao.html'));
 });
 
 /* ===============================
-   REGISTRO DE LEAD + IA
+   🔴 REGISTRO DE LEAD (CHAVE)
 ================================ */
-app.post('/indicacao', async (req, res) => {
+app.post('/indicacao', (req, res) => {
   const { nome, whatsapp, codigoIndicador } = req.body;
 
   const indicador = indicadores.find(i => i.codigo === codigoIndicador);
   if (!indicador) {
     return res.status(400).json({ error: 'Indicador inválido' });
-  }
-
-  // 1️⃣ IA classifica
-  const ia = await classificarLead({ nome, whatsapp });
-
-  // 2️⃣ Status inicial
-  let status = 'Registrado';
-  let horarioAgendado = null;
-
-  // 3️⃣ Só QUENTE agenda (mock de agenda)
-  if (ia.classificacao === 'QUENTE') {
-    status = 'Em atendimento';
-    horarioAgendado = 'A definir'; // depois entra Google Calendar
   }
 
   indicacoes.push({
@@ -109,12 +81,11 @@ app.post('/indicacao', async (req, res) => {
     whatsapp,
     indicadorCodigo: indicador.codigo,
     indicadorNome: indicador.nome,
-    classificacaoIA: ia.classificacao,
-    motivoIA: ia.motivo,
-    status,
-    horarioAgendado,
+    status: 'Registrado',
     criadaEm: new Date()
   });
+
+  console.log('LEAD REGISTRADO:', nome, indicador.codigo);
 
   res.json({ success: true });
 });
@@ -124,13 +95,13 @@ app.post('/indicacao', async (req, res) => {
 ================================ */
 app.get('/indicador/:codigo', (req, res) => {
   const indicador = indicadores.find(i => i.codigo === req.params.codigo);
-  if (!indicador) return res.status(404).json({ error: 'Não encontrado' });
 
   res.json({
-    nome: indicador.nome,
-    codigo: indicador.codigo,
-    nivel: indicador.nivel,
-    indicacoes: indicacoes.filter(l => l.indicadorCodigo === indicador.codigo)
+    nome: indicador?.nome || '',
+    codigo: req.params.codigo,
+    indicacoes: indicacoes.filter(
+      l => l.indicadorCodigo === req.params.codigo
+    )
   });
 });
 
@@ -145,12 +116,9 @@ app.get('/admin/leads', (req, res) => {
    PARCEIRO
 ================================ */
 app.get('/parceiro/leads', (req, res) => {
-  res.json(indicacoes.filter(l => l.status === 'Em atendimento'));
+  res.json(indicacoes);
 });
 
-/* ===============================
-   START
-================================ */
 app.listen(PORT, () => {
-  console.log(`🚀 INDICONS ONLINE NA PORTA ${PORT}`);
+  console.log(`🚀 INDICONS rodando na porta ${PORT}`);
 });
