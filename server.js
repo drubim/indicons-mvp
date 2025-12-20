@@ -42,7 +42,7 @@ app.post('/cadastro', (req, res) => {
   const existe = usuarios.find(u => u.email === email);
   if (existe) {
     return res.status(409).json({ error: 'Usuário já existe' });
-  }
+  } 
 
   usuarios.push({
     email,
