@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const { agendarComDuplicacao } = require('./services/googleAgenda');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,7 +28,8 @@ const usuarios = [
     email: 'parceiro@indicons.com.br',
     senha: 'parceiro123',
     role: 'parceiro',
-    nome: 'Parceiro'
+    nome: 'Parceiro',
+    calendarId: null // 🔹 futuramente agenda do parceiro
   }
 ];
 
@@ -110,29 +112,51 @@ app.get('/i/:codigo', (req, res) => {
 
 /* ===============================
    REGISTRO DA INDICAÇÃO
+   (LEAD QUALIFICADO → AGENDA REAL)
 ================================ */
-app.post('/indicacao', (req, res) => {
-  const { nome, whatsapp, codigoIndicador } = req.body;
+app.post('/indicacao', async (req, res) => {
+  try {
+    const { nome, whatsapp, codigoIndicador } = req.body;
 
-  const indicador = indicadores.find(i => i.codigo === codigoIndicador);
-  if (!indicador) {
-    return res.status(400).json({ error: 'Indicador inválido' });
+    const indicador = indicadores.find(i => i.codigo === codigoIndicador);
+    if (!indicador) {
+      return res.status(400).json({ error: 'Indicador inválido' });
+    }
+
+    // 🔹 horário exemplo (depois vem da IA)
+    const horarioISO = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    ).toISOString(); // amanhã
+
+    const parceiro = usuarios.find(u => u.role === 'parceiro');
+
+    // 🔹 AQUI ACONTECE O AGENDAMENTO REAL
+    const evento = await agendarComDuplicacao({
+      nome,
+      whatsapp,
+      inicio: horarioISO,
+      parceiroCalendarId: parceiro.calendarId // null por enquanto
+    });
+
+    indicacoes.push({
+      id: Date.now(),
+      nome,
+      whatsapp,
+      indicadorCodigo: indicador.codigo,
+      indicadorNome: indicador.nome,
+      status: 'Em atendimento',
+      horarioAgendado: evento.inicio,
+      meetLink: evento.meetLink,
+      criadaEm: new Date()
+    });
+
+    console.log(`📅 Agendado + Meet criado para ${nome}`);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Erro ao agendar:', err);
+    res.status(500).json({ error: 'Erro ao agendar reunião' });
   }
-
-  indicacoes.push({
-    id: Date.now(),
-    nome,
-    whatsapp,
-    indicadorCodigo: indicador.codigo,
-    indicadorNome: indicador.nome,
-    status: 'Em atendimento', // já deixa visível no parceiro
-    horarioAgendado: 'A definir',
-    criadaEm: new Date()
-  });
-
-  console.log(`🟡 Nova indicação: ${nome} (Indicador: ${indicador.nome})`);
-
-  res.json({ success: true });
 });
 
 /* ===============================
@@ -161,8 +185,6 @@ app.get('/indicador/:codigo', (req, res) => {
 /* ===============================
    PAINEL DO PARCEIRO
 ================================ */
-
-// Buscar leads em atendimento
 app.get('/parceiro/leads', (req, res) => {
   const leads = indicacoes.filter(
     i => i.status === 'Em atendimento'
@@ -170,7 +192,6 @@ app.get('/parceiro/leads', (req, res) => {
   res.json(leads);
 });
 
-// Atualizar status do lead
 app.post('/parceiro/status', (req, res) => {
   const { id, status } = req.body;
 
@@ -181,7 +202,6 @@ app.post('/parceiro/status', (req, res) => {
 
   lead.status = status;
 
-  // Atualiza ganhos do indicador
   if (status === 'Venda concluída') {
     const indicador = indicadores.find(
       i => i.codigo === lead.indicadorCodigo
