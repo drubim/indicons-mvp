@@ -1,48 +1,67 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
   <title>Painel do Parceiro | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="parceiro.css">
 </head>
-<body> 
+<body>
 
-<header class="topbar">
-  <div class="logo">INDICONS · Parceiro</div>
-  <a href="/logout" class="logout">Sair</a>
-</header>
+<h2>Painel do Parceiro</h2>
+<p>Leads qualificados e já agendados</p>
 
-<main class="container">
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>WhatsApp</th>
+      <th>Indicador</th>
+      <th>Horário</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody id="lista"></tbody>
+</table>
 
-  <section class="panel">
-    <h2>Leads para atendimento</h2>
-    <p class="muted">
-      Leads recebidos via indicadores. Atualize o status conforme o atendimento.
-    </p>
-  </section>
+<script>
+fetch('/parceiro/leads')
+  .then(res => res.json())
+  .then(leads => {
+    const tbody = document.getElementById('lista');
 
-  <section class="panel">
-    <table>
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Telefone</th>
-          <th>Email</th>
-          <th>Administradora</th>
-          <th>Valor</th>
-          <th>Status</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
-      <tbody id="leadsTable">
-        <!-- preenchido via JS -->
-      </tbody>
-    </table>
-  </section>
+    if (leads.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6">Nenhum lead em atendimento</td></tr>';
+      return;
+    }
 
-</main>
+    leads.forEach(l => {
+      const tr = document.createElement('tr');
 
-<script src="parceiro.js"></script>
+      tr.innerHTML = `
+        <td>${l.nome}</td>
+        <td>${l.whatsapp}</td>
+        <td>${l.indicadorNome || '-'}</td>
+        <td>${l.horarioAgendado || 'A definir'}</td>
+        <td>🔵 Em atendimento</td>
+        <td>
+          <button onclick="atualizar(${l.id}, 'Venda concluída')">🟢 Vendeu</button>
+          <button onclick="atualizar(${l.id}, 'Não avançou')">🔴 Não avançou</button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+  });
+
+function atualizar(id, status) {
+  fetch('/parceiro/status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, status })
+  })
+  .then(() => location.reload());
+}
+</script>
+
 </body>
 </html>
