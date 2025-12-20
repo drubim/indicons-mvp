@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const { classificarEAgendar } = require('./services/iaSdr');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,16 +63,16 @@ app.post('/cadastro', (req, res) => {
 });
 
 /* ===============================
-   LINK DO INDICADOR
+   LINK INDICADOR
 ================================ */
 app.get('/i/:codigo', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/indicacao.html'));
 });
 
 /* ===============================
-   REGISTRO DE LEAD
+   REGISTRO DE LEAD + IA
 ================================ */
-app.post('/indicacao', (req, res) => {
+app.post('/indicacao', async (req, res) => {
   const { nome, whatsapp, codigoIndicador } = req.body;
 
   const indicador = indicadores.find(i => i.codigo === codigoIndicador);
@@ -79,14 +80,22 @@ app.post('/indicacao', (req, res) => {
     return res.status(400).json({ error: 'Indicador inválido' });
   }
 
+  const ia = await classificarEAgendar({ whatsapp });
+
   indicacoes.push({
     id: Date.now(),
     nome,
     whatsapp,
+
     indicadorCodigo: indicador.codigo,
     indicadorNome: indicador.nome,
-    status: 'Registrado',
-    classificacaoIA: 'FRIO', // mock
+
+    classificacaoIA: ia.classificacao,
+    status: ia.status,
+
+    horarioReuniao: ia.horarioReuniao || null,
+    linkReuniao: ia.linkReuniao || null,
+
     criadaEm: new Date()
   });
 
@@ -94,48 +103,24 @@ app.post('/indicacao', (req, res) => {
 });
 
 /* ===============================
-   PAINEL INDICADOR
-================================ */
-app.get('/indicador/:codigo', (req, res) => {
-  const indicador = indicadores.find(i => i.codigo === req.params.codigo);
-
-  res.json({
-    nome: indicador?.nome || '',
-    codigo: req.params.codigo,
-    indicacoes: indicacoes.filter(
-      l => l.indicadorCodigo === req.params.codigo
-    )
-  });
-});
-
-/* ===============================
-   ADMIN
-================================ */
-app.get('/admin/usuarios', (req, res) => {
-  const lista = [
-    ...usuarios.map(u => ({
-      nome: u.nome,
-      email: u.email,
-      tipo: u.role
-    })),
-    ...indicadores.map(i => ({
-      nome: i.nome,
-      email: i.email,
-      tipo: 'indicador'
-    }))
-  ];
-  res.json(lista);
-});
-
-app.get('/admin/leads', (req, res) => {
-  res.json(indicacoes);
-});
-
-/* ===============================
-   PARCEIRO
+   PARCEIRO — LISTAR LEADS
 ================================ */
 app.get('/parceiro/leads', (req, res) => {
   res.json(indicacoes);
+});
+
+/* ===============================
+   PARCEIRO — AÇÃO HUMANA FINAL
+================================ */
+app.post('/parceiro/lead/status', (req, res) => {
+  const { leadId, status } = req.body;
+
+  const lead = indicacoes.find(l => l.id === leadId);
+  if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
+
+  lead.status = status;
+
+  res.json({ success: true });
 });
 
 /* ===============================
