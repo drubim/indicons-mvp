@@ -1,42 +1,32 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>Painel do Indicador</title>
-</head>
-<body>
-
-<h2 id="nome"></h2>
-
-<p>
-  Seu link de indicação:<br>
-  <input id="link" readonly style="width:320px">
-</p>
-
-<p id="nivel"></p>
-
-<h3>Minhas Indicações</h3>
-<ul id="lista"></ul>
-
 <script>
   const codigo = new URLSearchParams(window.location.search).get('codigo');
 
-  fetch(`/indicador/${codigo}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('nome').innerText = `Olá, ${data.nome}`;
-      document.getElementById('nivel').innerText = `Nível: ${data.nivel}`;
-      document.getElementById('link').value =
-        `${window.location.origin}/i/${data.codigo}`;
+  if (!codigo) {
+    alert('Acesso inválido. Faça login novamente.');
+    window.location.href = '/login.html';
+  } else {
+    fetch(`/indicador/${codigo}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('nome').innerText = `Olá, ${data.nome}`;
+        document.getElementById('nivel').innerText = `Nível: ${data.nivel}`;
+        document.getElementById('link').value =
+          `${window.location.origin}/i/${data.codigo}`;
 
-      const lista = document.getElementById('lista');
+        const lista = document.getElementById('lista');
+        lista.innerHTML = '';
 
-      data.indicacoes.forEach(i => {
-        const li = document.createElement('li');
-        li.innerText = `${icone(i.status)} ${i.nome} — ${i.status}`;
-        lista.appendChild(li);
+        if (data.indicacoes.length === 0) {
+          lista.innerHTML = '<li>Nenhuma indicação ainda</li>';
+        }
+
+        data.indicacoes.forEach(i => {
+          const li = document.createElement('li');
+          li.innerText = `${icone(i.status)} ${i.nome} — ${i.status}`;
+          lista.appendChild(li);
+        });
       });
-    });
+  }
 
   function icone(status) {
     if (status === 'Registrado') return '🟡';
@@ -46,6 +36,3 @@
     return '';
   }
 </script>
-
-</body>
-</html>
