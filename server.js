@@ -1,24 +1,24 @@
 // ========================================
-// INDICONS - SERVER.JS ESTÁVEL
+// INDICONS - SERVER.JS FINAL COMPATÍVEL
 // ========================================
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const path = require('path');
 
-const app = express(); 
+const app = express();
 const PORT = process.env.PORT || 3000;
+const SECRET = 'indicons_secret';
 
 // ========================================
-// MIDDLEWARES (ORDEM IMPORTA)
+// MIDDLEWARES
 // ========================================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// 🔴 SERVE A PASTA /public CORRETAMENTE
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ========================================
@@ -27,7 +27,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const db = new sqlite3.Database('./indicons.db');
 
 // ========================================
-// DATABASE SETUP (SEGURO)
+// DATABASE SETUP
 // ========================================
 db.serialize(() => {
   db.run(`
@@ -37,54 +37,55 @@ db.serialize(() => {
       email TEXT UNIQUE,
       senha_hash TEXT,
       role TEXT,
-      ativo INTEGER DEFAULT 1
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS clientes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT,
-      telefone TEXT,
-      produto TEXT,
-      indicador_id INTEGER,
-      status TEXT DEFAULT 'Cliente registrado',
+      ativo INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
 });
 
 // ========================================
-// ROTAS DE PÁGINA (GARANTIA TOTAL)
+// CRIAR USUÁRIOS PADRÃO (ADMIN / PARCEIRO)
 // ========================================
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+function criarUsuario(email, senha, role, nome) {
+  db.get(`SELECT id FROM users WHERE email = ?`, [email], (err, row) => {
+    if (!row) {
+      const hash = bcrypt.hashSync(senha, 10);
+      db.run(
+        `INSERT INTO users (nome, email, senha_hash, role, ativo)
+         VALUES (?, ?, ?, ?, 1)`,
+        [nome, email, hash, role]
+      );
+      console.log(`✅ Usuário criado: ${email}`);
+    }
+  });
+}
 
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.get('/parceiro', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'parceiro.html'));
-});
-
-app.get('/indicador', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'indicador.html'));
-});
-
-app.get('/cadastro', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'cadastro.html'));
-});
+criarUsuario('admin@indicons.com.br', 'admin123', 'admin', 'Administrador');
+criarUsuario('parceiro@indicons.com.br', 'parceiro123', 'parceiro', 'Parceiro');
 
 // ========================================
-// LOGIN ANTIGO (FORM POST /login)
+// ROTAS DE PÁGINA
 // ========================================
-app.post('/login', (req, res) => {
+app.get('/login', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'login.html'))
+);
+
+app.get('/admin', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'))
+);
+
+app.get('/parceiro', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'parceiro.html'))
+);
+
+app.get('/indicador', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'indicador.html'))
+);
+
+// ========================================
+// API LOGIN (USADO PELO login.js)
+// ========================================
+app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
 
   db.get(
@@ -92,56 +93,57 @@ app.post('/login', (req, res) => {
     [email],
     (err, user) => {
       if (!user) {
-        return res.redirect('/login');
+        return res.status(401).json({ error: 'Usuário inválido' });
       }
 
       if (!bcrypt.compareSync(senha, user.senha_hash)) {
-        return res.redirect('/login');
+        return res.status(401).json({ error: 'Senha inválida' });
       }
 
-      // REDIRECIONAMENTO POR PERFIL
-      if (user.role === 'admin') {
-        return res.redirect('/admin');
-      }
-      if (user.role === 'parceiro') {
-        return res.redirect('/parceiro');
-      }
-      if (user.role === 'indicador') {
-        return res.redirect('/indicador');
-      }
+      const token = jwt.sign(
+        { id: user.id, role: user.role },
+        SECRET,
+        { expiresIn: '8h' }
+      );
 
-      return res.redirect('/login');
+      res.json({
+        token,
+        role: user.role
+      });
     }
   );
 });
 
 // ========================================
-// CADASTRO PÚBLICO (FORM ANTIGO)
+// CADASTRO DE INDICADOR (FORM HTML)
 // ========================================
 app.post('/cadastro', (req, res) => {
-  const { nome, telefone, produto, indicador_id } = req.body;
+  const { nome, email, senha } = req.body;
 
-  db.run(
-    `
-    INSERT INTO clientes (nome, telefone, produto, indicador_id)
-    VALUES (?, ?, ?, ?)
-    `,
-    [nome, telefone, produto, indicador_id || null],
-    () => {
-      res.redirect('/obrigado.html');
-    }
-  );
-});
+  if (!nome || !email || !senha) {
+    return res.redirect('/cadastro.html');
+  }
 
-// ========================================
-// API SIMPLES (NÃO BLOQUEIA TELAS)
-// ========================================
-app.get('/api/clientes', (req, res) => {
-  db.all(
-    `SELECT * FROM clientes ORDER BY created_at DESC`,
-    [],
-    (err, rows) => {
-      res.json(rows || []);
+  db.get(
+    `SELECT id FROM users WHERE email = ?`,
+    [email],
+    (err, row) => {
+      if (row) {
+        return res.redirect('/login.html');
+      }
+
+      const hash = bcrypt.hashSync(senha, 10);
+
+      db.run(
+        `
+        INSERT INTO users (nome, email, senha_hash, role, ativo)
+        VALUES (?, ?, ?, 'indicador', 1)
+        `,
+        [nome, email, hash],
+        () => {
+          return res.redirect('/login.html');
+        }
+      );
     }
   );
 });
@@ -150,5 +152,5 @@ app.get('/api/clientes', (req, res) => {
 // SERVER START
 // ========================================
 app.listen(PORT, () => {
-  console.log(`✅ INDICONS rodando corretamente na porta ${PORT}`);
+  console.log(`✅ INDICONS rodando na porta ${PORT}`);
 });
