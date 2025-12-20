@@ -9,18 +9,11 @@
     body {
       font-family: Arial, sans-serif;
       background: #f3f4f6;
-      margin: 0;
       padding: 20px;
-      color: #111827;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
     }
 
     h1 {
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     .sub {
@@ -30,57 +23,22 @@
 
     .card {
       background: #ffffff;
-      border-radius: 12px;
-      padding: 18px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      border-radius: 10px;
+      padding: 20px;
       margin-bottom: 20px;
     }
 
-    .top {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .nivel {
-      font-weight: bold;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 14px;
-      background: #e5e7eb;
-    }
-
-    .nivel.Ativo { background: #e5e7eb; }
-    .nivel.Destaque { background: #fef3c7; }
-    .nivel.Premium { background: #dcfce7; }
-
-    .link-box {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .link-box input {
-      flex: 1;
+    input {
+      width: 100%;
       padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
+      margin-top: 8px;
       font-size: 14px;
     }
 
-    .link-box button {
+    button {
+      margin-top: 10px;
       padding: 10px 14px;
-      border-radius: 6px;
-      border: none;
-      background: #2563eb;
-      color: white;
       cursor: pointer;
-    }
-
-    .link-box button:hover {
-      background: #1d4ed8;
     }
 
     table {
@@ -88,79 +46,38 @@
       border-collapse: collapse;
     }
 
-    th {
-      text-align: left;
-      font-size: 13px;
-      color: #6b7280;
-      padding-bottom: 10px;
-    }
-
-    td {
-      padding: 12px 6px;
+    th, td {
+      padding: 10px;
       border-bottom: 1px solid #e5e7eb;
-      font-size: 14px;
-    }
-
-    .status {
-      font-weight: bold;
-    }
-
-    .Registrado { color: #ca8a04; }      /* 🟡 */
-    .Em { color: #2563eb; }               /* 🔵 */
-    .Venda { color: #16a34a; }             /* 🟢 */
-    .Não { color: #dc2626; }               /* 🔴 */
-
-    .empty {
-      text-align: center;
-      color: #6b7280;
-      padding: 20px;
-    }
-
-    @media (max-width: 768px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      th { display: none; }
-      td { border: none; }
-      tr { margin-bottom: 16px; }
+      text-align: left;
     }
   </style>
 </head>
 
 <body>
-<div class="container">
 
-  <h1 id="nome">Olá</h1>
-  <div class="sub">Acompanhe suas indicações em tempo real</div>
+<h1 id="nome">Olá</h1>
+<div class="sub">Acompanhe suas indicações em tempo real</div>
 
-  <div class="card top">
-    <div>
-      <strong>Seu link de indicação</strong>
-      <div class="link-box">
-        <input id="link" readonly>
-        <button onclick="copiar()">Copiar</button>
-      </div>
-    </div>
+<div class="card">
+  <strong>Seu link de indicação</strong>
+  <input id="link" readonly>
+  <button onclick="copiar()">Copiar</button>
+</div>
 
-    <div id="nivel" class="nivel"></div>
-  </div>
-
-  <div class="card">
-    <h3>Minhas Indicações</h3>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="lista">
-        <tr><td colspan="2" class="empty">Carregando...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
+<div class="card">
+  <h3>Minhas Indicações</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="lista">
+      <tr><td colspan="2">Carregando...</td></tr>
+    </tbody>
+  </table>
 </div>
 
 <script>
@@ -175,30 +92,30 @@
     .then(res => res.json())
     .then(data => {
       document.getElementById('nome').innerText = `Olá, ${data.nome}`;
-      document.getElementById('nivel').innerText = `Nível: ${data.nivel}`;
-      document.getElementById('nivel').classList.add(data.nivel);
       document.getElementById('link').value =
         `${window.location.origin}/i/${data.codigo}`;
 
-      const tbody = document.getElementById('lista');
-      tbody.innerHTML = '';
+      const lista = document.getElementById('lista');
+      lista.innerHTML = '';
 
       if (data.indicacoes.length === 0) {
-        tbody.innerHTML =
-          '<tr><td colspan="2" class="empty">Nenhuma indicação ainda</td></tr>';
+        lista.innerHTML =
+          '<tr><td colspan="2">Nenhuma indicação ainda</td></tr>';
         return;
       }
 
-      data.indicacoes.forEach(i => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${i.nome}</td>
-          <td class="status ${i.status.split(' ')[0]}">
-            ${icone(i.status)} ${i.status}
-          </td>
+      data.indicacoes.forEach(l => {
+        lista.innerHTML += `
+          <tr>
+            <td>${l.nome}</td>
+            <td>${l.status}</td>
+          </tr>
         `;
-        tbody.appendChild(tr);
       });
+    })
+    .catch(() => {
+      document.getElementById('lista').innerHTML =
+        '<tr><td colspan="2">Erro ao carregar dados</td></tr>';
     });
 
   function copiar() {
@@ -206,14 +123,6 @@
     input.select();
     document.execCommand('copy');
     alert('Link copiado!');
-  }
-
-  function icone(status) {
-    if (status === 'Registrado') return '🟡';
-    if (status === 'Em atendimento') return '🔵';
-    if (status === 'Venda concluída') return '🟢';
-    if (status === 'Não avançou') return '🔴';
-    return '';
   }
 </script>
 
