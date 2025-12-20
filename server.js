@@ -1,6 +1,6 @@
 /***************************************************
  * INDICONS — SERVER.JS
- * MVP funcional com Admin e Parceiro automáticos
+ * Render FREE • Admin/Parceiro garantidos
  ***************************************************/
 
 const express = require("express");
@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =========================
-   CONFIGURAÇÕES BÁSICAS
+   CONFIGURAÇÕES
 ========================= */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -26,7 +26,7 @@ app.use(
   })
 );
 
-// arquivos estáticos (HTML/CSS/JS)
+// arquivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================
@@ -59,46 +59,49 @@ db.serialize(() => {
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
-  /* =========================
-     CRIAR ADMIN PADRÃO
-  ========================= */
-  db.get(
-    "SELECT * FROM usuarios WHERE email = ?",
-    ["admin@indicons.com.br"],
-    async (err, row) => {
-      if (!row) {
-        const hash = await bcrypt.hash("admin123", 10);
-        db.run(
-          "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
-          ["Administrador", "admin@indicons.com.br", hash, "admin"]
-        );
-        console.log("✔ Admin criado: admin@indicons.com.br / admin123");
-      }
-    }
-  );
-
-  /* =========================
-     CRIAR PARCEIRO PADRÃO
-  ========================= */
-  db.get(
-    "SELECT * FROM usuarios WHERE email = ?",
-    ["parceiro@indicons.com.br"],
-    async (err, row) => {
-      if (!row) {
-        const hash = await bcrypt.hash("parceiro123", 10);
-        db.run(
-          "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
-          ["Parceiro Padrão", "parceiro@indicons.com.br", hash, "parceiro"]
-        );
-        console.log("✔ Parceiro criado: parceiro@indicons.com.br / parceiro123");
-      }
-    }
-  );
 });
 
 /* =========================
-   MIDDLEWARE AUTH
+   GARANTIR USUÁRIOS PADRÃO
+   (FUNCIONA NO RENDER FREE)
+========================= */
+async function garantirUsuario(nome, email, senha, tipo) {
+  db.get("SELECT * FROM usuarios WHERE email = ?", [email], async (err, row) => {
+    const hash = await bcrypt.hash(senha, 10);
+
+    if (!row) {
+      db.run(
+        "INSERT INTO usuarios (nome,email,senha,tipo) VALUES (?,?,?,?)",
+        [nome, email, hash, tipo]
+      );
+      console.log(`✔ ${tipo.toUpperCase()} criado: ${email}`);
+    } else if (row.tipo !== tipo) {
+      db.run(
+        "UPDATE usuarios SET senha=?, tipo=? WHERE email=?",
+        [hash, tipo, email]
+      );
+      console.log(`✔ ${email} atualizado para ${tipo}`);
+    }
+  });
+}
+
+// chama sempre ao subir
+garantirUsuario(
+  "Administrador",
+  "admin@indicons.com.br",
+  "admin123",
+  "admin"
+);
+
+garantirUsuario(
+  "Parceiro Padrão",
+  "parceiro@indicons.com.br",
+  "parceiro123",
+  "parceiro"
+);
+
+/* =========================
+   AUTH
 ========================= */
 function auth(req, res, next) {
   if (!req.session.usuario) {
@@ -117,18 +120,13 @@ app.post("/login", (req, res) => {
     "SELECT * FROM usuarios WHERE email = ?",
     [email],
     async (err, usuario) => {
-      if (!usuario) {
-        return res.send("Usuário não encontrado");
-      }
+      if (!usuario) return res.send("Usuário não encontrado");
 
       const ok = await bcrypt.compare(senha, usuario.senha);
-      if (!ok) {
-        return res.send("Senha incorreta");
-      }
+      if (!ok) return res.send("Senha incorreta");
 
       req.session.usuario = usuario;
 
-      // redirecionamento por tipo
       if (usuario.tipo === "admin") return res.redirect("/admin");
       if (usuario.tipo === "parceiro") return res.redirect("/parceiro");
       return res.redirect("/dashboard");
@@ -137,9 +135,7 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/login.html");
-  });
+  req.session.destroy(() => res.redirect("/login.html"));
 });
 
 /* =========================
@@ -176,7 +172,7 @@ app.get("/parceiro", auth, (req, res) => {
   if (req.session.usuario.tipo !== "parceiro") {
     return res.send("Acesso negado");
   }
-  res.sendFile(path.join(__dirname, "public", "dashboard-parceiro.html"));
+  res.sendFile(path.join(__dirname, "public", "parceiro.html"));
 });
 
 // ADMIN
@@ -184,7 +180,7 @@ app.get("/admin", auth, (req, res) => {
   if (req.session.usuario.tipo !== "admin") {
     return res.send("Acesso negado");
   }
-  res.sendFile(path.join(__dirname, "public", "dashboard-admin.html"));
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
 /* =========================
@@ -198,9 +194,7 @@ app.get("/api/parceiro/leads", auth, (req, res) => {
   db.all(
     "SELECT * FROM leads WHERE status != 'VENDIDO'",
     [],
-    (err, leads) => {
-      res.json(leads || []);
-    }
+    (err, rows) => res.json(rows || [])
   );
 });
 
