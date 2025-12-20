@@ -104,7 +104,7 @@ app.post('/indicacao', async (req, res) => {
 
 /* ===============================
    PARCEIRO — LISTAR LEADS
-================================ */
+================================ */ 
 app.get('/parceiro/leads', (req, res) => {
   res.json(indicacoes);
 });
