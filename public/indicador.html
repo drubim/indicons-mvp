@@ -2,103 +2,38 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Painel do Indicador | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    body { font-family: Arial, sans-serif; background: #f3f4f6; padding: 20px; }
-    h1 { margin-bottom: 5px; }
-    .sub { color: #6b7280; margin-bottom: 20px; }
-
-    .card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-
-    .badge {
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    .FRIO { background: #6b7280; }
-    .MORNO { background: #f59e0b; }
-    .QUENTE { background: #dc2626; }
-
-    .status-Registrado { color: #ca8a04; }
-    .status-Em { color: #2563eb; }
-
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
-    th { text-align: left; }
-
-    .total {
-      font-size: 22px;
-      font-weight: bold;
-      color: #16a34a;
-    }
-  </style>
+  <title>Painel do Indicador</title>
 </head>
-
 <body>
 
-<h1 id="nome">Olá</h1>
-<div class="sub">Acompanhe suas indicações em tempo real</div>
+<h2 id="nome">Indicador</h2>
 
-<div class="card">
-  <strong>Seu link de indicação</strong>
-  <input id="link" readonly style="width:100%; padding:10px; margin-top:6px">
-</div>
-
-<div class="card">
-  Comissão estimada
-  <div class="total" id="comissao">R$ 0,00</div>
-</div>
-
-<div class="card">
-  <h3>Minhas Indicações</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>IA</th>
-        <th>Status</th>
-        <th>R$</th>
-      </tr>
-    </thead>
-    <tbody id="lista">
-      <tr><td colspan="4">Carregando...</td></tr>
-    </tbody>
-  </table>
-</div>
+<table border="1" width="100%">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="lista">
+    <tr><td colspan="2">Carregando...</td></tr>
+  </tbody>
+</table>
 
 <script>
   const codigo = new URLSearchParams(window.location.search).get('codigo');
 
-  if (!codigo) {
-    alert('Acesso inválido.');
-    window.location.href = '/login.html';
-  }
-
   fetch(`/indicador/${codigo}`)
     .then(r => r.json())
     .then(data => {
-      document.getElementById('nome').innerText = `Olá, ${data.nome}`;
-      document.getElementById('link').value =
-        `${window.location.origin}/i/${data.codigo}`;
-      document.getElementById('comissao').innerText =
-        `R$ ${data.totalComissao.toFixed(2)}`;
+      document.getElementById('nome').innerText = data.nome || 'Indicador';
 
       const lista = document.getElementById('lista');
       lista.innerHTML = '';
 
-      if (data.indicacoes.length === 0) {
+      if (!data.indicacoes || data.indicacoes.length === 0) {
         lista.innerHTML =
-          '<tr><td colspan="4">Nenhuma indicação ainda</td></tr>';
+          '<tr><td colspan="2">Nenhum lead ainda</td></tr>';
         return;
       }
 
@@ -106,9 +41,7 @@
         lista.innerHTML += `
           <tr>
             <td>${l.nome}</td>
-            <td><span class="badge ${l.classificacaoIA}">${l.classificacaoIA}</span></td>
-            <td class="status-${l.status.split(' ')[0]}">${l.status}</td>
-            <td>R$ ${(l.comissaoEstimada || 0).toFixed(2)}</td>
+            <td>${l.status}</td>
           </tr>
         `;
       });
