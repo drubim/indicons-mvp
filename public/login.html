@@ -1,65 +1,38 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Entrar | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Login | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- mantém seu CSS antigo -->
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
-<header class="header">
-  <div class="container header-flex">
-    <div class="logo">INDICONS</div>
-    <nav>
-      <a href="/">Home</a>
-      <a href="/simulador.html">Simulador</a>
-      <a href="/cadastro.html" class="btn-outline">Criar conta</a>
-    </nav>
-  </div>
-</header>
+  <div class="login-container">
+    <h2>Acesso ao Sistema</h2>
 
-<main class="container center">
-
-  <section class="card login-card">
-    <h1>Acessar plataforma</h1>
-
-    <!-- FORMULÁRIO CORRETO -->
-    <form method="POST" action="/login">
-
-      <label>E-mail</label>
+    <form id="loginForm">
       <input
         type="email"
-        name="email"
-        placeholder="seu@email.com"
+        id="email"
+        placeholder="E-mail"
         required
-      >
+      />
 
-      <label>Senha</label>
       <input
         type="password"
-        name="senha"
-        placeholder="••••••••"
+        id="senha"
+        placeholder="Senha"
         required
-      >
+      />
 
-      <button class="btn btn-large" type="submit">
-        Entrar
-      </button>
-
+      <button type="submit">Entrar</button>
     </form>
 
-    <p class="muted">
-      Ainda não é indicador?
-      <a href="/cadastro.html"><strong>Criar conta</strong></a>
-    </p>
-  </section>
+    <p id="erro" style="color:red; display:none;"></p>
+  </div>
 
-</main>
-
-<footer class="footer-simple">
-  © 2025 INDICONS • Plataforma de indicação de consórcios
-</footer>
-
+  <script src="/js/login.js"></script>
 </body>
 </html>
