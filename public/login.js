@@ -1,66 +1,21 @@
-// =======================================
-// LOGIN.JS - FUNCIONAL E ROBUSTO
-// =======================================
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | INDICONS</title>
+</head>
+<body>
 
-document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('loginForm');
-  const erro = document.getElementById('erro');
+<h2>Acesso ao Sistema</h2>
 
-  // DEBUG VISUAL (REMOVA DEPOIS SE QUISER)
-  console.log('login.js carregado com sucesso');
+<form id="loginForm">
+  <input type="email" id="email" placeholder="E-mail" required>
+  <br><br>
+  <input type="password" id="senha" placeholder="Senha" required>
+  <br><br>
+  <button type="submit">Entrar</button>
+</form>
 
-  if (!form) {
-    alert('ERRO: Formulário de login não encontrado.');
-    return;
-  }
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    erro.style.display = 'none';
-
-    const email = document.getElementById('email').value.trim();
-    const senha = document.getElementById('senha').value.trim();
-
-    if (!email || !senha) {
-      erro.innerText = 'Preencha e-mail e senha.';
-      erro.style.display = 'block';
-      return;
-    }
-
-    fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, senha })
-    })
-      .then(async res => {
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || 'Usuário ou senha inválidos');
-        }
-        return res.json();
-      })
-      .then(data => {
-        // Salva token
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
-
-        // Redireciona conforme perfil
-        if (data.role === 'admin') {
-          window.location.href = '/admin';
-        } else if (data.role === 'parceiro') {
-          window.location.href = '/parceiro';
-        } else if (data.role === 'indicador') {
-          window.location.href = '/indicador';
-        } else {
-          throw new Error('Perfil inválido');
-        }
-      })
-      .catch(err => {
-        erro.innerText = err.message || 'Erro ao entrar';
-        erro.style.display = 'block';
-      });
-  });
-});
+<script src="login.js"></script>
+</body>
+</html>
