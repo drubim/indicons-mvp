@@ -6,19 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      padding: 20px;
-    }
+    body { font-family: Arial, sans-serif; background: #f3f4f6; padding: 20px; }
     .box {
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
       background: #fff;
       padding: 20px;
       border-radius: 10px;
     }
-    h2 { margin-bottom: 10px; }
     input, button {
       width: 100%;
       padding: 12px;
@@ -27,7 +22,7 @@
     }
     button {
       background: #2563eb;
-      color: white;
+      color: #fff;
       border: none;
       cursor: pointer;
     }
@@ -37,17 +32,17 @@
 
 <div class="box">
   <h2>Receba uma proposta</h2>
-  <p>Preencha os dados para falarmos com você.</p>
+  <p>Preencha seus dados para falarmos com você.</p>
 
   <form id="form">
-    <input type="text" id="nome" placeholder="Seu nome" required>
-    <input type="tel" id="whatsapp" placeholder="WhatsApp" required>
+    <input id="nome" placeholder="Seu nome" required>
+    <input id="whatsapp" placeholder="WhatsApp com DDD" required>
     <button type="submit">Enviar</button>
   </form>
 </div>
 
 <script>
-  // 🔴 ESSENCIAL: pega o código da URL
+  // 🔴 ESSENCIAL — PEGA O CÓDIGO DO INDICADOR
   const codigoIndicador = window.location.pathname.split('/').pop();
 
   document.getElementById('form').addEventListener('submit', async (e) => {
@@ -67,7 +62,7 @@
     });
 
     if (res.ok) {
-      alert('Recebemos seus dados! Em breve entraremos em contato.');
+      alert('Cadastro enviado! Em breve entraremos em contato.');
       document.getElementById('form').reset();
     } else {
       alert('Erro ao enviar. Tente novamente.');
