@@ -1,38 +1,41 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Login | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- mantém seu CSS antigo -->
-  <link rel="stylesheet" href="/css/style.css" />
+  <title>Acesso ao Sistema | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
-  <div class="login-container">
-    <h2>Acesso ao Sistema</h2>
+  <main class="container center">
+    <section class="card login-card">
+      <h1>Acesso ao Sistema</h1>
 
-    <form id="loginForm">
-      <input
-        type="email"
-        id="email"
-        placeholder="E-mail"
-        required
-      />
+      <form id="loginForm">
+        <label>E-mail</label>
+        <input
+          type="email"
+          id="email"
+          placeholder="seu@email.com"
+          required
+        >
 
-      <input
-        type="password"
-        id="senha"
-        placeholder="Senha"
-        required
-      />
+        <label>Senha</label>
+        <input
+          type="password"
+          id="senha"
+          placeholder="Sua senha"
+          required
+        >
 
-      <button type="submit">Entrar</button>
-    </form>
+        <button class="btn btn-large" type="submit">
+          Entrar
+        </button>
+      </form>
 
-    <p id="erro" style="color:red; display:none;"></p>
-  </div>
+      <p id="erro" style="color:red; margin-top:10px; display:none;"></p>
 
-  <script src="/js/login.js"></script>
-</body>
-</html>
+      <p class="muted" style="margin-top:20px;">
+        Não tem conta?
+        <a href="/cadastro.html
