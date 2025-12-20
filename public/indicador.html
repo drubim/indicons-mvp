@@ -6,50 +6,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      padding: 20px;
-    }
-
-    h1 {
-      margin-bottom: 5px;
-    }
-
-    .sub {
-      color: #6b7280;
-      margin-bottom: 20px;
-    }
+    body { font-family: Arial, sans-serif; background: #f3f4f6; padding: 20px; }
+    h1 { margin-bottom: 5px; }
+    .sub { color: #6b7280; margin-bottom: 20px; }
 
     .card {
-      background: #ffffff;
-      border-radius: 10px;
+      background: #fff;
       padding: 20px;
+      border-radius: 10px;
       margin-bottom: 20px;
     }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      font-size: 14px;
+    .badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
     }
 
-    button {
-      margin-top: 10px;
-      padding: 10px 14px;
-      cursor: pointer;
-    }
+    .FRIO { background: #6b7280; }
+    .MORNO { background: #f59e0b; }
+    .QUENTE { background: #dc2626; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    .status-Registrado { color: #ca8a04; }
+    .status-Em { color: #2563eb; }
 
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
+    th { text-align: left; }
+
+    .total {
+      font-size: 22px;
+      font-weight: bold;
+      color: #16a34a;
     }
   </style>
 </head>
@@ -61,8 +51,12 @@
 
 <div class="card">
   <strong>Seu link de indicação</strong>
-  <input id="link" readonly>
-  <button onclick="copiar()">Copiar</button>
+  <input id="link" readonly style="width:100%; padding:10px; margin-top:6px">
+</div>
+
+<div class="card">
+  Comissão estimada
+  <div class="total" id="comissao">R$ 0,00</div>
 </div>
 
 <div class="card">
@@ -71,11 +65,13 @@
     <thead>
       <tr>
         <th>Cliente</th>
+        <th>IA</th>
         <th>Status</th>
+        <th>R$</th>
       </tr>
     </thead>
     <tbody id="lista">
-      <tr><td colspan="2">Carregando...</td></tr>
+      <tr><td colspan="4">Carregando...</td></tr>
     </tbody>
   </table>
 </div>
@@ -84,23 +80,25 @@
   const codigo = new URLSearchParams(window.location.search).get('codigo');
 
   if (!codigo) {
-    alert('Acesso inválido. Faça login novamente.');
+    alert('Acesso inválido.');
     window.location.href = '/login.html';
   }
 
   fetch(`/indicador/${codigo}`)
-    .then(res => res.json())
+    .then(r => r.json())
     .then(data => {
       document.getElementById('nome').innerText = `Olá, ${data.nome}`;
       document.getElementById('link').value =
         `${window.location.origin}/i/${data.codigo}`;
+      document.getElementById('comissao').innerText =
+        `R$ ${data.totalComissao.toFixed(2)}`;
 
       const lista = document.getElementById('lista');
       lista.innerHTML = '';
 
       if (data.indicacoes.length === 0) {
         lista.innerHTML =
-          '<tr><td colspan="2">Nenhuma indicação ainda</td></tr>';
+          '<tr><td colspan="4">Nenhuma indicação ainda</td></tr>';
         return;
       }
 
@@ -108,22 +106,13 @@
         lista.innerHTML += `
           <tr>
             <td>${l.nome}</td>
-            <td>${l.status}</td>
+            <td><span class="badge ${l.classificacaoIA}">${l.classificacaoIA}</span></td>
+            <td class="status-${l.status.split(' ')[0]}">${l.status}</td>
+            <td>R$ ${(l.comissaoEstimada || 0).toFixed(2)}</td>
           </tr>
         `;
       });
-    })
-    .catch(() => {
-      document.getElementById('lista').innerHTML =
-        '<tr><td colspan="2">Erro ao carregar dados</td></tr>';
     });
-
-  function copiar() {
-    const input = document.getElementById('link');
-    input.select();
-    document.execCommand('copy');
-    alert('Link copiado!');
-  }
 </script>
 
 </body>
