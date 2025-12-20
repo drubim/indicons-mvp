@@ -32,7 +32,9 @@ app.post('/login', (req, res) => {
     usuarios.find(u => u.email === email && u.senha === senha) ||
     indicadores.find(i => i.email === email && i.senha === senha);
 
-  if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
+  if (!user) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
 
   res.json({
     role: user.role,
@@ -51,7 +53,9 @@ app.post('/cadastro', (req, res) => {
     usuarios.find(u => u.email === email) ||
     indicadores.find(i => i.email === email);
 
-  if (existe) return res.status(409).json({ error: 'Usuário já existe' });
+  if (existe) {
+    return res.status(409).json({ error: 'Usuário já existe' });
+  }
 
   const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -85,7 +89,9 @@ app.post('/indicacao', (req, res) => {
   const { nome, whatsapp, codigoIndicador } = req.body;
 
   const indicador = indicadores.find(i => i.codigo === codigoIndicador);
-  if (!indicador) return res.status(400).json({ error: 'Indicador inválido' });
+  if (!indicador) {
+    return res.status(400).json({ error: 'Indicador inválido' });
+  }
 
   indicacoes.push({
     id: Date.now(),
@@ -101,29 +107,26 @@ app.post('/indicacao', (req, res) => {
 });
 
 /* ===============================
-   ROTAS ADMIN (ESSENCIAIS)
+   PAINEL DO INDICADOR (ROTA CORRETA)
 ================================ */
+app.get('/indicador/:codigo', (req, res) => {
+  const { codigo } = req.params;
 
-// Resumo
-app.get('/admin/resumo', (req, res) => {
+  const indicador = indicadores.find(i => i.codigo === codigo);
+  if (!indicador) {
+    return res.status(404).json({ error: 'Indicador não encontrado' });
+  }
+
+  const minhasIndicacoes = indicacoes.filter(
+    l => l.indicadorCodigo === codigo
+  );
+
   res.json({
-    usuarios: usuarios.length + indicadores.length,
-    leads: indicacoes.length,
-    comissoes: 0
+    nome: indicador.nome,
+    codigo: indicador.codigo,
+    nivel: indicador.nivel,
+    indicacoes: minhasIndicacoes
   });
-});
-
-// Usuários
-app.get('/admin/usuarios', (req, res) => {
-  res.json([
-    ...usuarios.map(u => ({ nome: u.nome, email: u.email, tipo: u.role })),
-    ...indicadores.map(i => ({ nome: i.nome, email: i.email, tipo: 'indicador' }))
-  ]);
-});
-
-// Leads
-app.get('/admin/leads', (req, res) => {
-  res.json(indicacoes);
 });
 
 /* ===============================
