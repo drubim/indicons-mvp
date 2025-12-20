@@ -4,7 +4,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+/* ===============================
+   MIDDLEWARE
+================================ */
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ===============================
@@ -58,14 +62,14 @@ app.post('/cadastro', (req, res) => {
 });
 
 /* ===============================
-   LINK INDICADOR
+   LINK DO INDICADOR
 ================================ */
 app.get('/i/:codigo', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/indicacao.html'));
 });
 
 /* ===============================
-   🔴 REGISTRO DE LEAD (CHAVE)
+   REGISTRO DE LEAD
 ================================ */
 app.post('/indicacao', (req, res) => {
   const { nome, whatsapp, codigoIndicador } = req.body;
@@ -82,10 +86,9 @@ app.post('/indicacao', (req, res) => {
     indicadorCodigo: indicador.codigo,
     indicadorNome: indicador.nome,
     status: 'Registrado',
+    classificacaoIA: 'FRIO', // mock
     criadaEm: new Date()
   });
-
-  console.log('LEAD REGISTRADO:', nome, indicador.codigo);
 
   res.json({ success: true });
 });
@@ -108,6 +111,22 @@ app.get('/indicador/:codigo', (req, res) => {
 /* ===============================
    ADMIN
 ================================ */
+app.get('/admin/usuarios', (req, res) => {
+  const lista = [
+    ...usuarios.map(u => ({
+      nome: u.nome,
+      email: u.email,
+      tipo: u.role
+    })),
+    ...indicadores.map(i => ({
+      nome: i.nome,
+      email: i.email,
+      tipo: 'indicador'
+    }))
+  ];
+  res.json(lista);
+});
+
 app.get('/admin/leads', (req, res) => {
   res.json(indicacoes);
 });
@@ -119,6 +138,9 @@ app.get('/parceiro/leads', (req, res) => {
   res.json(indicacoes);
 });
 
+/* ===============================
+   START
+================================ */
 app.listen(PORT, () => {
-  console.log(`🚀 INDICONS rodando na porta ${PORT}`);
+  console.log(`🚀 INDICONS ONLINE NA PORTA ${PORT}`);
 });
