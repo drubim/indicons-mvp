@@ -4,39 +4,35 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* MIDDLEWARES */
+/* MIDDLEWARE */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-/* SERVIR FRONTEND */
 app.use(express.static(path.join(__dirname, 'public')));
+
+/* "BANCO" EM MEMÓRIA */
+const usuarios = [
+  { email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
+  { email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' },
+  { email: 'indicador@indicons.com.br', senha: 'indicador123', role: 'indicador' }
+];
 
 /* LOGIN */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
 
-  // CONTAS FIXAS PARA TESTE
-  if (email === 'admin@indicons.com.br' && senha === 'admin123') {
-    return res.json({ role: 'admin' });
+  const user = usuarios.find(
+    u => u.email === email && u.senha === senha
+  );
+
+  if (!user) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
   }
 
-  if (email === 'parceiro@indicons.com.br' && senha === 'parceiro123') {
-    return res.json({ role: 'parceiro' });
-  }
-
-  if (email === 'indicador@indicons.com.br' && senha === 'indicador123') {
-    return res.json({ role: 'indicador' });
-  }
-
-  return res.status(401).json({ error: 'Credenciais inválidas' });
+  res.json({ role: user.role });
 });
 
-/* ROTAS HTML */
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/login.html'));
-});
+/* CADASTRO DE INDICADOR */
+app.post('/cadastro', (req, res) => {
+  const { email, senha } = req.body;
 
-/* START */
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+  if (!email || !senha) {
