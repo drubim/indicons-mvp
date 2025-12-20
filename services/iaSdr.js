@@ -1,29 +1,30 @@
 // services/iaSdr.js
-// IA SDR MOCK — classifica leads
 
-async function classificarLead({ nome, whatsapp }) {
-  /**
-   * REGRA MOCK (simples e segura):
-   * - Se WhatsApp começa com 9 → QUENTE
-   * - Caso contrário → MORNO
-   * (Depois isso vira OpenAI)
-   */
+function gerarHorarioReuniao() {
+  const data = new Date();
+  data.setDate(data.getDate() + 1); // amanhã
+  data.setHours(10, 0, 0, 0);       // 10:00
+  return data;
+}
 
-  if (!whatsapp) {
-    return { classificacao: 'FRIO', motivo: 'Contato incompleto' };
-  }
+async function classificarEAgendar({ whatsapp }) {
+  const numero = whatsapp.replace(/\D/g, '');
 
-  if (whatsapp.replace(/\D/g, '').length >= 11) {
+  // FRIO
+  if (numero.length < 11) {
     return {
-      classificacao: 'QUENTE',
-      motivo: 'Contato válido e interesse potencial'
+      classificacao: 'FRIO',
+      status: 'Registrado'
     };
   }
 
+  // QUENTE
   return {
-    classificacao: 'MORNO',
-    motivo: 'Interesse inicial'
+    classificacao: 'QUENTE',
+    status: 'Reunião agendada',
+    horarioReuniao: gerarHorarioReuniao(),
+    linkReuniao: 'https://meet.google.com/abc-defg-hij' // mock
   };
 }
 
-module.exports = { classificarLead };
+module.exports = { classificarEAgendar };
