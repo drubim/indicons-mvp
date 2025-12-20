@@ -1,21 +1,28 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>Login | INDICONS</title>
-</head>
-<body>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-<h2>Acesso ao Sistema</h2>
+  const email = document.getElementById('email').value;
+  const senha = document.getElementById('senha').value;
 
-<form id="loginForm">
-  <input type="email" id="email" placeholder="E-mail" required>
-  <br><br>
-  <input type="password" id="senha" placeholder="Senha" required>
-  <br><br>
-  <button type="submit">Entrar</button>
-</form>
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha })
+    });
 
-<script src="login.js"></script>
-</body>
-</html>
+    if (!response.ok) {
+      alert('Usuário ou senha inválidos');
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.role === 'admin') window.location.href = 'admin.html';
+    if (data.role === 'parceiro') window.location.href = 'parceiro.html';
+    if (data.role === 'indicador') window.location.href = 'indicador.html';
+
+  } catch (error) {
+    alert('Erro ao conectar no servidor');
+  }
+});
