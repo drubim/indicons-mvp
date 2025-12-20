@@ -1,51 +1,209 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Painel do Indicador</title>
+<meta charset="UTF-8">
+<title>Painel do Indicador | INDICONS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f4f6;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 4px;
+}
+
+.sub {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+/* CARDS */
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+/* LINK */
+.link-box {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.link-box input {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.link-box button {
+  padding: 10px 14px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* TABELA */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background: #111827;
+  color: #ffffff;
+}
+
+/* BADGES IA */
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.FRIO { background: #6b7280; }
+.MORNO { background: #f59e0b; }
+.QUENTE { background: #dc2626; }
+
+/* STATUS */
+.status {
+  font-weight: bold;
+}
+
+.Registrado { color: #ca8a04; }        /* 🟡 */
+.Em { color: #2563eb; }                /* 🔵 */
+.Venda { color: #16a34a; }             /* 🟢 */
+
+/* COMISSÃO */
+.total {
+  font-size: 26px;
+  font-weight: bold;
+  color: #16a34a;
+}
+</style>
 </head>
+
 <body>
 
-<h2 id="nome">Indicador</h2>
+<h1 id="nome">Olá</h1>
+<div class="sub">Acompanhe suas indicações em tempo real</div>
 
-<table border="1" width="100%">
-  <thead>
-    <tr>
-      <th>Cliente</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody id="lista">
-    <tr><td colspan="2">Carregando...</td></tr>
-  </tbody>
-</table>
+<!-- LINK DO INDICADOR -->
+<div class="card">
+  <strong>Seu link de indicação</strong>
+  <div class="link-box">
+    <input id="link" readonly>
+    <button onclick="copiar()">Copiar</button>
+  </div>
+</div>
+
+<!-- COMISSÃO -->
+<div class="card">
+  Comissão estimada
+  <div class="total" id="comissao">R$ 0,00</div>
+</div>
+
+<!-- LISTA DE LEADS -->
+<div class="card">
+  <h3>Minhas Indicações</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>IA</th>
+        <th>Status</th>
+        <th>R$</th>
+      </tr>
+    </thead>
+    <tbody id="lista">
+      <tr><td colspan="4">Carregando...</td></tr>
+    </tbody>
+  </table>
+</div>
 
 <script>
-  const codigo = new URLSearchParams(window.location.search).get('codigo');
+const codigo = new URLSearchParams(window.location.search).get('codigo');
 
-  fetch(`/indicador/${codigo}`)
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById('nome').innerText = data.nome || 'Indicador';
+if (!codigo) {
+  alert('Acesso inválido. Faça login novamente.');
+  window.location.href = '/login.html';
+}
 
-      const lista = document.getElementById('lista');
-      lista.innerHTML = '';
+fetch(`/indicador/${codigo}`)
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('nome').innerText = `Olá, ${data.nome}`;
+    document.getElementById('link').value =
+      `${window.location.origin}/i/${data.codigo}`;
 
-      if (!data.indicacoes || data.indicacoes.length === 0) {
-        lista.innerHTML =
-          '<tr><td colspan="2">Nenhum lead ainda</td></tr>';
-        return;
-      }
+    let total = 0;
+    const lista = document.getElementById('lista');
+    lista.innerHTML = '';
 
-      data.indicacoes.forEach(l => {
-        lista.innerHTML += `
-          <tr>
-            <td>${l.nome}</td>
-            <td>${l.status}</td>
-          </tr>
-        `;
-      });
+    if (!data.indicacoes || data.indicacoes.length === 0) {
+      lista.innerHTML =
+        '<tr><td colspan="4">Nenhuma indicação ainda</td></tr>';
+      return;
+    }
+
+    data.indicacoes.forEach(l => {
+      total += l.comissaoEstimada || 0;
+
+      lista.innerHTML += `
+        <tr>
+          <td>${l.nome}</td>
+          <td>
+            <span class="badge ${l.classificacaoIA || 'FRIO'}">
+              ${l.classificacaoIA || 'FRIO'}
+            </span>
+          </td>
+          <td class="status ${l.status.split(' ')[0]}">
+            ${icone(l.status)} ${l.status}
+          </td>
+          <td>R$ ${(l.comissaoEstimada || 0).toFixed(2)}</td>
+        </tr>
+      `;
     });
+
+    document.getElementById('comissao').innerText =
+      `R$ ${total.toFixed(2)}`;
+  })
+  .catch(() => {
+    document.getElementById('lista').innerHTML =
+      '<tr><td colspan="4">Erro ao carregar dados</td></tr>';
+  });
+
+function copiar() {
+  const input = document.getElementById('link');
+  input.select();
+  document.execCommand('copy');
+  alert('Link copiado!');
+}
+
+function icone(status) {
+  if (status === 'Registrado') return '🟡';
+  if (status === 'Em atendimento') return '🔵';
+  if (status === 'Venda concluída') return '🟢';
+  return '';
+}
 </script>
 
 </body>
