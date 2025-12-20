@@ -1,69 +1,82 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Admin | INDICONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="admin.css">
+  <title>INDICONS · Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body { font-family: Arial, sans-serif; background: #f3f4f6; padding: 20px; }
+    h1 { margin-bottom: 20px; }
+    .cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+    .card {
+      background: #fff; border-radius: 10px; padding: 20px; min-width: 180px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    .card span { font-size: 26px; font-weight: bold; }
+    table {
+      width: 100%; border-collapse: collapse; background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 30px;
+    }
+    th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+    th { background: #111827; color: #fff; }
+  </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="logo">INDICONS · Admin</div>
-  <a href="/logout" class="logout">Sair</a>
-</header>
+<h1>INDICONS · Admin</h1>
 
-<main class="container">
+<div class="cards">
+  <div class="card">Usuários<br><span id="usuarios">0</span></div>
+  <div class="card">Leads<br><span id="leads">0</span></div>
+  <div class="card">Comissões (R$)<br><span id="comissoes">0</span></div>
+</div>
 
-  <!-- MÉTRICAS -->
-  <section class="cards">
-    <div class="card">
-      <h4>Usuários</h4>
-      <strong id="totalUsuarios">0</strong>
-    </div>
-    <div class="card">
-      <h4>Leads</h4>
-      <strong id="totalLeads">0</strong>
-    </div>
-    <div class="card">
-      <h4>Comissões (R$)</h4>
-      <strong id="totalComissao">0</strong>
-    </div>
-  </section>
+<h2>Usuários cadastrados</h2>
+<table>
+  <thead><tr><th>Nome</th><th>Email</th><th>Tipo</th></tr></thead>
+  <tbody id="listaUsuarios"></tbody>
+</table>
 
-  <!-- USUÁRIOS -->
-  <section class="panel">
-    <h3>Usuários cadastrados</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Email</th>
-          <th>Tipo</th>
-        </tr>
-      </thead>
-      <tbody id="usuariosTabela"></tbody>
-    </table>
-  </section>
+<h2>Leads registrados</h2>
+<table>
+  <thead><tr><th>Cliente</th><th>Indicador</th><th>Status</th></tr></thead>
+  <tbody id="listaLeads"></tbody>
+</table>
 
-  <!-- LEADS -->
-  <section class="panel">
-    <h3>Leads registrados</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Email</th>
-          <th>Valor</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="leadsTabela"></tbody>
-    </table>
-  </section>
+<script>
+  fetch('/admin/resumo')
+    .then(r => r.json())
+    .then(d => {
+      usuarios.innerText = d.usuarios;
+      leads.innerText = d.leads;
+      comissoes.innerText = d.comissoes;
+    });
 
-</main>
+  fetch('/admin/usuarios')
+    .then(r => r.json())
+    .then(lista => {
+      lista.forEach(u => {
+        listaUsuarios.innerHTML += `
+          <tr><td>${u.nome}</td><td>${u.email}</td><td>${u.tipo}</td></tr>
+        `;
+      });
+    });
 
-<script src="admin.js"></script>
+  fetch('/admin/leads')
+    .then(r => r.json())
+    .then(lista => {
+      if (lista.length === 0) {
+        listaLeads.innerHTML = '<tr><td colspan="3">Nenhum lead registrado</td></tr>';
+        return;
+      }
+      lista.forEach(l => {
+        listaLeads.innerHTML += `
+          <tr><td>${l.nome}</td><td>${l.indicadorNome}</td><td>${l.status}</td></tr>
+        `;
+      });
+    });
+</script>
+
 </body>
 </html>
