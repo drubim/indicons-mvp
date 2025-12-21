@@ -1,6 +1,12 @@
 const express = require('express');
 const path = require('path');
+
 const { classificarEAgendar } = require('./services/iaSdr');
+const {
+  gerarUrlAutorizacao,
+  obterTokens,
+  setTokens
+} = require('./services/googleOAuth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ===============================
-   DADOS EM MEMÓRIA
+   DADOS EM MEMÓRIA (MVP)
 ================================ */
 const usuarios = [
   { email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin', nome: 'Administrador' },
@@ -22,6 +28,13 @@ const usuarios = [
 
 const indicadores = [];
 const indicacoes = [];
+
+/* ===============================
+   HEALTH CHECK (RENDER)
+================================ */
+app.get('/', (req, res) => {
+  res.send('INDICONS ONLINE');
+});
 
 /* ===============================
    LOGIN
@@ -63,55 +76,99 @@ app.post('/cadastro', (req, res) => {
 });
 
 /* ===============================
-   LINK INDICADOR
+   LINK DO INDICADOR
 ================================ */
 app.get('/i/:codigo', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/indicacao.html'));
 });
 
 /* ===============================
-   REGISTRO DE LEAD + IA
+   REGISTRO DE LEAD + IA + GOOGLE
 ================================ */
 app.post('/indicacao', async (req, res) => {
-  const { nome, whatsapp, codigoIndicador } = req.body;
+  try {
+    const { nome, whatsapp, codigoIndicador } = req.body;
 
-  const indicador = indicadores.find(i => i.codigo === codigoIndicador);
-  if (!indicador) {
-    return res.status(400).json({ error: 'Indicador inválido' });
+    const indicador = indicadores.find(i => i.codigo === codigoIndicador);
+    if (!indicador) {
+      return res.status(400).json({ error: 'Indicador inválido' });
+    }
+
+    const ia = await classificarEAgendar({ nome, whatsapp });
+
+    indicacoes.push({
+      id: Date.now(),
+      nome,
+      whatsapp,
+
+      indicadorCodigo: indicador.codigo,
+      indicadorNome: indicador.nome,
+
+      classificacaoIA: ia.classificacao,
+      status: ia.status,
+
+      horarioReuniao: ia.horarioReuniao || null,
+      linkReuniao: ia.linkReuniao || null,
+
+      criadaEm: new Date()
+    });
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Erro ao registrar lead:', e);
+    res.status(500).json({ error: 'Erro ao registrar lead' });
   }
-
-  const ia = await classificarEAgendar({ whatsapp });
-
-  indicacoes.push({
-    id: Date.now(),
-    nome,
-    whatsapp,
-
-    indicadorCodigo: indicador.codigo,
-    indicadorNome: indicador.nome,
-
-    classificacaoIA: ia.classificacao,
-    status: ia.status,
-
-    horarioReuniao: ia.horarioReuniao || null,
-    linkReuniao: ia.linkReuniao || null,
-
-    criadaEm: new Date()
-  });
-
-  res.json({ success: true });
 });
 
 /* ===============================
-   PARCEIRO — LISTAR LEADS
-================================ */ 
-app.get('/parceiro/leads', (req, res) => {
+   INDICADOR — PAINEL
+================================ */
+app.get('/indicador/:codigo', (req, res) => {
+  const indicador = indicadores.find(i => i.codigo === req.params.codigo);
+
+  if (!indicador) {
+    return res.status(404).json({ error: 'Indicador não encontrado' });
+  }
+
+  res.json({
+    nome: indicador.nome,
+    codigo: indicador.codigo,
+    indicacoes: indicacoes.filter(
+      l => l.indicadorCodigo === indicador.codigo
+    )
+  });
+});
+
+/* ===============================
+   ADMIN
+================================ */
+app.get('/admin/usuarios', (req, res) => {
+  const lista = [
+    ...usuarios.map(u => ({
+      nome: u.nome,
+      email: u.email,
+      tipo: u.role
+    })),
+    ...indicadores.map(i => ({
+      nome: i.nome,
+      email: i.email,
+      tipo: 'indicador'
+    }))
+  ];
+  res.json(lista);
+});
+
+app.get('/admin/leads', (req, res) => {
   res.json(indicacoes);
 });
 
 /* ===============================
-   PARCEIRO — AÇÃO HUMANA FINAL
+   PARCEIRO
 ================================ */
+app.get('/parceiro/leads', (req, res) => {
+  res.json(indicacoes);
+});
+
 app.post('/parceiro/lead/status', (req, res) => {
   const { leadId, status } = req.body;
 
@@ -119,8 +176,40 @@ app.post('/parceiro/lead/status', (req, res) => {
   if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
 
   lead.status = status;
-
   res.json({ success: true });
+});
+
+/* ===============================
+   🔐 OAUTH GOOGLE — ETAPA 5
+================================ */
+
+/* Iniciar autorização Google */
+app.get('/auth/google', (req, res) => {
+  const url = gerarUrlAutorizacao();
+  res.redirect(url);
+});
+
+/* Callback do Google */
+let googleTokens = null;
+
+app.get('/oauth2callback', async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) {
+      return res.status(400).send('Código não fornecido');
+    }
+
+    const tokens = await obterTokens(code);
+    googleTokens = tokens;
+    setTokens(tokens);
+
+    res.send(
+      '✅ Google Calendar conectado com sucesso. Pode fechar esta página.'
+    );
+  } catch (e) {
+    console.error('Erro OAuth:', e);
+    res.status(500).send('Erro ao autenticar com Google');
+  }
 });
 
 /* ===============================
