@@ -2,39 +2,30 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Painel do Parceiro | INDICONS</title>
-  <link rel="stylesheet" href="/parceiro.css">
+  <title>Painel do Parceiro</title>
 </head>
 <body>
 
-<header> 
-  <h1>INDICONS · Parceiro</h1>
-</header>
+<h2>Leads</h2>
 
-<main class="box">
-  <h2>Leads Qualificados</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Indicador</th>
-        <th>Classificação</th>
-        <th>Status</th>
-        <th>Reunião</th>
-      </tr>
-    </thead>
-    <tbody id="leads">
-      <tr><td colspan="5">Carregando...</td></tr>
-    </tbody>
-  </table>
-</main>
+<table border="1" width="100%">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Indicador</th>
+      <th>Status</th>
+      <th>Valor Consórcio</th>
+      <th>Ação</th>
+    </tr>
+  </thead>
+  <tbody id="lista"></tbody>
+</table>
 
 <script>
 fetch('/parceiro/leads')
   .then(r => r.json())
   .then(leads => {
-    const tbody = document.getElementById('leads');
+    const tbody = document.getElementById('lista');
     tbody.innerHTML = '';
 
     leads.forEach(l => {
@@ -42,13 +33,28 @@ fetch('/parceiro/leads')
       tr.innerHTML = `
         <td>${l.nome}</td>
         <td>${l.indicadorNome}</td>
-        <td>${l.classificacaoIA}</td>
         <td>${l.status}</td>
-        <td>${l.linkReuniao ? `<a href="${l.linkReuniao}" target="_blank">Abrir Meet</a>` : '-'}</td>
+        <td>
+          <input type="number" id="v${l.id}" placeholder="Ex: 120000">
+        </td>
+        <td>
+          <button onclick="vender(${l.id})">Marcar vendido</button>
+        </td>
       `;
       tbody.appendChild(tr);
     });
   });
+
+function vender(id) {
+  const valor = document.getElementById('v' + id).value;
+  if (!valor) return alert('Informe o valor');
+
+  fetch('/lead/vendido', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, valorVenda: valor })
+  }).then(() => location.reload());
+}
 </script>
 
 </body>
