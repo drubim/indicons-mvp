@@ -6,7 +6,7 @@ try {
   criarEvento = agenda.criarEvento;
 } catch (e) {
   console.warn('⚠️ Google Agenda ainda não disponível');
-}
+} 
 
 function gerarHorario() {
   const d = new Date();
