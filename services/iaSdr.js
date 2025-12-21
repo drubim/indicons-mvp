@@ -1,13 +1,13 @@
-// services/iaSdr.js
+const { criarEvento } = require('./googleAgenda');
 
-function gerarHorarioReuniao() {
-  const data = new Date();
-  data.setDate(data.getDate() + 1); // amanhã
-  data.setHours(10, 0, 0, 0);       // 10:00
-  return data;
+function gerarHorario() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(10, 0, 0, 0);
+  return d;
 }
 
-async function classificarEAgendar({ whatsapp }) {
+async function classificarEAgendar({ whatsapp, nome }) {
   const numero = whatsapp.replace(/\D/g, '');
 
   // FRIO
@@ -18,12 +18,15 @@ async function classificarEAgendar({ whatsapp }) {
     };
   }
 
-  // QUENTE
+  // QUENTE → agenda real
+  const inicio = gerarHorario();
+  const evento = await criarEvento({ nome, inicio });
+
   return {
     classificacao: 'QUENTE',
     status: 'Reunião agendada',
-    horarioReuniao: gerarHorarioReuniao(),
-    linkReuniao: 'https://meet.google.com/abc-defg-hij' // mock
+    horarioReuniao: evento.inicio,
+    linkReuniao: evento.linkMeet
   };
 }
 
