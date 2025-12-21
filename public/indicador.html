@@ -1,208 +1,80 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Painel do Indicador | INDICONS</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f3f4f6;
-  padding: 20px;
-}
-
-h1 {
-  margin-bottom: 4px;
-}
-
-.sub {
-  color: #6b7280;
-  margin-bottom: 20px;
-}
-
-/* CARDS */
-.card {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-}
-
-/* LINK */
-.link-box {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.link-box input {
-  flex: 1;
-  padding: 10px;
-  font-size: 14px;
-}
-
-.link-box button {
-  padding: 10px 14px;
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* TABELA */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-  font-size: 14px;
-}
-
-th {
-  background: #111827;
-  color: #ffffff;
-}
-
-/* BADGES IA */
-.badge {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.FRIO { background: #6b7280; }
-.MORNO { background: #f59e0b; }
-.QUENTE { background: #dc2626; }
-
-/* STATUS */
-.status {
-  font-weight: bold;
-}
-
-.Registrado { color: #ca8a04; }        /* 🟡 */
-.Em { color: #2563eb; }                /* 🔵 */
-.Venda { color: #16a34a; }             /* 🟢 */
-
-/* COMISSÃO */
-.total {
-  font-size: 26px;
-  font-weight: bold;
-  color: #16a34a;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Painel do Indicador | INDICONS</title>
+  <link rel="stylesheet" href="/indicador.css">
 </head>
-
 <body>
 
-<h1 id="nome">Olá</h1>
-<div class="sub">Acompanhe suas indicações em tempo real</div>
+<header>
+  <h1>INDICONS · Indicador</h1>
+</header>
 
-<!-- LINK DO INDICADOR -->
-<div class="card">
-  <strong>Seu link de indicação</strong>
-  <div class="link-box">
-    <input id="link" readonly>
-    <button onclick="copiar()">Copiar</button>
-  </div>
-</div>
+<main>
+  <section class="box">
+    <h2 id="nomeIndicador">Olá, Indicador</h2>
 
-<!-- COMISSÃO -->
-<div class="card">
-  Comissão estimada
-  <div class="total" id="comissao">R$ 0,00</div>
-</div>
+    <div class="link-box">
+      <label>Seu link de indicação</label>
+      <input type="text" id="linkIndicacao" readonly>
+      <button onclick="copiarLink()">Copiar</button>
+    </div>
 
-<!-- LISTA DE LEADS -->
-<div class="card">
-  <h3>Minhas Indicações</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>IA</th>
-        <th>Status</th>
-        <th>R$</th>
-      </tr>
-    </thead>
-    <tbody id="lista">
-      <tr><td colspan="4">Carregando...</td></tr>
-    </tbody>
-  </table>
-</div>
+    <div class="etapas">
+      <div class="etapa registrado">🟡 Registrado</div>
+      <div class="etapa contato">🔵 Em contato (IA)</div>
+      <div class="etapa qualificado">🟠 Qualificado</div>
+      <div class="etapa reuniao">🟢 Reunião agendada</div>
+    </div>
+  </section>
+
+  <section class="box">
+    <h3>Minhas Indicações</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Status</th>
+          <th>Classificação</th>
+        </tr>
+      </thead>
+      <tbody id="listaIndicacoes">
+        <tr><td colspan="3">Carregando...</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
 
 <script>
 const codigo = new URLSearchParams(window.location.search).get('codigo');
 
-if (!codigo) {
-  alert('Acesso inválido. Faça login novamente.');
-  window.location.href = '/login.html';
-}
-
 fetch(`/indicador/${codigo}`)
-  .then(res => res.json())
+  .then(r => r.json())
   .then(data => {
-    document.getElementById('nome').innerText = `Olá, ${data.nome}`;
-    document.getElementById('link').value =
-      `${window.location.origin}/i/${data.codigo}`;
+    document.getElementById('nomeIndicador').innerText = `Olá, ${data.nome}`;
+    document.getElementById('linkIndicacao').value =
+      `https://app.indicons.com.br/i/${data.codigo}`;
 
-    let total = 0;
-    const lista = document.getElementById('lista');
-    lista.innerHTML = '';
-
-    if (!data.indicacoes || data.indicacoes.length === 0) {
-      lista.innerHTML =
-        '<tr><td colspan="4">Nenhuma indicação ainda</td></tr>';
-      return;
-    }
+    const tbody = document.getElementById('listaIndicacoes');
+    tbody.innerHTML = '';
 
     data.indicacoes.forEach(l => {
-      total += l.comissaoEstimada || 0;
-
-      lista.innerHTML += `
-        <tr>
-          <td>${l.nome}</td>
-          <td>
-            <span class="badge ${l.classificacaoIA || 'FRIO'}">
-              ${l.classificacaoIA || 'FRIO'}
-            </span>
-          </td>
-          <td class="status ${l.status.split(' ')[0]}">
-            ${icone(l.status)} ${l.status}
-          </td>
-          <td>R$ ${(l.comissaoEstimada || 0).toFixed(2)}</td>
-        </tr>
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${l.nome}</td>
+        <td>${l.status}</td>
+        <td>${l.classificacaoIA}</td>
       `;
+      tbody.appendChild(tr);
     });
-
-    document.getElementById('comissao').innerText =
-      `R$ ${total.toFixed(2)}`;
-  })
-  .catch(() => {
-    document.getElementById('lista').innerHTML =
-      '<tr><td colspan="4">Erro ao carregar dados</td></tr>';
   });
 
-function copiar() {
-  const input = document.getElementById('link');
+function copiarLink() {
+  const input = document.getElementById('linkIndicacao');
   input.select();
   document.execCommand('copy');
   alert('Link copiado!');
-}
-
-function icone(status) {
-  if (status === 'Registrado') return '🟡';
-  if (status === 'Em atendimento') return '🔵';
-  if (status === 'Venda concluída') return '🟢';
-  return '';
 }
 </script>
 
