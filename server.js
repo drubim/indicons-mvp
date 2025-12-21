@@ -218,3 +218,4 @@ app.get('/oauth2callback', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 INDICONS ONLINE NA PORTA ${PORT}`);
 });
+// deploy trigger - nao remover
