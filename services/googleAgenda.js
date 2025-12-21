@@ -1,69 +1,41 @@
 const { google } = require('googleapis');
+const { oauth2Client } = require('./googleOAuth');
 
-const auth = new google.auth.JWT(
-  process.env.GOOGLE_CLIENT_EMAIL,
-  null,
-  process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  ['https://www.googleapis.com/auth/calendar']
-);
+const calendar = google.calendar({
+  version: 'v3',
+  auth: oauth2Client
+});
 
-const calendar = google.calendar({ version: 'v3', auth });
-
-async function criarEvento({ nome, whatsapp, inicio, calendarId }) {
+async function criarEvento({ nome, inicio }) {
   const evento = {
-    summary: `Lead INDICONS – ${nome}`,
-    description: `Contato: ${whatsapp}`,
+    summary: `Reunião INDICONS – ${nome}`,
+    description: 'Reunião criada automaticamente pela IA INDICONS',
     start: {
-      dateTime: inicio,
+      dateTime: inicio.toISOString(),
       timeZone: 'America/Sao_Paulo'
     },
     end: {
-      dateTime: new Date(
-        new Date(inicio).getTime() + 30 * 60000
-      ).toISOString(),
+      dateTime: new Date(inicio.getTime() + 60 * 60 * 1000).toISOString(),
       timeZone: 'America/Sao_Paulo'
     },
     conferenceData: {
       createRequest: {
-        requestId: `indicons-${Date.now()}`
+        requestId: Math.random().toString(36).substring(2),
+        conferenceSolutionKey: { type: 'hangoutsMeet' }
       }
     }
   };
 
   const res = await calendar.events.insert({
-    calendarId,
+    calendarId: 'primary',
     resource: evento,
     conferenceDataVersion: 1
   });
 
-  return res.data;
-}
-
-async function agendarComDuplicacao({ nome, whatsapp, inicio, parceiroCalendarId }) {
-  // 1️⃣ Agenda mestre (INDICONS)
-  const eventoPrincipal = await criarEvento({
-    nome,
-    whatsapp,
-    inicio,
-    calendarId: process.env.GOOGLE_CALENDAR_ID
-  });
-
-  // 2️⃣ Duplica na agenda do parceiro
-  if (parceiroCalendarId) {
-    await calendar.events.insert({
-      calendarId: parceiroCalendarId,
-      resource: {
-        ...eventoPrincipal,
-        conferenceData: eventoPrincipal.conferenceData
-      },
-      conferenceDataVersion: 1
-    });
-  }
-
   return {
-    inicio: eventoPrincipal.start.dateTime,
-    meetLink: eventoPrincipal.conferenceData.entryPoints[0].uri
+    linkMeet: res.data.hangoutLink,
+    inicio: res.data.start.dateTime
   };
 }
 
-module.exports = { agendarComDuplicacao };
+module.exports = { criarEvento };
