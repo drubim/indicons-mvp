@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 ========================= */
 const usuarios = [
   {
-    id: 1,
+    id: 1, 
     nome: 'Admin',
     email: 'admin@indicons.com.br',
     senha: 'admin123',
