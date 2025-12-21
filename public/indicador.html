@@ -13,7 +13,7 @@
 
 <main>
   <section class="box">
-    <h2 id="nomeIndicador">Olá, Indicador</h2>
+    <h2 id="nomeIndicador">Olá</h2>
 
     <div class="link-box">
       <label>Seu link de indicação</label>
@@ -23,9 +23,9 @@
 
     <div class="etapas">
       <div class="etapa registrado">🟡 Registrado</div>
-      <div class="etapa contato">🔵 Em contato (IA)</div>
-      <div class="etapa qualificado">🟠 Qualificado</div>
-      <div class="etapa reuniao">🟢 Reunião agendada</div>
+      <div class="etapa andamento">🔵 Em andamento</div>
+      <div class="etapa vendido">🟢 Vendido</div>
+      <div class="etapa comissao">💰 Comissão gerada</div>
     </div>
   </section>
 
@@ -36,11 +36,12 @@
         <tr>
           <th>Cliente</th>
           <th>Status</th>
-          <th>Classificação</th>
+          <th>Venda</th>
+          <th>Minha comissão</th>
         </tr>
       </thead>
       <tbody id="listaIndicacoes">
-        <tr><td colspan="3">Carregando...</td></tr>
+        <tr><td colspan="4">Carregando...</td></tr>
       </tbody>
     </table>
   </section>
@@ -52,19 +53,35 @@ const codigo = new URLSearchParams(window.location.search).get('codigo');
 fetch(`/indicador/${codigo}`)
   .then(r => r.json())
   .then(data => {
-    document.getElementById('nomeIndicador').innerText = `Olá, ${data.nome}`;
+    const nome = data.nome || 'Indicador';
+    document.getElementById('nomeIndicador').innerText = `Olá, ${nome}`;
+
     document.getElementById('linkIndicacao').value =
       `https://app.indicons.com.br/i/${data.codigo}`;
 
     const tbody = document.getElementById('listaIndicacoes');
     tbody.innerHTML = '';
 
+    if (!data.indicacoes.length) {
+      tbody.innerHTML = '<tr><td colspan="4">Nenhuma indicação ainda</td></tr>';
+      return;
+    }
+
     data.indicacoes.forEach(l => {
+      const venda = l.valorVenda
+        ? `R$ ${Number(l.valorVenda).toLocaleString('pt-BR')}`
+        : '-';
+
+      const comissao = l.valorComissao
+        ? `R$ ${Number(l.valorComissao).toLocaleString('pt-BR')}`
+        : '-';
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${l.nome}</td>
         <td>${l.status}</td>
-        <td>${l.classificacaoIA}</td>
+        <td>${venda}</td>
+        <td>${comissao}</td>
       `;
       tbody.appendChild(tr);
     });
