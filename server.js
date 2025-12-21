@@ -2,89 +2,64 @@ const express = require('express');
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 
-/* ========================
+/* =========================
    BASE EM MEMÓRIA (MVP)
-======================== */
-const indicadores = [
-  { codigo: 'PJ55AY', nome: 'Indicador Teste' }
+========================= */
+const usuarios = [
+  {
+    id: 1,
+    nome: 'Admin',
+    email: 'admin@indicons.com.br',
+    senha: 'admin123',
+    tipo: 'admin'
+  },
+  {
+    id: 2,
+    nome: 'Parceiro',
+    email: 'parceiro@indicons.com.br',
+    senha: 'parceiro123',
+    tipo: 'parceiro'
+  }
 ];
 
+const indicadores = [];
 const leads = [];
 
-/* ========================
-   ROTAS INDICADOR
-======================== */
-app.get('/indicador/:codigo', (req, res) => {
-  const indicador = indicadores.find(i => i.codigo === req.params.codigo);
+/* =========================
+   CADASTRO INDICADOR
+========================= */
+app.post('/cadastro', (req, res) => {
+  const { nome, email, senha } = req.body;
 
-  if (!indicador) {
-    return res.json({
-      nome: 'Indicador',
-      codigo: req.params.codigo,
-      indicacoes: []
-    });
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: 'Dados incompletos' });
   }
 
-  const indicacoes = leads.filter(
-    l => l.indicadorCodigo === indicador.codigo
-  );
+  const existe = usuarios.find(u => u.email === email);
+  if (existe) {
+    return res.status(400).json({ erro: 'Usuário já existe' });
+  }
 
-  res.json({
-    nome: indicador.nome || 'Indicador',
-    codigo: indicador.codigo,
-    indicacoes
-  });
-});
+  const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-/* ========================
-   CADASTRO DE LEAD
-======================== */
-app.post('/lead', (req, res) => {
-  const { nome, indicadorCodigo } = req.body;
-
-  const indicador = indicadores.find(i => i.codigo === indicadorCodigo);
-
-  const novoLead = {
+  const novoIndicador = {
     id: Date.now(),
     nome,
-    indicadorCodigo,
-    indicadorNome: indicador ? indicador.nome : 'Indicador',
-    status: 'Registrado',
-    valorVenda: null,
-    percentualComissao: 0.01,
-    valorComissao: null
+    email,
+    senha,
+    tipo: 'indicador',
+    codigo
   };
 
-  leads.push(novoLead);
-  res.json({ ok: true });
-});
-
-/* ========================
-   PARCEIRO / ADMIN
-======================== */
-app.get('/parceiro/leads', (req, res) => res.json(leads));
-app.get('/admin/leads', (req, res) => res.json(leads));
-
-/* ========================
-   MARCAR COMO VENDIDO
-======================== */
-app.post('/lead/vendido', (req, res) => {
-  const { id, valorVenda } = req.body;
-
-  const lead = leads.find(l => l.id === id);
-  if (!lead) return res.status(404).json({ erro: 'Lead não encontrado' });
-
-  lead.status = 'Vendido';
-  lead.valorVenda = Number(valorVenda);
-  lead.valorComissao = lead.valorVenda * lead.percentualComissao;
+  usuarios.push(novoIndicador);
+  indicadores.push({ codigo, nome });
 
   res.json({ ok: true });
 });
 
-app.listen(PORT, () =>
-  console.log('Servidor rodando na porta', PORT)
-);
+/* =============*
