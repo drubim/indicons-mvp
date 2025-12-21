@@ -4,7 +4,7 @@ const path = require('path');
 const { classificarEAgendar } = require('./services/iaSdr');
 const {
   gerarUrlAutorizacao,
-  obterTokens,
+  obterTokens, 
   setTokens
 } = require('./services/googleOAuth');
 
