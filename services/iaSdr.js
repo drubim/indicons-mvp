@@ -1,4 +1,12 @@
-const { criarEvento } = require('./googleAgenda');
+let criarEvento = null;
+
+// Tentamos carregar o Google Agenda, mas NÃO quebramos se falhar
+try {
+  const agenda = require('./googleAgenda');
+  criarEvento = agenda.criarEvento;
+} catch (e) {
+  console.warn('⚠️ Google Agenda ainda não disponível');
+}
 
 function gerarHorario() {
   const d = new Date();
@@ -8,7 +16,7 @@ function gerarHorario() {
 }
 
 async function classificarEAgendar({ whatsapp, nome }) {
-  const numero = whatsapp.replace(/\D/g, '');
+  const numero = (whatsapp || '').replace(/\D/g, '');
 
   // FRIO
   if (numero.length < 11) {
@@ -18,15 +26,25 @@ async function classificarEAgendar({ whatsapp, nome }) {
     };
   }
 
-  // QUENTE → agenda real
-  const inicio = gerarHorario();
-  const evento = await criarEvento({ nome, inicio });
+  // QUENTE — tenta agendar, mas não quebra se não conseguir
+  let horario = gerarHorario();
+  let link = null;
+
+  if (criarEvento) {
+    try {
+      const evento = await criarEvento({ nome, inicio: horario });
+      horario = evento.inicio;
+      link = evento.linkMeet;
+    } catch (e) {
+      console.error('Erro ao criar evento Google:', e.message);
+    }
+  }
 
   return {
     classificacao: 'QUENTE',
     status: 'Reunião agendada',
-    horarioReuniao: evento.inicio,
-    linkReuniao: evento.linkMeet
+    horarioReuniao: horario,
+    linkReuniao: link
   };
 }
 
