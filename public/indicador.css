@@ -34,18 +34,20 @@ main {
 .etapas {
   display: flex;
   gap: 10px;
+  margin-bottom: 20px;
 }
 
 .etapa {
   padding: 10px;
   border-radius: 5px;
   font-size: 14px;
+  font-weight: bold;
 }
 
 .registrado { background: #ffe58a; }
-.contato { background: #91caff; }
-.qualificado { background: #ffbb96; }
-.reuniao { background: #b7eb8f; }
+.andamento { background: #91caff; }
+.vendido { background: #b7eb8f; }
+.comissao { background: #ffd666; }
 
 table {
   width: 100%;
@@ -55,4 +57,5 @@ table {
 th, td {
   border-bottom: 1px solid #ddd;
   padding: 8px;
+  text-align: center;
 }
