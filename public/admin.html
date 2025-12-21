@@ -2,49 +2,42 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Admin | INDICONS</title>
-  <link rel="stylesheet" href="/admin.css">
+  <title>Admin INDICONS</title>
 </head>
 <body>
 
-<header>
-  <h1>INDICONS · Admin</h1>
-</header>
+<h2>Leads Registrados</h2>
 
-<main class="box">
-  <h2>Leads Registrados</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Indicador</th>
-        <th>Classificação IA</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="adminLeads">
-      <tr><td colspan="4">Carregando...</td></tr>
-    </tbody>
-  </table>
-</main>
+<table border="1" width="100%">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Indicador</th>
+      <th>Status</th>
+      <th>Venda</th>
+      <th>Comissão</th>
+    </tr>
+  </thead>
+  <tbody id="lista"></tbody>
+</table>
 
 <script>
 fetch('/admin/leads')
   .then(r => r.json())
   .then(leads => {
-    const tbody = document.getElementById('adminLeads');
+    const tbody = document.getElementById('lista');
     tbody.innerHTML = '';
 
     leads.forEach(l => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${l.nome}</td>
-        <td>${l.indicadorNome}</td>
-        <td>${l.classificacaoIA}</td>
-        <td>${l.status}</td>
+      tbody.innerHTML += `
+        <tr>
+          <td>${l.nome}</td>
+          <td>${l.indicadorNome}</td>
+          <td>${l.status}</td>
+          <td>${l.valorVenda ? 'R$ ' + l.valorVenda : '-'}</td>
+          <td>${l.valorComissao ? 'R$ ' + l.valorComissao.toFixed(2) : '-'}</td>
+        </tr>
       `;
-      tbody.appendChild(tr);
     });
   });
 </script>
