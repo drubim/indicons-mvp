@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="dashboard-indicador.css" />
 </head>
 <body>
-
   <div class="container">
 
     <header class="header">
@@ -17,12 +16,12 @@
 
     <!-- LINK DE INDICAÇÃO -->
     <section class="link-box">
-      <label>Seu link de indicação</label>
+      <label for="linkIndicador">Seu link de indicação</label>
       <div class="link-row">
-        <input type="text" id="linkIndicador" readonly />
-        <button onclick="copiarLink()">Copiar link</button>
+        <input id="linkIndicador" type="text" readonly />
+        <button id="btnCopiar">Copiar link</button>
       </div>
-      <span id="copiadoMsg" class="copiado">Link copiado com sucesso</span>
+      <small id="copiadoMsg" class="copiado">Link copiado com sucesso</small>
     </section>
 
     <!-- CARDS -->
@@ -31,21 +30,18 @@
         <span>Registrado</span>
         <strong id="qtdRegistrado">0</strong>
       </div>
-
       <div class="card andamento">
         <span>Em andamento</span>
         <strong id="qtdAndamento">0</strong>
       </div>
-
       <div class="card vendido">
         <span>Vendido</span>
         <strong id="qtdVendido">0</strong>
       </div>
-
       <div class="card comissao">
         <span>Comissão</span>
         <strong id="totalComissao">R$ 0,00</strong>
-      </div> 
+      </div>
     </section>
 
     <!-- TABELA -->
@@ -60,9 +56,7 @@
             <th>Data</th>
           </tr>
         </thead>
-        <tbody id="tabelaIndicacoes">
-          <!-- preenchido via JS -->
-        </tbody>
+        <tbody id="tabelaIndicacoes"></tbody>
       </table>
     </section>
 
