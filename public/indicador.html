@@ -1,67 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Painel do Indicador</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="dashboard-indicador.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./dashboard-indicador.css">
 </head>
 <body>
-  <div class="container">
 
-    <header class="header">
-      <h1>Painel do Indicador</h1>
-      <p>Acompanhe suas indicações e comissões</p>
-    </header>
+<div class="container">
 
-    <!-- LINK DE INDICAÇÃO -->
-    <section class="link-box">
-      <label for="linkIndicador">Seu link de indicação</label>
-      <div class="link-row">
-        <input id="linkIndicador" type="text" readonly />
-        <button id="btnCopiar">Copiar link</button>
-      </div>
-      <small id="copiadoMsg" class="copiado">Link copiado com sucesso</small>
-    </section>
+  <header>
+    <h1>Painel do Indicador</h1>
+    <p>Acompanhe suas indicações e comissões</p>
+  </header>
 
-    <!-- CARDS -->
-    <section class="cards">
-      <div class="card">
-        <span>Registrado</span>
-        <strong id="qtdRegistrado">0</strong>
-      </div>
-      <div class="card andamento">
-        <span>Em andamento</span>
-        <strong id="qtdAndamento">0</strong>
-      </div>
-      <div class="card vendido">
-        <span>Vendido</span>
-        <strong id="qtdVendido">0</strong>
-      </div>
-      <div class="card comissao">
-        <span>Comissão</span>
-        <strong id="totalComissao">R$ 0,00</strong>
-      </div>
-    </section>
+  <section class="link-box">
+    <label>Seu link de indicação</label>
+    <div class="link-row">
+      <input id="linkIndicador" readonly>
+      <button id="copiar">Copiar link</button>
+    </div>
+    <span id="msg">Link copiado com sucesso</span>
+  </section>
 
-    <!-- TABELA -->
-    <section class="tabela-box">
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Status</th>
-            <th>Valor do consórcio</th>
-            <th>Comissão</th>
-            <th>Data</th>
-          </tr>
-        </thead>
-        <tbody id="tabelaIndicacoes"></tbody>
-      </table>
-    </section>
+  <section class="cards">
+    <div class="card">Registrado <strong id="r">0</strong></div>
+    <div class="card andamento">Em andamento <strong id="a">0</strong></div>
+    <div class="card vendido">Vendido <strong id="v">0</strong></div>
+    <div class="card comissao">Comissão <strong id="c">R$ 0,00</strong></div>
+  </section>
 
-  </div>
-
-  <script src="dashboard-indicador.js"></script>
-</body>
-</html>
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Status</th>
+        <th>Valor</th>
+        <th>Comissão</th>
