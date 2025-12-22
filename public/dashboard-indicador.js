@@ -1,45 +1,64 @@
-// pega codigo da URL
+// ===== PEGAR CÓDIGO DA URL =====
 const params = new URLSearchParams(window.location.search);
-const codigo = params.get("codigo");
+const codigo = params.get("codigo") || "SEU_CODIGO";
 
+// ===== GERAR LINK DO INDICADOR =====
 const link = `https://app.indicons.com.br/indicador.html?codigo=${codigo}`;
 
-document.getElementById("linkIndicador").value = link;
+const inputLink = document.getElementById("linkIndicador");
+const btnCopiar = document.getElementById("btnCopiar");
+const msgCopiado = document.getElementById("msgCopiado");
 
-document.getElementById("copiar").onclick = () => {
+inputLink.value = link;
+
+btnCopiar.addEventListener("click", () => {
   navigator.clipboard.writeText(link);
-  const msg = document.getElementById("msg");
-  msg.style.display = "block";
-  setTimeout(() => msg.style.display = "none", 1500);
-};
+  msgCopiado.style.display = "block";
+  setTimeout(() => (msgCopiado.style.display = "none"), 1500);
+});
 
-// dados simulados (frontend apenas)
-const dados = [
+// ===== DADOS (EXEMPLO FRONTEND) =====
+const indicacoes = [
   { cliente: "João", status: "Registrado", valor: null, comissao: null, data: "10/12" },
   { cliente: "Maria", status: "Em andamento", valor: 180000, comissao: null, data: "12/12" },
   { cliente: "Carlos", status: "Vendido", valor: 250000, comissao: 5000, data: "15/12" }
 ];
 
-let r=0,a=0,v=0,c=0;
-const tbody = document.getElementById("lista");
+let registrado = 0;
+let andamento = 0;
+let vendido = 0;
+let totalComissao = 0;
 
-dados.forEach(d => {
-  if (d.status==="Registrado") r++;
-  if (d.status==="Em andamento") a++;
-  if (d.status==="Vendido") { v++; c+=d.comissao; }
+const tbody = document.getElementById("listaIndicacoes");
 
-  tbody.innerHTML += `
-    <tr>
-      <td>${d.cliente}</td>
-      <td>${d.status}</td>
-      <td>${d.valor?d.valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}):"-"}</td>
-      <td>${d.comissao?d.comissao.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}):"-"}</td>
-      <td>${d.data}</td>
-    </tr>
+indicacoes.forEach(item => {
+  if (item.status === "Registrado") registrado++;
+  if (item.status === "Em andamento") andamento++;
+  if (item.status === "Vendido") {
+    vendido++;
+    totalComissao += item.comissao;
+  }
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${item.cliente}</td>
+    <td><span class="badge ${item.status.toLowerCase().replace(" ", "")}">${item.status}</span></td>
+    <td>${item.valor ? moeda(item.valor) : "—"}</td>
+    <td>${item.status === "Vendido" ? moeda(item.comissao) : "—"}</td>
+    <td>${item.data}</td>
   `;
+  tbody.appendChild(tr);
 });
 
-document.getElementById("r").innerText=r;
-document.getElementById("a").innerText=a;
-document.getElementById("v").innerText=v;
-document.getElementById("c").innerText=c.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+document.getElementById("registrado").innerText = registrado;
+document.getElementById("andamento").innerText = andamento;
+document.getElementById("vendido").innerText = vendido;
+document.getElementById("totalComissao").innerText = moeda(totalComissao);
+
+// ===== HELPERS =====
+function moeda(valor) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
