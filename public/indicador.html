@@ -1,51 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Painel do Indicador</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="./dashboard-indicador.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS ABSOLUTO (OBRIGATÓRIO NO RENDER) -->
+  <link rel="stylesheet" href="/dashboard-indicador.css" />
 </head>
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <header>
-    <h1>Painel do Indicador</h1>
-    <p>Acompanhe suas indicações e comissões</p>
-  </header>
+    <header class="header">
+      <h1>Painel do Indicador</h1>
+      <p>Acompanhe suas indicações e comissões</p>
+    </header>
 
-  <section class="link-box">
-    <label>Seu link de indicação</label>
-    <div class="link-row">
-      <input id="linkIndicador" readonly>
-      <button id="copiar">Copiar link</button>
-    </div>
-    <span id="msg">Link copiado com sucesso</span>
-  </section>
+    <!-- LINK -->
+    <section class="link-box">
+      <label>Seu link de indicação</label>
+      <div class="link-row">
+        <input id="linkIndicador" readonly />
+        <button id="btnCopiar">Copiar link</button>
+      </div>
+      <small id="msgCopiado">Link copiado com sucesso</small>
+    </section>
 
-  <section class="cards">
-    <div class="card">Registrado <strong id="r">0</strong></div>
-    <div class="card andamento">Em andamento <strong id="a">0</strong></div>
-    <div class="card vendido">Vendido <strong id="v">0</strong></div>
-    <div class="card comissao">Comissão <strong id="c">R$ 0,00</strong></div>
-  </section>
+    <!-- CARDS -->
+    <section class="cards">
+      <div class="card">
+        <span>Registrado</span>
+        <strong id="registrado">0</strong>
+      </div>
+      <div class="card andamento">
+        <span>Em andamento</span>
+        <strong id="andamento">0</strong>
+      </div>
+      <div class="card vendido">
+        <span>Vendido</span>
+        <strong id="vendido">0</strong>
+      </div>
+      <div class="card comissao">
+        <span>Comissão</span>
+        <strong id="totalComissao">R$ 0,00</strong>
+      </div>
+    </section>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Status</th>
-        <th>Valor</th>
-        <th>Comissão</th>
-        <th>Data</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
+    <!-- TABELA -->
+    <section class="tabela-box">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Status</th>
+            <th>Valor do consórcio</th>
+            <th>Comissão</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody id="listaIndicacoes"></tbody>
+      </table>
+    </section>
 
-</div>
+  </div>
 
-<script src="./dashboard-indicador.js"></script>
+  <!-- JS ABSOLUTO -->
+  <script src="/dashboard-indicador.js"></script>
 </body>
 </html>
