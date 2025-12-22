@@ -1,21 +1,24 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>Login | INDICONS</title>
-</head>
-<body>
+<h2>Entrar</h2>
 
-<h2>Acesso ao Sistema</h2>
+<input id="email" placeholder="Email"><br>
+<input id="senha" placeholder="Senha"><br>
+<button onclick="login()">Entrar</button>
 
-<form id="loginForm">
-  <input type="email" id="email" placeholder="E-mail" required>
-  <br><br>
-  <input type="password" id="senha" placeholder="Senha" required>
-  <br><br>
-  <button type="submit">Entrar</button>
-</form>
-
-<script src="login.js"></script>
-</body>
-</html>
+<script>
+function login() {
+  fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.value, senha: senha.value })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.role === "indicador")
+      location.href = "/painel-indicador.html?codigo=" + d.codigo_indicador;
+    if (d.role === "parceiro")
+      location.href = "/painel-parceiro.html";
+    if (d.role === "admin")
+      location.href = "/painel-admin.html";
+  });
+}
+</script>
