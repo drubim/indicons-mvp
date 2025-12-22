@@ -6,20 +6,20 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static("public"));
 
-/* BASE EM MEMÓRIA (substitui banco por enquanto) */
+/* BASE ÚNICA */
 let leads = [];
 
-/* ===============================
-   1️⃣ CADASTRO DE LEAD (INDICADOR)
-   =============================== */
-app.post("/api/leads", async (req, res) => {
+/* =====================================
+   FUNÇÃO CENTRAL DE CRIAÇÃO DE LEAD
+   ===================================== */
+function criarLead(data) {
   const lead = {
     id: Date.now(),
-    nome: req.body.nome,
-    telefone: req.body.telefone,
-    email: req.body.email,
+    nome: data.nome,
+    telefone: data.telefone,
+    email: data.email || null,
 
-    indicador_codigo: req.body.indicador_codigo,
+    indicador_codigo: data.indicador_codigo || null,
     parceiro_id: null,
 
     status: "registrado",
@@ -36,16 +36,40 @@ app.post("/api/leads", async (req, res) => {
 
   leads.push(lead);
 
-  // 👉 CHAMA IA APÓS CADASTRO
+  // chama IA após criar
   processarLeadComIA(lead);
 
-  res.json({ success: true });
+  return lead;
+}
+
+/* =====================================
+   CADASTRO ANTIGO (MANTIDO)
+   ===================================== */
+app.post("/api/clientes", (req, res) => {
+  try {
+    const lead = criarLead(req.body);
+    res.json({ success: true, lead });
+  } catch (e) {
+    res.status(400).json({ error: "Erro ao cadastrar cliente" });
+  }
 });
 
-/* ===============================
-   2️⃣ LISTAGEM (INDICADOR / PARCEIRO / ADMIN)
-   =============================== */
-app.get("/api/leads", (req, res) => {
+/* =====================================
+   NOVO ENDPOINT (OPCIONAL)
+   ===================================== */
+app.post("/api/leads", (req, res) => {
+  try {
+    const lead = criarLead(req.body);
+    res.json({ success: true, lead });
+  } catch (e) {
+    res.status(400).json({ error: "Erro ao cadastrar lead" });
+  }
+});
+
+/* =====================================
+   LISTAGEM (INDICADOR / PARCEIRO / ADMIN)
+   ===================================== */
+app.get("/api/clientes", (req, res) => {
   const { indicador, parceiro } = req.query;
   let resultado = leads;
 
@@ -60,28 +84,28 @@ app.get("/api/leads", (req, res) => {
   res.json(resultado);
 });
 
-/* ===============================
-   3️⃣ ATUALIZAÇÃO (PARCEIRO / ADMIN)
-   =============================== */
-app.put("/api/leads/:id", (req, res) => {
+/* =====================================
+   ATUALIZAÇÃO (PARCEIRO / ADMIN)
+   ===================================== */
+app.put("/api/clientes/:id", (req, res) => {
   const lead = leads.find(l => l.id == req.params.id);
-  if (!lead) return res.status(404).end();
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
 
   Object.assign(lead, req.body);
 
-  if (lead.status === "vendido") {
+  if (lead.status === "vendido" && lead.valor_consorcio) {
     lead.comissao = lead.valor_consorcio * 0.02;
   }
 
-  res.json(lead);
+  res.json({ success: true, lead });
 });
 
-/* ===============================
-   4️⃣ IA – TRIAGEM + AGENDAMENTO
-   =============================== */
+/* =====================================
+   IA – TRIAGEM + AGENDAMENTO
+   ===================================== */
 function processarLeadComIA(lead) {
-  // SIMULA TRIAGEM (substituir por IA real)
-  const leadQuente = true; // regra simples por enquanto
+  // ⚠️ lógica simples (substituir por IA real depois)
+  const leadQuente = true;
 
   if (leadQuente) {
     lead.status_ia = "quente";
@@ -94,7 +118,7 @@ function processarLeadComIA(lead) {
 }
 
 app.listen(PORT, () => {
-  console.log("INDICONS rodando");
+  console.log("INDICONS rodando corretamente");
 });
 
 // deploy trigger
