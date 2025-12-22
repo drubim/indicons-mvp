@@ -62,3 +62,4 @@ function moeda(valor) {
     currency: "BRL"
   });
 }
+ 
