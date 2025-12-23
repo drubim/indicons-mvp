@@ -4,9 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
-/* ======================
-   CONFIG BÁSICA
-====================== */
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -15,16 +12,18 @@ const SECRET = 'indicons-secret';
 /* ======================
    MODELS (SEGURO)
 ====================== */
+let Usuario = null;
 let Indicador = null;
 let Lead = null;
 
 try {
   const db = require('./models');
+  Usuario = db.Usuario || null;
   Indicador = db.Indicador || null;
   Lead = db.Lead || null;
   console.log('Models carregados');
 } catch (e) {
-  console.log('Models não carregados, servidor em modo seguro');
+  console.log('Models não carregados');
 }
 
 /* ======================
@@ -43,55 +42,80 @@ function auth(req, res, next) {
 }
 
 /* ======================
-   ROTA INVISÍVEL
+   LOGIN (RESTAURADO)
 ====================== */
-app.get('/i/:codigo', async (req, res) => {
-  if (!Indicador) return res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
+app.post('/api/login', async (req, res) => {
+  if (!Usuario) {
+    return res.status(500).json({ erro: 'Usuários não disponíveis' });
+  }
+
+  const { email, senha } = req.body;
 
   try {
-    const indicador = await Indicador.findOne({
-      where: { codigo: req.params.codigo }
+    const usuario = await Usuario.findOne({
+      where: { email, senha }
     });
 
-    if (!indicador) {
-      return res.status(404).send('Link inválido');
+    if (!usuario) {
+      return res.status(401).json({ erro: 'Usuário ou senha inválidos' });
     }
 
-    res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
+    const token = jwt.sign(
+      { id: usuario.id, role: usuario.role },
+      SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.json({ token, role: usuario.role });
   } catch {
-    res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
+    res.status(500).json({ erro: 'Erro no login' });
   }
 });
 
 /* ======================
-   CADASTRO LEAD
+   ROTA INVISÍVEL CLIENTE
+====================== */
+app.get('/i/:codigo', async (req, res) => {
+  if (!Indicador) {
+    return res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
+  }
+
+  const indicador = await Indicador.findOne({
+    where: { codigo: req.params.codigo }
+  });
+
+  if (!indicador) {
+    return res.status(404).send('Link inválido');
+  }
+
+  res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
+});
+
+/* ======================
+   CADASTRO DE LEAD
 ====================== */
 app.post('/api/cadastro-cliente/:codigo', async (req, res) => {
   if (!Indicador || !Lead) {
     return res.json({ sucesso: true });
   }
 
-  try {
-    const indicador = await Indicador.findOne({
-      where: { codigo: req.params.codigo }
-    });
+  const indicador = await Indicador.findOne({
+    where: { codigo: req.params.codigo }
+  });
 
-    if (!indicador) {
-      return res.status(400).json({ erro: 'Indicador inválido' });
-    }
-
-    await Lead.create({
-      nome: req.body.nome,
-      telefone: req.body.telefone,
-      email: req.body.email,
-      indicador_id: indicador.id,
-      status: 'novo'
-    });
-
-    res.json({ sucesso: true });
-  } catch {
-    res.status(500).json({ erro: 'Erro ao cadastrar' });
+  if (!indicador) {
+    return res.status(400).json({ erro: 'Indicador inválido' });
   }
+
+  await Lead.create({
+    nome: req.body.nome,
+    telefone: req.body.telefone,
+    email: req.body.email,
+    indicador_id: indicador.id,
+    status: 'novo'
+  });
+
+  res.json({ sucesso: true });
 });
 
 /* ======================
@@ -136,7 +160,7 @@ app.get('/api/leads/admin', auth, async (req, res) => {
 });
 
 /* ======================
-   START (RENDER SAFE)
+   START
 ====================== */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
