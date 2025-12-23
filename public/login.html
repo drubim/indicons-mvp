@@ -1,24 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Entrar</title>
+</head>
+<body>
+
 <h2>Entrar</h2>
 
-<input id="email" placeholder="Email"><br>
-<input id="senha" placeholder="Senha"><br>
-<button onclick="login()">Entrar</button>
+<form id="loginForm">
+  <input id="email" placeholder="Email" required><br>
+  <input id="senha" type="password" placeholder="Senha" required><br>
+  <button type="submit">Entrar</button>
+</form>
+
+<p id="erro" style="color:red; display:none;"></p>
 
 <script>
-function login() {
+document.getElementById("loginForm").addEventListener("submit", function(e) {
+  e.preventDefault(); // 🔴 ESSENCIAL
+
   fetch("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: email.value, senha: senha.value })
+    body: JSON.stringify({
+      email: email.value,
+      senha: senha.value
+    })
   })
-  .then(r => r.json())
-  .then(d => {
-    if (d.role === "indicador")
-      location.href = "/painel-indicador.html?codigo=" + d.codigo_indicador;
-    if (d.role === "parceiro")
-      location.href = "/painel-parceiro.html";
-    if (d.role === "admin")
-      location.href = "/painel-admin.html";
+  .then(res => {
+    if (!res.ok) throw new Error("Login inválido");
+    return res.json();
+  })
+  .then(data => {
+    if (data.role === "admin") {
+      location.href = "/painel-admin";
+    }
+    if (data.role === "parceiro") {
+      location.href = "/painel-parceiro";
+    }
+    if (data.role === "indicador") {
+      location.href = "/painel-indicador?codigo=" + data.codigo_indicador;
+    }
+  })
+  .catch(() => {
+    const erro = document.getElementById("erro");
+    erro.innerText = "Email ou senha inválidos";
+    erro.style.display = "block";
   });
-}
+});
 </script>
+
+</body>
+</html>
