@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>INDICONS · Parceiro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { font-family: Arial, sans-serif; background: #f3f4f6; padding: 20px; }
+h1 { margin-bottom: 20px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  background: #111827;
+  color: #ffffff;
+}
+
+button {
+  padding: 6px 10px;
+  margin: 2px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.venda { background: #16a34a; color: #fff; }
+.desc  { background: #dc2626; color: #fff; }
+</style>
+</head>
+
+<body>
+
+<h1>Reuniões agendadas pela IA</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Indicador</th>
+      <th>Data / Hora</th>
+      <th>Reunião</th>
+      <th>Ação humana</th>
+    </tr>
+  </thead>
+  <tbody id="leads">
+    <tr><td colspan="5">Carregando...</td></tr>
+  </tbody>
+</table>
+
+<script>
+function atualizarStatus(id, status) {
+  fetch('/parceiro/lead/status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ leadId: id, status })
+  }).then(() => location.reload());
+}
+
+fetch('/parceiro/leads')
+  .then(r => r.json())
+  .then(leads => {
+    const tbody = document.getElementById('leads');
+    tbody.innerHTML = '';
+
+    const agendados = leads.filter(l => l.status === 'Reunião agendada');
+
+    if (agendados.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="5">Nenhuma reunião agendada</td></tr>';
+      return;
+    }
+
+    agendados.forEach(l => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${l.nome}</td>
+          <td>${l.indicadorNome}</td>
+          <td>${new Date(l.horarioReuniao).toLocaleString()}</td>
+          <td><a href="${l.linkReuniao}" target="_blank">Abrir</a></td>
+          <td>
+            <button class="venda" onclick="atualizarStatus(${l.id}, 'Venda concluída')">🟢 Venda</button>
+            <button class="desc"  onclick="atualizarStatus(${l.id}, 'Descartado')">🔴 Descartar</button>
+          </td>
+        </tr>
+      `;
+    });
+  });
+</script>
+
+</body>
+</html>
