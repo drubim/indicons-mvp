@@ -30,6 +30,12 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
+   LEADS (CLIENTES) EM MEMÓRIA
+====================== */
+let leads = [];
+let leadId = 1;
+
+/* ======================
    LOGIN
 ====================== */
 app.post('/login', (req, res) => {
@@ -107,6 +113,58 @@ app.get('/parceiro', auth('parceiro'), (req, res) => {
 
 app.get('/indicador', auth('indicador'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'indicador.html'));
+});
+
+/* ======================
+   ROTA INVISÍVEL – CLIENTE
+====================== */
+
+// Formulário invisível do cliente
+app.get('/i/:codigo', (req, res) => {
+  const codigo = req.params.codigo;
+
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Cadastro</title>
+    </head>
+    <body>
+      <h2>Receba uma simulação</h2>
+
+      <form method="POST" action="/i/${codigo}">
+        <input name="nome" placeholder="Seu nome" required /><br><br>
+        <input name="telefone" placeholder="Telefone" required /><br><br>
+        <button type="submit">Enviar</button>
+      </form>
+    </body>
+    </html>
+  `);
+});
+
+// Recebe cadastro do cliente
+app.post('/i/:codigo', (req, res) => {
+  const { nome, telefone } = req.body;
+  const codigo = req.params.codigo;
+
+  leads.push({
+    id: leadId++,
+    nome,
+    telefone,
+    codigoIndicador: codigo,
+    status: 'novo',
+    criadoEm: new Date()
+  });
+
+  res.send('Cadastro recebido. Em breve entraremos em contato.');
+});
+
+/* ======================
+   DEBUG (TEMPORÁRIO)
+====================== */
+app.get('/debug/leads', (req, res) => {
+  res.json(leads);
 });
 
 /* ======================
