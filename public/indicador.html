@@ -24,19 +24,19 @@
         <th>Data</th>
       </tr>
     </thead>
-    <tbody id="listaLeads">
-      <!-- preenchido via JS -->
-    </tbody>
+    <tbody id="listaLeads"></tbody>
   </table>
 
   <br>
   <a href="/logout">Sair</a>
 
   <script>
-    // 🔹 Carrega o link do indicador
-    fetch('/api/indicador/link')
+    // 🔹 Carrega link do indicador (COM COOKIE)
+    fetch('/api/indicador/link', {
+      credentials: 'same-origin'
+    })
       .then(res => {
-        if (!res.ok) throw new Error('Não autorizado');
+        if (!res.ok) throw new Error();
         return res.json();
       })
       .then(data => {
@@ -55,12 +55,11 @@
       alert('Link copiado!');
     }
 
-    // 🔹 Carrega leads do indicador
-    fetch('/api/leads/indicador')
-      .then(res => {
-        if (!res.ok) throw new Error('Erro');
-        return res.json();
-      })
+    // 🔹 Carrega leads do indicador (COM COOKIE)
+    fetch('/api/leads/indicador', {
+      credentials: 'same-origin'
+    })
+      .then(res => res.json())
       .then(leads => {
         const tbody = document.getElementById('listaLeads');
         tbody.innerHTML = '';
