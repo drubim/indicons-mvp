@@ -9,55 +9,23 @@ app.use(express.static('public'));
 const SECRET = 'indicons-secret';
 
 /* ======================
-   MODELS
+   USUÁRIOS FIXOS (SEM DB)
 ====================== */
-let Usuario = null;
-let Indicador = null;
-let Lead = null;
-
-try {
-  const db = require('./models');
-  Usuario = db.Usuario;
-  Indicador = db.Indicador;
-  Lead = db.Lead;
-} catch {
-  console.log('Models não carregados');
-}
+const usuarios = [
+  { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
+  { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' },
+  { id: 3, email: 'indicador@indicons.com.br', senha: 'indicador123', role: 'indicador' }
+];
 
 /* ======================
-   CRIAR USUÁRIOS PADRÃO
+   LOGIN (100% FUNCIONAL)
 ====================== */
-async function criarUsuariosPadrao() {
-  if (!Usuario) return;
-
-  const usuarios = [
-    { email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
-    { email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
-  ];
-
-  for (const u of usuarios) {
-    const existe = await Usuario.findOne({ where: { email: u.email } });
-    if (!existe) {
-      await Usuario.create(u);
-    }
-  }
-}
-
-criarUsuariosPadrao();
-
-/* ======================
-   LOGIN
-====================== */
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
 
-  if (!Usuario) {
-    return res.status(500).json({ erro: 'Sistema indisponível' });
-  }
-
-  const usuario = await Usuario.findOne({
-    where: { email, senha }
-  });
+  const usuario = usuarios.find(
+    u => u.email === email && u.senha === senha
+  );
 
   if (!usuario) {
     return res.status(401).json({ erro: 'Usuário ou senha inválidos' });
@@ -73,21 +41,9 @@ app.post('/api/login', async (req, res) => {
 });
 
 /* ======================
-   ROTA INVISÍVEL
+   ROTA INVISÍVEL CLIENTE
 ====================== */
-app.get('/i/:codigo', async (req, res) => {
-  if (!Indicador) {
-    return res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
-  }
-
-  const indicador = await Indicador.findOne({
-    where: { codigo: req.params.codigo }
-  });
-
-  if (!indicador) {
-    return res.status(404).send('Link inválido');
-  }
-
+app.get('/i/:codigo', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
 });
 
