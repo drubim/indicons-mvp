@@ -1,131 +1,123 @@
-const express = require("express");
-const path = require("path");
+const express = require('express');
+const path = require('path');
+const session = require('express-session');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+/* ======================
+   MIDDLEWARES
+====================== */
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static("public"));
 
-/* ===============================
-   ROTAS HTML (CORREÇÃO PRINCIPAL)
-   =============================== */
+app.use(session({
+  secret: 'indicons-secret',
+  resave: false,
+  saveUninitialized: false
+}));
 
-// HOME
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
-// CADASTRO INDICADOR
-app.get("/cadastro-indicador", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "cadastro-indicador.html"));
-});
+/* ======================
+   USUÁRIOS EM MEMÓRIA
+====================== */
+const users = [
+  { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
+  { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
+];
 
-// LOGIN
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
+let indicadorId = 100;
 
-// CADASTRO CLIENTE (VIA LINK)
-app.get("/cadastro", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "cadastro.html"));
-});
+/* ======================
+   LOGIN
+====================== */
+app.post('/login', (req, res) => {
+  const { email, senha } = req.body;
 
-// PAINÉIS
-app.get("/painel-indicador", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "painel-indicador.html"));
-});
+  const user = users.find(u => u.email === email && u.senha === senha);
+  if (!user) {
+    return res.redirect('/login.html');
+  }
 
-app.get("/painel-parceiro", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "painel-parceiro.html"));
-});
-
-app.get("/painel-admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "painel-admin.html"));
-});
-
-/* ===============================
-   BACKEND (MANTIDO)
-   =============================== */
-
-let usuarios = [];
-let leads = [];
-
-function gerarCodigoIndicador() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-// CADASTRO INDICADOR
-app.post("/api/indicadores", (req, res) => {
-  const codigo = gerarCodigoIndicador();
-
-  usuarios.push({
-    id: Date.now(),
-    nome: req.body.nome,
-    email: req.body.email,
-    telefone: req.body.telefone,
-    senha: req.body.senha,
-    role: "indicador",
-    codigo_indicador: codigo
-  });
-
-  res.json({ success: true, codigo_indicador: codigo });
-});
-
-// LOGIN
-app.post("/api/login", (req, res) => {
-  const user = usuarios.find(
-    u => u.email === req.body.email && u.senha === req.body.senha
-  );
-
-  if (!user) return res.status(401).json({ error: "Credenciais inválidas" });
-
-  res.json({
-    success: true,
+  req.session.user = {
+    id: user.id,
     role: user.role,
-    codigo_indicador: user.codigo_indicador || null,
-    parceiro_id: user.id
-  });
-});
-
-// CADASTRO CLIENTE
-app.post("/api/clientes", (req, res) => {
-  const lead = {
-    id: Date.now(),
-    nome: req.body.nome,
-    telefone: req.body.telefone,
-    email: req.body.email,
-    criado_em: new Date(),
-    indicador_codigo: req.body.indicador_codigo,
-    parceiro_id: null,
-    status: "registrado",
-    valor_consorcio: null,
-    comissao: null,
-    status_ia: "pendente",
-    reuniao_agendada: false,
-    data_reuniao: null
+    email: user.email
   };
 
-  leads.push(lead);
-  processarIA(lead);
-
-  res.json({ success: true });
+  res.redirect('/dashboard');
 });
 
-// LISTAGEM
-app.get("/api/leads", (req, res) => {
-  res.json(leads);
+/* ======================
+   CADASTRO INDICADOR
+====================== */
+app.post('/cadastro-indicador', (req, res) => {
+  const { email, senha } = req.body;
+
+  users.push({
+    id: indicadorId++,
+    email,
+    senha,
+    role: 'indicador'
+  });
+
+  res.redirect('/login.html');
 });
 
-// IA (BASTIDORES)
-function processarIA(lead) {
-  lead.status_ia = "quente";
-  lead.parceiro_id = "CLOSER_01";
-  lead.reuniao_agendada = true;
-  lead.data_reuniao = new Date(Date.now() + 86400000);
+/* ======================
+   DASHBOARD CENTRAL
+====================== */
+app.get('/dashboard', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login.html');
+  }
+
+  const role = req.session.user.role;
+
+  if (role === 'admin') return res.redirect('/admin');
+  if (role === 'parceiro') return res.redirect('/parceiro');
+  if (role === 'indicador') return res.redirect('/indicador');
+
+  res.redirect('/login.html');
+});
+
+/* ======================
+   ROTAS PROTEGIDAS
+====================== */
+function auth(role) {
+  return (req, res, next) => {
+    if (!req.session.user || req.session.user.role !== role) {
+      return res.redirect('/login.html');
+    }
+    next();
+  };
 }
 
-app.listen(PORT, () => {
-  console.log("INDICONS rodando corretamente");
+app.get('/admin', auth('admin'), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// deploy trigger
+app.get('/parceiro', auth('parceiro'), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'parceiro.html'));
+});
+
+app.get('/indicador', auth('indicador'), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'indicador.html'));
+});
+
+/* ======================
+   LOGOUT
+====================== */
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login.html');
+  });
+});
+
+/* ======================
+   START
+====================== */
+app.listen(PORT, () => {
+  console.log('INDICONS rodando');
+});
