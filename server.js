@@ -1,19 +1,28 @@
 const express = require('express');
 const path = require('path');
-const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-const { Indicador, Lead, Usuario } = require('./models');
 
 const app = express();
 
-app.use(bodyParser.json());
+/* ======================
+   CONFIG BÁSICA
+====================== */
+app.use(express.json());
 app.use(express.static('public'));
 
 const SECRET = 'indicons-secret';
 
-// =====================
-// AUTH MIDDLEWARE
-// =====================
+/* ======================
+   MODELS (AJUSTE AQUI)
+   ⚠️ USE SEUS MODELS REAIS
+====================== */
+const db = require('./models'); 
+const Indicador = db.Indicador;
+const Lead = db.Lead;
+
+/* ======================
+   AUTH
+====================== */
 function auth(req, res, next) {
   const token = req.headers.authorization;
   if (!token) return res.sendStatus(401);
@@ -26,88 +35,97 @@ function auth(req, res, next) {
   }
 }
 
-// =====================
-// ROTA INVISÍVEL - CLIENTE INDICADO
-// =====================
+/* ======================
+   ROTA INVISÍVEL
+====================== */
 app.get('/i/:codigo', async (req, res) => {
-  const indicador = await Indicador.findOne({
-    where: { codigo: req.params.codigo }
-  });
+  try {
+    const indicador = await Indicador.findOne({
+      where: { codigo: req.params.codigo }
+    });
 
-  if (!indicador) {
-    return res.status(404).send('Link inválido');
+    if (!indicador) {
+      return res.status(404).send('Link inválido');
+    }
+
+    res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
+  } catch (e) {
+    res.status(500).send('Erro interno');
   }
-
-  res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
 });
 
-// =====================
-// CADASTRO DO LEAD
-// =====================
+/* ======================
+   CADASTRO LEAD
+====================== */
 app.post('/api/cadastro-cliente/:codigo', async (req, res) => {
-  const { nome, telefone, email } = req.body;
+  try {
+    const indicador = await Indicador.findOne({
+      where: { codigo: req.params.codigo }
+    });
 
-  const indicador = await Indicador.findOne({
-    where: { codigo: req.params.codigo }
-  });
+    if (!indicador) {
+      return res.status(400).json({ erro: 'Indicador inválido' });
+    }
 
-  if (!indicador) {
-    return res.status(400).json({ erro: 'Indicador inválido' });
+    await Lead.create({
+      nome: req.body.nome,
+      telefone: req.body.telefone,
+      email: req.body.email,
+      indicador_id: indicador.id,
+      status: 'novo'
+    });
+
+    res.json({ sucesso: true });
+  } catch (e) {
+    res.status(500).json({ erro: 'Erro ao cadastrar' });
   }
-
-  await Lead.create({
-    nome,
-    telefone,
-    email,
-    indicador_id: indicador.id,
-    status: 'novo'
-  });
-
-  res.json({ sucesso: true });
 });
 
-// =====================
-// LEADS - INDICADOR
-// =====================
+/* ======================
+   LEADS - INDICADOR
+====================== */
 app.get('/api/leads/indicador', auth, async (req, res) => {
   if (req.user.role !== 'indicador') return res.sendStatus(403);
 
   const leads = await Lead.findAll({
     where: { indicador_id: req.user.id },
-    order: [['created_at', 'DESC']]
+    order: [['createdAt', 'DESC']]
   });
 
   res.json(leads);
 });
 
-// =====================
-// LEADS - PARCEIRO
-// =====================
+/* ======================
+   LEADS - PARCEIRO
+====================== */
 app.get('/api/leads/parceiro', auth, async (req, res) => {
   if (req.user.role !== 'parceiro') return res.sendStatus(403);
 
   const leads = await Lead.findAll({
     where: { parceiro_id: req.user.id },
-    order: [['created_at', 'DESC']]
+    order: [['createdAt', 'DESC']]
   });
 
   res.json(leads);
 });
 
-// =====================
-// LEADS - ADMIN
-// =====================
+/* ======================
+   LEADS - ADMIN
+====================== */
 app.get('/api/leads/admin', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.sendStatus(403);
 
   const leads = await Lead.findAll({
-    order: [['created_at', 'DESC']]
+    order: [['createdAt', 'DESC']]
   });
 
   res.json(leads);
 });
 
-// =====================
-app.listen(3000, () => {
-  console.log('Indicons rodando');
+/* ======================
+   START (RENDER SAFE)
+====================== */
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('Indicons rodando na porta', PORT);
 });
