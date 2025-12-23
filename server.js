@@ -2,14 +2,12 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const crypto = require('crypto');
-const { google } = require('googleapis');
-const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ======================
-   MIDDLEWARE
+   MIDDLEWARE BÁSICO
 ====================== */
 app.set('trust proxy', 1);
 app.use(express.urlencoded({ extended: true }));
@@ -20,174 +18,214 @@ app.use(session({
   secret: 'indicons-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: true, sameSite: 'lax' }
+  cookie: {
+    secure: false,       // true apenas com HTTPS forçado
+    sameSite: 'lax'
+  }
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ======================
-   GOOGLE CALENDAR
-====================== */
-const auth = new google.auth.GoogleAuth({
-  keyFile: 'calendar.json',
-  scopes: ['https://www.googleapis.com/auth/calendar']
-});
-const calendar = google.calendar({ version: 'v3', auth });
-const CALENDAR_ID = 'SEU_CALENDARIO@gmail.com';
-
-/* ======================
-   EMAIL (TESTE)
-====================== */
-const mailer = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'SEU_EMAIL@gmail.com',
-    pass: 'SENHA_DE_APP'
-  }
-});
-
-/* ======================
-   CONFIG
-====================== */
-const RETRY_INTERVAL = 30 * 1000;
-
-/* ======================
-   USERS
+   USUÁRIOS EM MEMÓRIA
 ====================== */
 const users = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
   { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
 ];
+
 let indicadorId = 100;
 
 /* ======================
-   LEADS + FILA
+   LEADS EM MEMÓRIA
 ====================== */
 let leads = [];
-let retryQueue = [];
 let leadId = 1;
 
 /* ======================
-   FUNÇÃO: AGENDAR + NOTIFICAR
+   LOGIN (FORM HTML)  ✅ OBRIGATÓRIO
 ====================== */
-async function agendarEEnviar(lead) {
-  try {
-    const start = new Date();
-    start.setHours(start.getHours() + 2);
-    const end = new Date(start);
-    end.setMinutes(end.getMinutes() + 30);
+app.post('/login', (req, res) => {
+  const { email, senha } = req.body;
 
-    const event = await calendar.events.insert({
-      calendarId: CALENDAR_ID,
-      conferenceDataVersion: 1,
-      requestBody: {
-        summary: `Reunião INDICONS – ${lead.nome}`,
-        start: { dateTime: start.toISOString() },
-        end: { dateTime: end.toISOString() },
-        conferenceData: {
-          createRequest: { requestId: crypto.randomUUID() }
-        }
-      }
-    });
+  const user = users.find(
+    u => u.email === email && u.senha === senha
+  );
 
-    lead.reuniaoAgendada = true;
-    lead.status = 'Reunião agendada';
-    lead.meetLink = event.data.hangoutLink;
-    lead.dataReuniao = start;
-
-    const parceiro = users.find(u => u.id === lead.parceiroId);
-
-    // EMAIL PARA PARCEIRO
-    await mailer.sendMail({
-      from: 'INDICONS <SEU_EMAIL@gmail.com>',
-      to: parceiro.email,
-      subject: 'Novo lead com reunião agendada',
-      html: `
-        <p><strong>Cliente:</strong> ${lead.nome}</p>
-        <p><strong>Data:</strong> ${start.toLocaleString()}</p>
-        <p><a href="${lead.meetLink}">Entrar na reunião</a></p>
-      `
-    });
-
-    // EMAIL PARA CLIENTE
-    await mailer.sendMail({
-      from: 'INDICONS <SEU_EMAIL@gmail.com>',
-      to: 'cliente@teste.com', /* depois usar email real */
-      subject: 'Sua reunião foi agendada',
-      html: `
-        <p>Sua reunião foi confirmada.</p>
-        <p><strong>Data:</strong> ${start.toLocaleString()}</p>
-        <p><a href="${lead.meetLink}">Acessar reunião</a></p>
-      `
-    });
-
-    console.log(`📧 Notificações enviadas para lead ${lead.id}`);
-    return true;
-
-  } catch (err) {
-    console.error('❌ Erro agenda/notificação:', err.message);
-    return false;
+  if (!user) {
+    return res.redirect('/login.html');
   }
-}
+
+  req.session.user = {
+    id: user.id,
+    role: user.role
+  };
+
+  res.redirect('/dashboard');
+});
 
 /* ======================
-   FILA DE RETRY
+   LOGIN (API / FETCH)
 ====================== */
-setInterval(async () => {
-  if (retryQueue.length === 0) return;
+app.post('/api/login', (req, res) => {
+  const { email, senha } = req.body;
 
-  for (let i = retryQueue.length - 1; i >= 0; i--) {
-    const item = retryQueue[i];
-    const lead = leads.find(l => l.id === item.leadId);
-    if (!lead) {
-      retryQueue.splice(i, 1);
-      continue;
-    }
+  const user = users.find(
+    u => u.email === email && u.senha === senha
+  );
 
-    const ok = await agendarEEnviar(lead);
-    if (ok) retryQueue.splice(i, 1);
+  if (!user) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
   }
-}, RETRY_INTERVAL);
+
+  req.session.user = {
+    id: user.id,
+    role: user.role
+  };
+
+  res.json({ ok: true, role: user.role });
+});
 
 /* ======================
-   ROTAS ESSENCIAIS
+   CADASTRO DE INDICADOR  ✅ OBRIGATÓRIO
+====================== */
+app.post('/cadastro-indicador', (req, res) => {
+  const { email, senha } = req.body;
+
+  if (!email || !senha) {
+    return res.redirect('/cadastro.html');
+  }
+
+  users.push({
+    id: indicadorId++,
+    email,
+    senha,
+    role: 'indicador',
+    codigo: crypto.randomBytes(4).toString('hex')
+  });
+
+  res.redirect('/login.html');
+});
+
+/* ======================
+   DASHBOARD (REDIRECIONA)
+====================== */
+app.get('/dashboard', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login.html');
+  }
+
+  if (req.session.user.role === 'admin') {
+    return res.redirect('/admin.html');
+  }
+
+  if (req.session.user.role === 'parceiro') {
+    return res.redirect('/parceiro.html');
+  }
+
+  if (req.session.user.role === 'indicador') {
+    return res.redirect('/indicador.html');
+  }
+
+  res.redirect('/login.html');
+});
+
+/* ======================
+   LINK DO INDICADOR
+====================== */
+app.get('/api/indicador/link', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'indicador') {
+    return res.sendStatus(401);
+  }
+
+  const indicador = users.find(u => u.id === req.session.user.id);
+  res.json({
+    link: `https://app.indicons.com.br/i/${indicador.codigo}`
+  });
+});
+
+/* ======================
+   LEADS – ADMIN
+====================== */
+app.get('/api/leads/admin', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.sendStatus(401);
+  }
+
+  res.json(leads);
+});
+
+/* ======================
+   LEADS – INDICADOR (RESUMO)
+====================== */
+app.get('/api/leads/indicador', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'indicador') {
+    return res.sendStatus(401);
+  }
+
+  res.json(
+    leads.filter(l => l.indicadorId === req.session.user.id)
+  );
+});
+
+/* ======================
+   FORM DO CLIENTE (LINK DO INDICADOR)
+====================== */
+app.get('/i/:codigo', (req, res) => {
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
+
+  if (!indicador) {
+    return res.send('Link inválido');
+  }
+
+  res.send(`
+    <h2>Receba uma simulação</h2>
+    <form method="POST">
+      <input name="nome" placeholder="Nome" required /><br><br>
+      <input name="telefone" placeholder="Telefone" required /><br><br>
+      <button>Enviar</button>
+    </form>
+  `);
+});
+
+/* ======================
+   RECEBE LEAD DO CLIENTE
 ====================== */
 app.post('/i/:codigo', (req, res) => {
-  const ind = users.find(u => u.codigo === req.params.codigo);
-  if (!ind) return res.send('Link inválido');
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
 
-  const score = Math.floor(Math.random() * 100);
-  let classificacao = 'frio';
-  let status = 'Recebido';
-  let parceiroId = null;
-
-  if (score >= 70) {
-    classificacao = 'quente';
-    status = 'Aguardando agendamento';
-    parceiroId = users.find(u => u.role === 'parceiro')?.id;
+  if (!indicador) {
+    return res.send('Link inválido');
   }
 
-  const lead = {
+  leads.push({
     id: leadId++,
     nome: req.body.nome,
     telefone: req.body.telefone,
-    indicadorId: ind.id,
-    parceiroId,
-    classificacao,
-    status,
-    reuniaoAgendada: false,
+    indicadorId: indicador.id,
+    status: 'Recebido',
     criadoEm: new Date()
-  }; 
-
-  leads.push(lead);
-  if (classificacao === 'quente') retryQueue.push({ leadId: lead.id });
+  });
 
   res.send('Cadastro realizado com sucesso.');
+});
+
+/* ======================
+   LOGOUT
+====================== */
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login.html');
+  });
 });
 
 /* ======================
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS – NOTIFICAÇÃO ATIVA');
+  console.log('INDICONS – servidor estável com login e cadastro funcionando');
 });
