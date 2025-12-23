@@ -33,21 +33,10 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     return res.json();
   })
   .then(data => {
-
-    // 🔒 GRAVA EM TODOS OS LUGARES POSSÍVEIS
-    localStorage.setItem('token', 'ok');
-    localStorage.setItem('role', data.role);
-    localStorage.setItem('usuario', email.value);
-    localStorage.setItem('perfil', data.role);
-
-    sessionStorage.setItem('token', 'ok');
-    sessionStorage.setItem('role', data.role);
-    sessionStorage.setItem('usuario', email.value);
-    sessionStorage.setItem('perfil', data.role);
-
-    if (data.role === 'admin') location.href = '/admin.html';
-    if (data.role === 'parceiro') location.href = '/parceiro.html';
-    if (data.role === 'indicador') location.href = '/indicador.html';
+    // 🔁 redireciona PARA A PONTE
+    if (data.role === 'admin') location.href = '/auth/admin';
+    if (data.role === 'parceiro') location.href = '/auth/parceiro';
+    if (data.role === 'indicador') location.href = '/auth/indicador';
   })
   .catch(() => {
     document.getElementById('erro').style.display = 'block';
