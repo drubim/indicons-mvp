@@ -11,10 +11,6 @@
 <form id="cadastroForm">
   <input type="email" id="email" placeholder="E-mail" required><br><br>
   <input type="password" id="senha" placeholder="Senha" required><br><br>
-  <select id="role">
-    <option value="indicador">Indicador</option>
-    <option value="parceiro">Parceiro</option>
-  </select><br><br>
   <button type="submit">Cadastrar</button>
 </form>
 
@@ -29,13 +25,20 @@ document.getElementById('cadastroForm').addEventListener('submit', async functio
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: email.value,
-      senha: senha.value,
-      role: role.value
+      senha: senha.value
     })
   });
 
-  document.getElementById('msg').innerText =
-    res.ok ? 'Cadastro realizado' : 'Erro ao cadastrar';
+  const msg = document.getElementById('msg');
+
+  if (res.ok) {
+    msg.innerText = 'Cadastro realizado com sucesso';
+    msg.style.color = 'green';
+    document.getElementById('cadastroForm').reset();
+  } else {
+    msg.innerText = 'Erro ao cadastrar';
+    msg.style.color = 'red';
+  }
 });
 </script>
 
