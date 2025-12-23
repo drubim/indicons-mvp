@@ -1,6 +1,7 @@
 {
   "name": "indicons",
   "version": "1.0.0",
+  "description": "INDICONS Web App",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
