@@ -1,220 +1,113 @@
 const express = require('express');
 const path = require('path');
-
-const { classificarEAgendar } = require('./services/iaSdr');
-const {
-  gerarUrlAutorizacao,
-  obterTokens, 
-  setTokens
-} = require('./services/googleOAuth');
+const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
+const { Indicador, Lead, Usuario } = require('./models');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-/* ===============================
-   MIDDLEWARE
-================================ */
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json());
+app.use(express.static('public'));
 
-/* ===============================
-   DADOS EM MEMÓRIA (MVP)
-================================ */
-const usuarios = [
-  { email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin', nome: 'Administrador' },
-  { email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro', nome: 'Parceiro' }
-];
+const SECRET = 'indicons-secret';
 
-const indicadores = [];
-const indicacoes = [];
+// =====================
+// AUTH MIDDLEWARE
+// =====================
+function auth(req, res, next) {
+  const token = req.headers.authorization;
+  if (!token) return res.sendStatus(401);
 
-/* ===============================
-   HEALTH CHECK (RENDER)
-================================ */
-app.get('/', (req, res) => {
-  res.send('INDICONS ONLINE');
-});
-
-/* ===============================
-   LOGIN
-================================ */
-app.post('/login', (req, res) => {
-  const { email, senha } = req.body;
-
-  const user =
-    usuarios.find(u => u.email === email && u.senha === senha) ||
-    indicadores.find(i => i.email === email && i.senha === senha);
-
-  if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
-
-  res.json({
-    role: user.role,
-    nome: user.nome,
-    codigo: user.codigo || null
-  });
-});
-
-/* ===============================
-   CADASTRO INDICADOR
-================================ */
-app.post('/cadastro', (req, res) => {
-  const { email, senha, nome } = req.body;
-
-  const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-  indicadores.push({
-    email,
-    senha,
-    nome,
-    role: 'indicador',
-    codigo,
-    nivel: 'Ativo'
-  });
-
-  res.json({ success: true, codigo });
-});
-
-/* ===============================
-   LINK DO INDICADOR
-================================ */
-app.get('/i/:codigo', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/indicacao.html'));
-});
-
-/* ===============================
-   REGISTRO DE LEAD + IA + GOOGLE
-================================ */
-app.post('/indicacao', async (req, res) => {
   try {
-    const { nome, whatsapp, codigoIndicador } = req.body;
-
-    const indicador = indicadores.find(i => i.codigo === codigoIndicador);
-    if (!indicador) {
-      return res.status(400).json({ error: 'Indicador inválido' });
-    }
-
-    const ia = await classificarEAgendar({ nome, whatsapp });
-
-    indicacoes.push({
-      id: Date.now(),
-      nome,
-      whatsapp,
-
-      indicadorCodigo: indicador.codigo,
-      indicadorNome: indicador.nome,
-
-      classificacaoIA: ia.classificacao,
-      status: ia.status,
-
-      horarioReuniao: ia.horarioReuniao || null,
-      linkReuniao: ia.linkReuniao || null,
-
-      criadaEm: new Date()
-    });
-
-    res.json({ success: true });
-  } catch (e) {
-    console.error('Erro ao registrar lead:', e);
-    res.status(500).json({ error: 'Erro ao registrar lead' });
+    req.user = jwt.verify(token.replace('Bearer ', ''), SECRET);
+    next();
+  } catch {
+    res.sendStatus(401);
   }
-});
+}
 
-/* ===============================
-   INDICADOR — PAINEL
-================================ */
-app.get('/indicador/:codigo', (req, res) => {
-  const indicador = indicadores.find(i => i.codigo === req.params.codigo);
+// =====================
+// ROTA INVISÍVEL - CLIENTE INDICADO
+// =====================
+app.get('/i/:codigo', async (req, res) => {
+  const indicador = await Indicador.findOne({
+    where: { codigo: req.params.codigo }
+  });
 
   if (!indicador) {
-    return res.status(404).json({ error: 'Indicador não encontrado' });
+    return res.status(404).send('Link inválido');
   }
 
-  res.json({
-    nome: indicador.nome,
-    codigo: indicador.codigo,
-    indicacoes: indicacoes.filter(
-      l => l.indicadorCodigo === indicador.codigo
-    )
+  res.sendFile(path.join(__dirname, 'public/cadastro-cliente.html'));
+});
+
+// =====================
+// CADASTRO DO LEAD
+// =====================
+app.post('/api/cadastro-cliente/:codigo', async (req, res) => {
+  const { nome, telefone, email } = req.body;
+
+  const indicador = await Indicador.findOne({
+    where: { codigo: req.params.codigo }
   });
-});
 
-/* ===============================
-   ADMIN
-================================ */
-app.get('/admin/usuarios', (req, res) => {
-  const lista = [
-    ...usuarios.map(u => ({
-      nome: u.nome,
-      email: u.email,
-      tipo: u.role
-    })),
-    ...indicadores.map(i => ({
-      nome: i.nome,
-      email: i.email,
-      tipo: 'indicador'
-    }))
-  ];
-  res.json(lista);
-});
-
-app.get('/admin/leads', (req, res) => {
-  res.json(indicacoes);
-});
-
-/* ===============================
-   PARCEIRO
-================================ */
-app.get('/parceiro/leads', (req, res) => {
-  res.json(indicacoes);
-});
-
-app.post('/parceiro/lead/status', (req, res) => {
-  const { leadId, status } = req.body;
-
-  const lead = indicacoes.find(l => l.id === leadId);
-  if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
-
-  lead.status = status;
-  res.json({ success: true });
-});
-
-/* ===============================
-   🔐 OAUTH GOOGLE — ETAPA 5
-================================ */
-
-/* Iniciar autorização Google */
-app.get('/auth/google', (req, res) => {
-  const url = gerarUrlAutorizacao();
-  res.redirect(url);
-});
-
-/* Callback do Google */
-let googleTokens = null;
-
-app.get('/oauth2callback', async (req, res) => {
-  try {
-    const { code } = req.query;
-    if (!code) {
-      return res.status(400).send('Código não fornecido');
-    }
-
-    const tokens = await obterTokens(code);
-    googleTokens = tokens;
-    setTokens(tokens);
-
-    res.send(
-      '✅ Google Calendar conectado com sucesso. Pode fechar esta página.'
-    );
-  } catch (e) {
-    console.error('Erro OAuth:', e);
-    res.status(500).send('Erro ao autenticar com Google');
+  if (!indicador) {
+    return res.status(400).json({ erro: 'Indicador inválido' });
   }
+
+  await Lead.create({
+    nome,
+    telefone,
+    email,
+    indicador_id: indicador.id,
+    status: 'novo'
+  });
+
+  res.json({ sucesso: true });
 });
 
-/* ===============================
-   START
-================================ */
-app.listen(PORT, () => {
-  console.log(`🚀 INDICONS ONLINE NA PORTA ${PORT}`);
+// =====================
+// LEADS - INDICADOR
+// =====================
+app.get('/api/leads/indicador', auth, async (req, res) => {
+  if (req.user.role !== 'indicador') return res.sendStatus(403);
+
+  const leads = await Lead.findAll({
+    where: { indicador_id: req.user.id },
+    order: [['created_at', 'DESC']]
+  });
+
+  res.json(leads);
+});
+
+// =====================
+// LEADS - PARCEIRO
+// =====================
+app.get('/api/leads/parceiro', auth, async (req, res) => {
+  if (req.user.role !== 'parceiro') return res.sendStatus(403);
+
+  const leads = await Lead.findAll({
+    where: { parceiro_id: req.user.id },
+    order: [['created_at', 'DESC']]
+  });
+
+  res.json(leads);
+});
+
+// =====================
+// LEADS - ADMIN
+// =====================
+app.get('/api/leads/admin', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.sendStatus(403);
+
+  const leads = await Lead.findAll({
+    order: [['created_at', 'DESC']]
+  });
+
+  res.json(leads);
+});
+
+// =====================
+app.listen(3000, () => {
+  console.log('Indicons rodando');
 });
