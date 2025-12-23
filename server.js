@@ -33,17 +33,17 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const calendar = google.calendar({ version: 'v3', auth });
-
-// ⚠️ USE O EMAIL DO CALENDÁRIO COMPARTILHADO
-const CALENDAR_ID = 'indicons.calendar@gmail.com'
+const CALENDAR_ID = 'SEU_CALENDARIO@gmail.com';
 
 /* ======================
-   CONFIGURAÇÃO
+   CONFIG
 ====================== */
 const INDICADOR_PERCENTUAL = 0.10;
+const RETRY_INTERVAL_MS = 30 * 1000; // 30 segundos
+const MAX_RETRIES = 10;
 
 /* ======================
-   USUÁRIOS
+   USERS
 ====================== */
 const users = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
@@ -58,7 +58,82 @@ let leads = [];
 let leadId = 1;
 
 /* ======================
-   LOGIN
+   FILA DE RETRY
+====================== */
+let retryQueue = [];
+
+/* ======================
+   FUNÇÃO DE AGENDAMENTO
+====================== */
+async function tentarAgendarReuniao(lead) {
+  try {
+    const start = new Date();
+    start.setHours(start.getHours() + 2);
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + 30);
+
+    const event = await calendar.events.insert({
+      calendarId: CALENDAR_ID,
+      conferenceDataVersion: 1,
+      requestBody: {
+        summary: `Reunião INDICONS – ${lead.nome}`,
+        start: { dateTime: start.toISOString() },
+        end: { dateTime: end.toISOString() },
+        conferenceData: {
+          createRequest: { requestId: crypto.randomUUID() }
+        }
+      }
+    });
+
+    lead.reuniaoAgendada = true;
+    lead.meetLink = event.data.hangoutLink;
+    lead.dataReuniao = start;
+    lead.status = 'Reunião agendada';
+
+    console.log(`✅ Reunião agendada para lead ${lead.id}`);
+    return true;
+
+  } catch (err) {
+    console.error(`❌ Falha ao agendar lead ${lead.id}:`, err.message);
+    return false;
+  }
+}
+
+/* ======================
+   PROCESSADOR DA FILA
+====================== */
+setInterval(async () => {
+  if (retryQueue.length === 0) return;
+
+  console.log(`🔁 Tentando reagendar ${retryQueue.length} lead(s)`);
+
+  for (let i = retryQueue.length - 1; i >= 0; i--) {
+    const item = retryQueue[i];
+    const lead = leads.find(l => l.id === item.leadId);
+
+    if (!lead) {
+      retryQueue.splice(i, 1);
+      continue;
+    }
+
+    if (item.tentativas >= MAX_RETRIES) {
+      lead.status = 'Falha no agendamento';
+      retryQueue.splice(i, 1);
+      continue;
+    }
+
+    const sucesso = await tentarAgendarReuniao(lead);
+
+    if (sucesso) {
+      retryQueue.splice(i, 1);
+    } else {
+      item.tentativas++;
+    }
+  }
+}, RETRY_INTERVAL_MS);
+
+/* ======================
+   LOGIN / CADASTRO
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
@@ -76,9 +151,6 @@ app.post('/api/login', (req, res) => {
   res.json({ ok: true, role: user.role });
 });
 
-/* ======================
-   CADASTRO INDICADOR
-====================== */
 app.post('/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
   users.push({
@@ -112,14 +184,11 @@ app.get('/api/indicador/link', (req, res) => {
 /* ======================
    APIs DE LEADS
 ====================== */
-
-// ADMIN vê tudo
 app.get('/api/leads/admin', (req, res) => {
   if (req.session.user.role !== 'admin') return res.sendStatus(401);
   res.json(leads);
 });
 
-// PARCEIRO vê SOMENTE quente + reunião
 app.get('/api/leads/parceiro', (req, res) => {
   if (req.session.user.role !== 'parceiro') return res.sendStatus(401);
   res.json(
@@ -131,12 +200,10 @@ app.get('/api/leads/parceiro', (req, res) => {
   );
 });
 
-// INDICADOR vê resumo mínimo
 app.get('/api/leads/indicador', (req, res) => {
   if (req.session.user.role !== 'indicador') return res.sendStatus(401);
   res.json(
-    leads
-      .filter(l => l.indicadorId === req.session.user.id)
+    leads.filter(l => l.indicadorId === req.session.user.id)
       .map(l => ({
         nome: l.nome,
         status: l.status,
@@ -162,7 +229,7 @@ app.get('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   RECEBE CLIENTE + IA + AGENDA SEGURA
+   RECEBE CLIENTE
 ====================== */
 app.post('/i/:codigo', async (req, res) => {
   const ind = users.find(u => u.codigo === req.params.codigo);
@@ -172,68 +239,40 @@ app.post('/i/:codigo', async (req, res) => {
 
   let classificacao = 'frio';
   let status = 'Recebido';
-  let reuniaoAgendada = false;
   let parceiroId = null;
-  let meetLink = null;
-  let dataReuniao = null;
+  let reuniaoAgendada = false;
 
   if (score >= 70) {
     classificacao = 'quente';
+    status = 'Aguardando agendamento';
 
     const parceiro = users.find(u => u.role === 'parceiro');
     parceiroId = parceiro?.id || null;
-
-    try {
-      const start = new Date();
-      start.setHours(start.getHours() + 2);
-      const end = new Date(start);
-      end.setMinutes(end.getMinutes() + 30);
-
-      const event = await calendar.events.insert({
-        calendarId: CALENDAR_ID,
-        conferenceDataVersion: 1,
-        requestBody: {
-          summary: `Reunião INDICONS – ${req.body.nome}`,
-          start: { dateTime: start.toISOString() },
-          end: { dateTime: end.toISOString() },
-          conferenceData: {
-            createRequest: { requestId: crypto.randomUUID() }
-          }
-        }
-      });
-
-      reuniaoAgendada = true;
-      meetLink = event.data.hangoutLink;
-      dataReuniao = start;
-      status = 'Reunião agendada';
-
-    } catch (err) {
-      console.error('❌ ERRO GOOGLE CALENDAR:', err.message);
-      status = 'Aguardando agendamento';
-    }
   } else if (score >= 40) {
     classificacao = 'morno';
     status = 'Em atendimento';
   }
 
-  const houveVenda = false;
-  const comissaoIndicador = 0;
-
-  leads.push({
+  const lead = {
     id: leadId++,
     nome: req.body.nome,
     telefone: req.body.telefone,
     indicadorId: ind.id,
     parceiroId,
-    score,
     classificacao,
+    score,
     status,
     reuniaoAgendada,
-    dataReuniao,
-    meetLink,
-    comissaoIndicador,
+    comissaoIndicador: 0,
     criadoEm: new Date()
-  });
+  };
+
+  leads.push(lead);
+
+  // entra na fila se for quente
+  if (classificacao === 'quente') {
+    retryQueue.push({ leadId: lead.id, tentativas: 0 });
+  }
 
   res.send('Cadastro realizado com sucesso.');
 });
@@ -249,5 +288,5 @@ app.get('/logout', (req, res) => {
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS – ESTÁVEL, COM AGENDA SEGURA');
+  console.log('INDICONS – FILA DE RETRY ATIVA');
 });
