@@ -31,10 +31,16 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
-   LEADS EM MEMÓRIA
+   LEADS
 ====================== */
 let leads = [];
 let leadId = 1;
+
+/* ======================
+   REUNIÕES
+====================== */
+let meetings = [];
+let meetingId = 1;
 
 /* ======================
    CONTROLE DE PARCEIROS
@@ -56,7 +62,7 @@ app.post('/login', (req, res) => {
   const user = users.find(u => u.email === email && u.senha === senha);
   if (!user) return res.redirect('/login.html');
 
-  req.session.user = { id: user.id, role: user.role, email: user.email };
+  req.session.user = { id: user.id, role: user.role };
   res.redirect('/dashboard');
 });
 
@@ -117,13 +123,19 @@ app.get('/indicador', auth('indicador'), (req, res) =>
    APIs DE LEADS
 ====================== */
 app.get('/api/leads/admin', auth('admin'), (req, res) => res.json(leads));
-
 app.get('/api/leads/indicador', auth('indicador'), (req, res) =>
   res.json(leads.filter(l => l.indicadorId === req.session.user.id))
 );
-
 app.get('/api/leads/parceiro', auth('parceiro'), (req, res) =>
   res.json(leads.filter(l => l.parceiroId === req.session.user.id))
+);
+
+/* ======================
+   APIs DE REUNIÕES
+====================== */
+app.get('/api/meetings/admin', auth('admin'), (req, res) => res.json(meetings));
+app.get('/api/meetings/parceiro', auth('parceiro'), (req, res) =>
+  res.json(meetings.filter(m => m.parceiroId === req.session.user.id))
 );
 
 /* ======================
@@ -171,30 +183,41 @@ app.post('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   IA INVISÍVEL – SCORE + ATRIBUIÇÃO
+   IA INVISÍVEL – SCORE + ATRIBUIÇÃO + AGENDAMENTO
 ====================== */
 setInterval(() => {
   leads.forEach(lead => {
     if (lead.status === 'novo') {
-      // score simulado
+      // score
       lead.score = Math.floor(Math.random() * 100);
-
       if (lead.score >= 70) lead.classificacao = 'quente';
       else if (lead.score >= 40) lead.classificacao = 'morno';
       else lead.classificacao = 'frio';
 
-      // atribuição automática
+      // atribuição
       if (lead.classificacao !== 'frio') {
         const parceiroId = getNextParceiroId();
         if (parceiroId) {
           lead.parceiroId = parceiroId;
           lead.status = 'atribuido';
+
+          // 🔔 AGENDAMENTO AUTOMÁTICO
+          const data = new Date();
+          data.setHours(data.getHours() + 2); // +2h
+
+          meetings.push({
+            id: meetingId++,
+            leadId: lead.id,
+            parceiroId,
+            data,
+            link: `https://meet.google.com/${crypto.randomBytes(3).toString('hex')}`
+          });
+
+          lead.status = 'agendado';
         }
       } else {
         lead.status = 'disponivel';
       }
-
-      lead.triadoEm = new Date();
     }
   });
 }, 10000);
