@@ -17,9 +17,6 @@
   <th>Nome</th>
   <th>Telefone</th>
   <th>Indicador</th>
-  <th>Status</th>
-  <th>Score</th>
-  <th>Classificação</th>
   <th>Data</th>
 </tr>
 </thead>
@@ -41,9 +38,6 @@ fetch('/api/leads/admin')
           <td>${l.nome}</td>
           <td>${l.telefone}</td>
           <td>${l.indicadorId}</td>
-          <td>${l.status}</td>
-          <td>${l.score}</td>
-          <td>${l.classificacao}</td>
           <td>${new Date(l.criadoEm).toLocaleString()}</td>
         </tr>`;
     });
