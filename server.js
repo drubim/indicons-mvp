@@ -22,23 +22,28 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ======================
-   CONFIGURAÇÃO DE COMISSÃO
+   CONFIG
 ====================== */
-// percentual do indicador sobre a comissão líquida
-const INDICADOR_PERCENTUAL = 0.10; // 10%
+const INDICADOR_PERCENTUAL = 0.10;
 
-/* USERS */
+/* ======================
+   USERS
+====================== */
 const users = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
   { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
 ];
 let indicadorId = 100;
 
-/* LEADS */
+/* ======================
+   LEADS
+====================== */
 let leads = [];
 let leadId = 1;
 
-/* LOGIN */
+/* ======================
+   LOGIN
+====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
   const user = users.find(u => u.email === email && u.senha === senha);
@@ -55,7 +60,9 @@ app.post('/api/login', (req, res) => {
   res.json({ ok: true, role: user.role });
 });
 
-/* CADASTRO INDICADOR */
+/* ======================
+   CADASTRO INDICADOR
+====================== */
 app.post('/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
   users.push({
@@ -68,7 +75,9 @@ app.post('/cadastro-indicador', (req, res) => {
   res.redirect('/login.html');
 });
 
-/* DASHBOARD */
+/* ======================
+   DASHBOARD
+====================== */
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
   if (req.session.user.role === 'admin') return res.redirect('/admin.html');
@@ -76,13 +85,38 @@ app.get('/dashboard', (req, res) => {
   if (req.session.user.role === 'indicador') return res.redirect('/indicador.html');
 });
 
-/* LINK INDICADOR */
+/* ======================
+   LINK INDICADOR
+====================== */
 app.get('/api/indicador/link', (req, res) => {
   const ind = users.find(u => u.id === req.session.user.id);
   res.json({ link: `https://app.indicons.com.br/i/${ind.codigo}` });
 });
 
-/* LEADS – INDICADOR */
+/* ======================
+   APIs DE LEADS
+====================== */
+
+// ADMIN vê tudo
+app.get('/api/leads/admin', (req, res) => {
+  if (req.session.user.role !== 'admin') return res.sendStatus(401);
+  res.json(leads);
+});
+
+// PARCEIRO vê SOMENTE leads quentes COM reunião
+app.get('/api/leads/parceiro', (req, res) => {
+  if (req.session.user.role !== 'parceiro') return res.sendStatus(401);
+
+  res.json(
+    leads.filter(l =>
+      l.classificacao === 'quente' &&
+      l.reuniaoAgendada === true &&
+      l.parceiroId === req.session.user.id
+    )
+  );
+});
+
+// INDICADOR vê resumo
 app.get('/api/leads/indicador', (req, res) => {
   if (req.session.user.role !== 'indicador') return res.sendStatus(401);
 
@@ -98,36 +132,52 @@ app.get('/api/leads/indicador', (req, res) => {
   );
 });
 
-/* FORM CLIENTE */
+/* ======================
+   FORM CLIENTE
+====================== */
 app.get('/i/:codigo', (req, res) => {
   const ind = users.find(u => u.codigo === req.params.codigo);
   if (!ind) return res.send('Link inválido');
   res.send(`
     <form method="POST">
-      <input name="nome" placeholder="Nome" required><br>
-      <input name="telefone" placeholder="Telefone" required><br>
+      <input name="nome" required placeholder="Nome"><br>
+      <input name="telefone" required placeholder="Telefone"><br>
       <button>Enviar</button>
     </form>
   `);
 });
 
-/* RECEBE CLIENTE */
+/* ======================
+   RECEBE CLIENTE + IA + AGENDAMENTO
+====================== */
 app.post('/i/:codigo', (req, res) => {
   const ind = users.find(u => u.codigo === req.params.codigo);
   if (!ind) return res.send('Link inválido');
 
-  // lógica interna (simulação)
+  // IA (simulada)
   const score = Math.floor(Math.random() * 100);
-  const valorConsorcio = score >= 70 ? 80000 : 0; // simulado
-  const houveVenda = score >= 70;
 
+  let classificacao = 'frio';
   let status = 'Recebido';
-  if (score >= 40) status = 'Em atendimento';
-  if (houveVenda) status = 'Finalizado – Vendido';
-  if (!houveVenda && score < 40) status = 'Finalizado – Não vendido';
+  let reuniaoAgendada = false;
+  let parceiroId = null;
 
-  // comissão simulada
-  const comissaoTotal = houveVenda ? valorConsorcio * 0.06 : 0; // 6% exemplo
+  if (score >= 70) {
+    classificacao = 'quente';
+    status = 'Reunião agendada';
+    reuniaoAgendada = true;
+
+    // atribuição automática de parceiro
+    const parceiro = users.find(u => u.role === 'parceiro');
+    parceiroId = parceiro?.id || null;
+  } else if (score >= 40) {
+    classificacao = 'morno';
+    status = 'Em atendimento';
+  }
+
+  const houveVenda = classificacao === 'quente';
+  const valorConsorcio = houveVenda ? 100000 : 0;
+  const comissaoTotal = houveVenda ? valorConsorcio * 0.06 : 0;
   const comissaoIndicador = houveVenda
     ? comissaoTotal * INDICADOR_PERCENTUAL
     : 0;
@@ -137,7 +187,11 @@ app.post('/i/:codigo', (req, res) => {
     nome: req.body.nome,
     telefone: req.body.telefone,
     indicadorId: ind.id,
+    parceiroId,
+    score,
+    classificacao,
     status,
+    reuniaoAgendada,
     valorConsorcio,
     comissaoIndicador,
     criadoEm: new Date()
@@ -146,11 +200,13 @@ app.post('/i/:codigo', (req, res) => {
   res.send('Cadastro realizado com sucesso.');
 });
 
-/* LOGOUT */
+/* ======================
+   LOGOUT
+====================== */
 app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login.html'));
 });
 
 app.listen(PORT, () => {
-  console.log('INDICONS – status final + comissão do indicador');
+  console.log('INDICONS – parceiro só vê lead quente com reunião');
 });
