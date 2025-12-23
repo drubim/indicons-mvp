@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,14 +24,24 @@ app.use(express.static(path.join(__dirname, 'public')));
    USUÁRIOS EM MEMÓRIA
 ====================== */
 const users = [
-  { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
-  { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
+  {
+    id: 1,
+    email: 'admin@indicons.com.br',
+    senha: 'admin123',
+    role: 'admin'
+  },
+  {
+    id: 2,
+    email: 'parceiro@indicons.com.br',
+    senha: 'parceiro123',
+    role: 'parceiro'
+  }
 ];
 
 let indicadorId = 100;
 
 /* ======================
-   LEADS (CLIENTES) EM MEMÓRIA
+   LEADS EM MEMÓRIA
 ====================== */
 let leads = [];
 let leadId = 1;
@@ -42,9 +53,7 @@ app.post('/login', (req, res) => {
   const { email, senha } = req.body;
 
   const user = users.find(u => u.email === email && u.senha === senha);
-  if (!user) {
-    return res.redirect('/login.html');
-  }
+  if (!user) return res.redirect('/login.html');
 
   req.session.user = {
     id: user.id,
@@ -61,35 +70,33 @@ app.post('/login', (req, res) => {
 app.post('/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
 
+  const codigo = crypto.randomBytes(4).toString('hex'); // código único
+
   users.push({
     id: indicadorId++,
     email,
     senha,
-    role: 'indicador'
+    role: 'indicador',
+    codigo
   });
 
   res.redirect('/login.html');
 });
 
 /* ======================
-   DASHBOARD CENTRAL
+   DASHBOARD
 ====================== */
 app.get('/dashboard', (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/login.html');
-  }
+  if (!req.session.user) return res.redirect('/login.html');
 
   const role = req.session.user.role;
-
   if (role === 'admin') return res.redirect('/admin');
   if (role === 'parceiro') return res.redirect('/parceiro');
   if (role === 'indicador') return res.redirect('/indicador');
-
-  res.redirect('/login.html');
 });
 
 /* ======================
-   MIDDLEWARE AUTH
+   AUTH
 ====================== */
 function auth(role) {
   return (req, res, next) => {
@@ -101,58 +108,62 @@ function auth(role) {
 }
 
 /* ======================
-   PAINÉIS PROTEGIDOS
+   PAINÉIS
 ====================== */
-app.get('/admin', auth('admin'), (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
+app.get('/admin', auth('admin'), (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/admin.html'))
+);
 
-app.get('/parceiro', auth('parceiro'), (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'parceiro.html'));
-});
+app.get('/parceiro', auth('parceiro'), (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/parceiro.html'))
+);
 
-app.get('/indicador', auth('indicador'), (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'indicador.html'));
+app.get('/indicador', auth('indicador'), (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/indicador.html'))
+);
+
+/* ======================
+   LINK DO INDICADOR
+====================== */
+app.get('/api/meu-link', auth('indicador'), (req, res) => {
+  const indicador = users.find(u => u.id === req.session.user.id);
+  res.json({
+    link: `https://app.indicons.com.br/i/${indicador.codigo}`
+  });
 });
 
 /* ======================
-   ROTA INVISÍVEL – CLIENTE
+   ROTA INVISÍVEL CLIENTE
 ====================== */
-
-// Formulário invisível do cliente
 app.get('/i/:codigo', (req, res) => {
-  const codigo = req.params.codigo;
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
+
+  if (!indicador) return res.send('Link inválido');
 
   res.send(`
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-      <meta charset="UTF-8">
-      <title>Cadastro</title>
-    </head>
-    <body>
-      <h2>Receba uma simulação</h2>
-
-      <form method="POST" action="/i/${codigo}">
-        <input name="nome" placeholder="Seu nome" required /><br><br>
-        <input name="telefone" placeholder="Telefone" required /><br><br>
-        <button type="submit">Enviar</button>
-      </form>
-    </body>
-    </html>
+    <h2>Simulação</h2>
+    <form method="POST">
+      <input name="nome" placeholder="Nome" required /><br><br>
+      <input name="telefone" placeholder="Telefone" required /><br><br>
+      <button type="submit">Enviar</button>
+    </form>
   `);
 });
 
-// Recebe cadastro do cliente
 app.post('/i/:codigo', (req, res) => {
-  const { nome, telefone } = req.body;
-  const codigo = req.params.codigo;
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
+
+  if (!indicador) return res.send('Link inválido');
 
   leads.push({
     id: leadId++,
-    nome,
-    telefone,
-    codigoIndicador: codigo,
+    nome: req.body.nome,
+    telefone: req.body.telefone,
+    indicadorId: indicador.id,
     status: 'novo',
     criadoEm: new Date()
   });
@@ -161,24 +172,18 @@ app.post('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   DEBUG (TEMPORÁRIO)
+   DEBUG
 ====================== */
-app.get('/debug/leads', (req, res) => {
-  res.json(leads);
-});
+app.get('/debug/leads', (req, res) => res.json(leads));
 
 /* ======================
    LOGOUT
 ====================== */
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login.html');
-  });
+  req.session.destroy(() => res.redirect('/login.html'));
 });
 
 /* ======================
    START
 ====================== */
-app.listen(PORT, () => {
-  console.log('INDICONS rodando');
-});
+app.listen(PORT, () => console.log('INDICONS rodando'));
