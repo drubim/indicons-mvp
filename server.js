@@ -113,7 +113,7 @@ app.get('/api/indicador/link', (req, res) => {
    APIs DE LEADS
 ====================== */
 
-// ADMIN — todos os leads
+// ADMIN
 app.get('/api/leads/admin', (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(401).json({ error: 'Não autorizado' });
@@ -121,7 +121,7 @@ app.get('/api/leads/admin', (req, res) => {
   res.json(leads);
 });
 
-// INDICADOR — apenas os seus leads
+// INDICADOR
 app.get('/api/leads/indicador', (req, res) => {
   if (!req.session.user || req.session.user.role !== 'indicador') {
     return res.status(401).json({ error: 'Não autorizado' });
@@ -148,6 +148,9 @@ app.get('/i/:codigo', (req, res) => {
   `);
 });
 
+/* ======================
+   RECEBE CLIENTE + CLASSIFICA
+====================== */
 app.post('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
@@ -156,11 +159,19 @@ app.post('/i/:codigo', (req, res) => {
 
   const { nome, telefone } = req.body;
 
+  // classificação simples (regra inicial)
+  const score = Math.floor(Math.random() * 100);
+  let classificacao = 'frio';
+  if (score >= 70) classificacao = 'quente';
+  else if (score >= 40) classificacao = 'morno';
+
   leads.push({
     id: leadId++,
     nome,
     telefone,
     indicadorId: indicador.id,
+    score,
+    classificacao,
     criadoEm: new Date()
   });
 
@@ -178,5 +189,5 @@ app.get('/logout', (req, res) => {
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS rodando – leads integrados nos painéis');
+  console.log('INDICONS rodando – leads classificados');
 });
