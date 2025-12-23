@@ -1,0 +1,24 @@
+<h2>Entrar</h2>
+
+<input id="email" placeholder="Email"><br>
+<input id="senha" placeholder="Senha"><br>
+<button onclick="login()">Entrar</button>
+
+<script>
+function login() {
+  fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.value, senha: senha.value })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.role === "indicador")
+      location.href = "/painel-indicador.html?codigo=" + d.codigo_indicador;
+    if (d.role === "parceiro")
+      location.href = "/painel-parceiro.html";
+    if (d.role === "admin")
+      location.href = "/painel-admin.html";
+  });
+}
+</script>

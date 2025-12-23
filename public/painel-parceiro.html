@@ -1,0 +1,17 @@
+<h2>Painel do Parceiro</h2>
+
+<div>
+  Registrados: <span id="card-registrados"></span><br>
+  Em andamento: <span id="card-andamento"></span><br>
+  Vendidos: <span id="card-vendidos"></span>
+</div>
+
+<table><tbody id="tabela-body"></tbody></table>
+
+<script>
+window.PAINEL_CONFIG = {
+  role: "parceiro",
+  contexto: { parceiroId: "CLOSER_01" }
+};
+</script>
+<script src="/painel-base.js"></script>

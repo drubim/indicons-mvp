@@ -1,0 +1,24 @@
+<h2>Cadastro</h2>
+
+<input id="nome" placeholder="Nome"><br>
+<input id="telefone" placeholder="Telefone"><br>
+<input id="email" placeholder="Email"><br>
+<button onclick="enviar()">Cadastrar</button>
+
+<script>
+const indicador = new URLSearchParams(location.search).get("indicador");
+
+function enviar() {
+  fetch("/api/clientes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nome: nome.value,
+      telefone: telefone.value,
+      email: email.value,
+      indicador_codigo: indicador
+    })
+  })
+  .then(() => alert("Cadastro realizado. Em breve entraremos em contato."));
+}
+</script>
