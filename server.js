@@ -11,10 +11,9 @@ const PORT = process.env.PORT || 3000;
    GOOGLE CALENDAR / MEET
 ====================== */
 const authGoogle = new google.auth.GoogleAuth({
-  keyFile: 'calendar.json', // arquivo na raiz
+  keyFile: 'calendar.json',
   scopes: ['https://www.googleapis.com/auth/calendar']
 });
-
 const calendar = google.calendar({ version: 'v3', auth: authGoogle });
 
 /* ======================
@@ -26,7 +25,8 @@ app.use(express.json());
 app.use(session({
   secret: 'indicons-secret',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: { secure: false } // Render usa HTTPS via proxy
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -50,7 +50,7 @@ let leadId = 1;
 let meetingId = 1;
 
 /* ======================
-   PARCEIROS (ROUND-ROBIN)
+   PARCEIROS (ROUND ROBIN)
 ====================== */
 let parceiroIndex = 0;
 function getNextParceiroId() {
@@ -62,17 +62,8 @@ function getNextParceiroId() {
 }
 
 /* ======================
-   AUTH / LOGIN
+   FUNÇÃO AUTH
 ====================== */
-app.post('/login', (req, res) => {
-  const { email, senha } = req.body;
-  const user = users.find(u => u.email === email && u.senha === senha);
-  if (!user) return res.redirect('/login.html');
-
-  req.session.user = { id: user.id, role: user.role };
-  res.redirect('/dashboard');
-});
-
 function protect(role) {
   return (req, res, next) => {
     if (!req.session.user || req.session.user.role !== role) {
@@ -82,25 +73,66 @@ function protect(role) {
   };
 }
 
+/* =====================================================
+   LOGIN — COMPATÍVEL COM FRONTEND ANTIGO E NOVO
+===================================================== */
+
+// 🔹 LOGIN VIA FETCH (/api/login)
+app.post('/api/login', (req, res) => {
+  const { email, senha } = req.body;
+
+  const user = users.find(u => u.email === email && u.senha === senha);
+  if (!user) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
+
+  req.session.user = {
+    id: user.id,
+    role: user.role,
+    email: user.email
+  };
+
+  res.json({ ok: true, role: user.role });
+});
+
+// 🔹 LOGIN VIA FORM HTML (/login)
+app.post('/login', (req, res) => {
+  const { email, senha } = req.body;
+
+  const user = users.find(u => u.email === email && u.senha === senha);
+  if (!user) return res.redirect('/login.html');
+
+  req.session.user = {
+    id: user.id,
+    role: user.role,
+    email: user.email
+  };
+
+  res.redirect('/dashboard');
+});
+
 /* ======================
    DASHBOARD
 ====================== */
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
+
   if (req.session.user.role === 'admin') return res.redirect('/admin');
   if (req.session.user.role === 'parceiro') return res.redirect('/parceiro');
   if (req.session.user.role === 'indicador') return res.redirect('/indicador');
 });
 
 /* ======================
-   PAINÉIS (HTMLs EXISTENTES)
+   PAINÉIS
 ====================== */
 app.get('/admin', protect('admin'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/admin.html'))
 );
+
 app.get('/parceiro', protect('parceiro'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/parceiro.html'))
 );
+
 app.get('/indicador', protect('indicador'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/indicador.html'))
 );
@@ -145,15 +177,6 @@ app.get('/api/leads/parceiro', protect('parceiro'), (req, res) =>
 );
 
 /* ======================
-   APIs DE REUNIÕES
-====================== */
-app.get('/api/meetings/admin', protect('admin'), (req, res) => res.json(meetings));
-
-app.get('/api/meetings/parceiro', protect('parceiro'), (req, res) =>
-  res.json(meetings.filter(m => m.parceiroId === req.session.user.id))
-);
-
-/* ======================
    ROTA INVISÍVEL DO CLIENTE
 ====================== */
 app.get('/i/:codigo', (req, res) => {
@@ -190,58 +213,55 @@ app.post('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   IA INVISÍVEL + GOOGLE CALENDAR
+   IA + AGENDAMENTO GOOGLE
 ====================== */
 setInterval(async () => {
   for (const lead of leads) {
-    if (lead.status === 'novo') {
-      // score e classificação
-      lead.score = Math.floor(Math.random() * 100);
-      if (lead.score >= 70) lead.classificacao = 'quente';
-      else if (lead.score >= 40) lead.classificacao = 'morno';
-      else lead.classificacao = 'frio';
+    if (lead.status !== 'novo') continue;
 
-      if (lead.classificacao === 'frio') {
-        lead.status = 'disponivel';
-        continue;
-      }
+    lead.score = Math.floor(Math.random() * 100);
+    if (lead.score >= 70) lead.classificacao = 'quente';
+    else if (lead.score >= 40) lead.classificacao = 'morno';
+    else lead.classificacao = 'frio';
 
-      const parceiroId = getNextParceiroId();
-      if (!parceiroId) continue;
-
-      // agenda para +2h, duração 30min
-      const start = new Date();
-      start.setHours(start.getHours() + 2);
-      const end = new Date(start);
-      end.setMinutes(end.getMinutes() + 30);
-
-      const event = await calendar.events.insert({
-        calendarId: 'primary',
-        conferenceDataVersion: 1,
-        requestBody: {
-          summary: `Reunião INDICONS – ${lead.nome}`,
-          description: `Lead automático INDICONS`,
-          start: { dateTime: start.toISOString() },
-          end: { dateTime: end.toISOString() },
-          conferenceData: {
-            createRequest: { requestId: crypto.randomUUID() }
-          }
-        }
-      });
-
-      meetings.push({
-        id: meetingId++,
-        leadId: lead.id,
-        parceiroId,
-        data: start,
-        meetLink: event.data.hangoutLink,
-        googleEventId: event.data.id
-      });
-
-      lead.parceiroId = parceiroId;
-      lead.status = 'agendado';
-      lead.triadoEm = new Date();
+    if (lead.classificacao === 'frio') {
+      lead.status = 'disponivel';
+      continue;
     }
+
+    const parceiroId = getNextParceiroId();
+    if (!parceiroId) continue;
+
+    const start = new Date();
+    start.setHours(start.getHours() + 2);
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + 30);
+
+    const event = await calendar.events.insert({
+      calendarId: 'primary',
+      conferenceDataVersion: 1,
+      requestBody: {
+        summary: `Reunião INDICONS – ${lead.nome}`,
+        start: { dateTime: start.toISOString() },
+        end: { dateTime: end.toISOString() },
+        conferenceData: {
+          createRequest: { requestId: crypto.randomUUID() }
+        }
+      }
+    });
+
+    meetings.push({
+      id: meetingId++,
+      leadId: lead.id,
+      parceiroId,
+      data: start,
+      meetLink: event.data.hangoutLink,
+      googleEventId: event.data.id
+    });
+
+    lead.parceiroId = parceiroId;
+    lead.status = 'agendado';
+    lead.triadoEm = new Date();
   }
 }, 15000);
 
@@ -260,7 +280,6 @@ app.get('/debug/test-calendar', async (req, res) => {
       conferenceDataVersion: 1,
       requestBody: {
         summary: 'TESTE INDICONS',
-        description: 'Evento de teste automático',
         start: { dateTime: start.toISOString() },
         end: { dateTime: end.toISOString() },
         conferenceData: {
@@ -269,11 +288,7 @@ app.get('/debug/test-calendar', async (req, res) => {
       }
     });
 
-    res.json({
-      ok: true,
-      meet: event.data.hangoutLink,
-      eventId: event.data.id
-    });
+    res.json({ ok: true, meet: event.data.hangoutLink });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -289,5 +304,6 @@ app.get('/logout', (req, res) => {
 /* ======================
    START
 ====================== */
-app.listen(PORT, () => console.log('INDICONS rodando com Google Calendar/Meet'));
- 
+app.listen(PORT, () => {
+  console.log('INDICONS rodando com login, IA e Google Calendar');
+});
