@@ -41,7 +41,13 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
-   LOGIN (FORM HTML)
+   LEADS (CLIENTES)
+====================== */
+let leads = [];
+let leadId = 1;
+
+/* ======================
+   LOGIN (FORM)
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
@@ -59,10 +65,10 @@ app.post('/login', (req, res) => {
 });
 
 /* ======================
-   LOGIN (FETCH / API)
+   LOGIN (FETCH)
 ====================== */
 app.post('/api/login', (req, res) => {
-  const { email, senha } = req.body;
+  const { email, senha };
 
   const user = users.find(u => u.email === email && u.senha === senha);
   if (!user) {
@@ -82,7 +88,7 @@ app.post('/api/login', (req, res) => {
    CADASTRO INDICADOR
 ====================== */
 app.post('/cadastro-indicador', (req, res) => {
-  const { email, senha } = req.body;
+  const { email, senha };
   if (!email || !senha) return res.send('Dados inválidos');
 
   users.push({
@@ -97,7 +103,7 @@ app.post('/cadastro-indicador', (req, res) => {
 });
 
 /* ======================
-   DASHBOARD / REDIRECIONAMENTO
+   DASHBOARD
 ====================== */
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
@@ -126,8 +132,10 @@ app.get('/api/indicador/link', (req, res) => {
 });
 
 /* ======================
-   ROTA INVISÍVEL DO CLIENTE (BASE)
+   ROTA INVISÍVEL – CLIENTE
 ====================== */
+
+// MOSTRA FORMULÁRIO
 app.get('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
@@ -145,6 +153,27 @@ app.get('/i/:codigo', (req, res) => {
   `);
 });
 
+// RECEBE CADASTRO DO CLIENTE
+app.post('/i/:codigo', (req, res) => {
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
+
+  if (!indicador) return res.send('Link inválido');
+
+  const { nome, telefone } = req.body;
+
+  leads.push({
+    id: leadId++,
+    nome,
+    telefone,
+    indicadorId: indicador.id,
+    criadoEm: new Date()
+  });
+
+  res.send('Cadastro realizado com sucesso. Em breve entraremos em contato.');
+});
+
 /* ======================
    LOGOUT
 ====================== */
@@ -153,15 +182,15 @@ app.get('/logout', (req, res) => {
 });
 
 /* ======================
-   DEBUG (opcional)
+   DEBUG
 ====================== */
-app.get('/debug/users', (req, res) => {
-  res.json(users);
+app.get('/debug/leads', (req, res) => {
+  res.json(leads);
 });
 
 /* ======================
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS rodando – base estável com login, cadastro e link');
+  console.log('INDICONS rodando – cadastro via link OK');
 });
