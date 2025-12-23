@@ -9,16 +9,17 @@ app.use(express.static('public'));
 const SECRET = 'indicons-secret';
 
 /* ======================
-   USUÁRIOS FIXOS (SEM DB)
+   USUÁRIOS EM MEMÓRIA
 ====================== */
 const usuarios = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
-  { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' },
-  { id: 3, email: 'indicador@indicons.com.br', senha: 'indicador123', role: 'indicador' }
+  { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
 ];
 
+let proximoId = 3;
+
 /* ======================
-   LOGIN (100% FUNCIONAL)
+   LOGIN
 ====================== */
 app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
@@ -38,6 +39,31 @@ app.post('/api/login', (req, res) => {
   );
 
   res.json({ token, role: usuario.role });
+});
+
+/* ======================
+   CADASTRO DE INDICADOR
+====================== */
+app.post('/api/cadastro', (req, res) => {
+  const { email, senha } = req.body;
+
+  if (!email || !senha) {
+    return res.status(400).json({ erro: 'Dados inválidos' });
+  }
+
+  const existe = usuarios.find(u => u.email === email);
+  if (existe) {
+    return res.status(400).json({ erro: 'Usuário já existe' });
+  }
+
+  usuarios.push({
+    id: proximoId++,
+    email,
+    senha,
+    role: 'indicador'
+  });
+
+  res.json({ sucesso: true });
 });
 
 /* ======================
