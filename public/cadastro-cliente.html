@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cadastro</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      width: 300px;
+      border-radius: 6px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    button {
+      background: #000;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<form id="form">
+  <h3>Solicitar Contato</h3>
+
+  <input type="text" id="nome" placeholder="Nome" required />
+  <input type="tel" id="telefone" placeholder="Telefone" required />
+  <input type="email" id="email" placeholder="Email" />
+
+  <button type="submit">Enviar</button>
+</form>
+
+<script>
+  const codigo = window.location.pathname.split('/').pop();
+
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const res = await fetch('/api/cadastro-cliente/' + codigo, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: nome.value,
+        telefone: telefone.value,
+        email: email.value
+      })
+    });
+
+    if (res.ok) {
+      alert('Cadastro enviado com sucesso');
+      document.getElementById('form').reset();
+    } else {
+      alert('Erro ao enviar');
+    }
+  });
+</script>
+
+</body>
+</html>
