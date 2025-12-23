@@ -2,8 +2,32 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const crypto = require('crypto');
-const { google } = require('googleapis');
 
+/* ======================
+   TENTAR CARREGAR GOOGLE
+====================== */
+let calendar = null;
+let googleAvailable = false;
+
+try {
+  const { google } = require('googleapis');
+
+  const auth = new google.auth.GoogleAuth({
+    keyFile: 'calendar.json',
+    scopes: ['https://www.googleapis.com/auth/calendar']
+  });
+
+  calendar = google.calendar({ version: 'v3', auth });
+  googleAvailable = true;
+  console.log('✅ Google Calendar carregado');
+
+} catch (err) {
+  console.warn('⚠️ Google Calendar DESATIVADO:', err.message);
+}
+
+/* ======================
+   APP
+====================== */
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -21,7 +45,7 @@ app.use(session({
   saveUninitialized: false,
   proxy: true,
   cookie: {
-    secure: true,
+    secure: true,      // HTTPS Render
     sameSite: 'lax'
   }
 }));
@@ -29,45 +53,49 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ======================
-   GOOGLE CALENDAR + MEET
+   CONFIG
 ====================== */
-const auth = new google.auth.GoogleAuth({
-  keyFile: 'calendar.json', // arquivo da service account
-  scopes: ['https://www.googleapis.com/auth/calendar']
-});
-
-const calendar = google.calendar({ version: 'v3', auth });
-
-// ⚠️ TROQUE PELO SEU CALENDÁRIO REAL
 const CALENDAR_ID = 'SEU_CALENDARIO@gmail.com';
 
 /* ======================
-   USUÁRIOS
+   USUÁRIOS EM MEMÓRIA
 ====================== */
 const users = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
   { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
 ];
+
 let indicadorId = 100;
 
 /* ======================
-   LEADS
+   LEADS EM MEMÓRIA
 ====================== */
 let leads = [];
 let leadId = 1;
 
 /* ======================
-   LOGIN / CADASTRO
+   LOGIN (FORM)
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
-  const user = users.find(u => u.email === email && u.senha === senha);
+
+  const user = users.find(
+    u => u.email === email && u.senha === senha
+  );
+
   if (!user) return res.redirect('/login.html');
 
-  req.session.user = { id: user.id, role: user.role };
+  req.session.user = {
+    id: user.id,
+    role: user.role
+  };
+
   res.redirect('/dashboard');
 });
 
+/* ======================
+   CADASTRO INDICADOR
+====================== */
 app.post('/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
 
@@ -82,6 +110,9 @@ app.post('/cadastro-indicador', (req, res) => {
   res.redirect('/login.html');
 });
 
+/* ======================
+   DASHBOARD
+====================== */
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
 
@@ -91,7 +122,7 @@ app.get('/dashboard', (req, res) => {
 });
 
 /* ======================
-   APIs INDICADOR / ADMIN
+   LINK DO INDICADOR
 ====================== */
 app.get('/api/indicador/link', (req, res) => {
   if (!req.session.user || req.session.user.role !== 'indicador') {
@@ -99,17 +130,28 @@ app.get('/api/indicador/link', (req, res) => {
   }
 
   const indicador = users.find(u => u.id === req.session.user.id);
-  res.json({ link: `https://app.indicons.com.br/i/${indicador.codigo}` });
+
+  res.json({
+    link: `https://app.indicons.com.br/i/${indicador.codigo}`
+  });
 });
 
+/* ======================
+   LEADS – INDICADOR
+====================== */
 app.get('/api/leads/indicador', (req, res) => {
   if (!req.session.user || req.session.user.role !== 'indicador') {
     return res.sendStatus(401);
   }
 
-  res.json(leads.filter(l => l.indicadorId === req.session.user.id));
+  res.json(
+    leads.filter(l => l.indicadorId === req.session.user.id)
+  );
 });
 
+/* ======================
+   LEADS – ADMIN
+====================== */
 app.get('/api/leads/admin', (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.sendStatus(401);
@@ -122,7 +164,10 @@ app.get('/api/leads/admin', (req, res) => {
    FORM CLIENTE
 ====================== */
 app.get('/i/:codigo', (req, res) => {
-  const indicador = users.find(u => u.codigo === req.params.codigo);
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
+
   if (!indicador) return res.send('Link inválido');
 
   res.send(`
@@ -136,10 +181,13 @@ app.get('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   RECEBE LEAD + AGENDA
+   RECEBE LEAD + GOOGLE (SE DISPONÍVEL)
 ====================== */
 app.post('/i/:codigo', async (req, res) => {
-  const indicador = users.find Elliott => u.codigo === req.params.codigo);
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
+
   if (!indicador) return res.send('Link inválido');
 
   const score = Math.floor(Math.random() * 100);
@@ -147,9 +195,8 @@ app.post('/i/:codigo', async (req, res) => {
   let status = 'Recebido';
   let reuniaoAgendada = false;
   let meetLink = null;
-  let dataReuniao = null;
 
-  if (score >= 70) {
+  if (score >= 70 && googleAvailable && calendar) {
     try {
       const start = new Date();
       start.setHours(start.getHours() + 2);
@@ -171,13 +218,14 @@ app.post('/i/:codigo', async (req, res) => {
 
       reuniaoAgendada = true;
       meetLink = event.data.hangoutLink;
-      dataReuniao = start;
       status = 'Reunião agendada';
 
     } catch (err) {
-      console.error('Erro ao agendar reunião:', err.message);
+      console.error('Erro ao agendar:', err.message);
       status = 'Aguardando agendamento';
     }
+  } else if (score >= 70) {
+    status = 'Aguardando agendamento';
   }
 
   leads.push({
@@ -189,7 +237,6 @@ app.post('/i/:codigo', async (req, res) => {
     status,
     reuniaoAgendada,
     meetLink,
-    dataReuniao,
     criadoEm: new Date()
   });
 
@@ -207,5 +254,5 @@ app.get('/logout', (req, res) => {
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS – Google Calendar + Meet ativos');
+  console.log('INDICONS – servidor estável (Calendar protegido)');
 });
