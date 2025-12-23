@@ -6,52 +6,42 @@
 </head>
 <body>
 
-  <h1>Login</h1>
+<h2>Login</h2>
 
-  <form id="loginForm">
-    <input type="email" id="email" placeholder="E-mail" required />
-    <br><br>
-    <input type="password" id="senha" placeholder="Senha" required />
-    <br><br>
-    <button type="submit">Entrar</button>
-  </form>
+<form id="loginForm">
+  <input type="email" id="email" placeholder="E-mail" required><br><br>
+  <input type="password" id="senha" placeholder="Senha" required><br><br>
+  <button type="submit">Entrar</button>
+</form>
 
-  <p id="erro" style="color:red; display:none;">Login inválido</p>
+<p id="erro" style="color:red;display:none;">Login inválido</p>
 
-  <script>
-    document.getElementById('loginForm').addEventListener('submit', function (e) {
-      e.preventDefault();
+<script>
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
 
-      const email = document.getElementById('email').value;
-      const senha = document.getElementById('senha').value;
-
-      fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, senha })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
-      .then(data => {
-        if (data.role === 'indicador') {
-          window.location.href = '/painel-indicador.html';
-        }
-        if (data.role === 'admin') {
-          window.location.href = '/painel-admin.html';
-        }
-        if (data.role === 'parceiro') {
-          window.location.href = '/painel-parceiro.html';
-        }
-      })
-      .catch(() => {
-        document.getElementById('erro').style.display = 'block';
-      });
-    });
-  </script>
+  fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email.value,
+      senha: senha.value
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error();
+    return res.json();
+  })
+  .then(data => {
+    if (data.role === 'admin') location.href = '/admin.html';
+    if (data.role === 'parceiro') location.href = '/parceiro.html';
+    if (data.role === 'indicador') location.href = '/indicador.html';
+  })
+  .catch(() => {
+    document.getElementById('erro').style.display = 'block';
+  });
+});
+</script>
 
 </body>
 </html>
