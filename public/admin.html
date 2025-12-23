@@ -1,15 +1,42 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Painel Admin</title>
-</head>
+<head><meta charset="UTF-8"><title>Admin | INDICONS</title></head>
 <body>
 
 <h1>Painel Admin</h1>
-<p>Área administrativa do sistema.</p>
 
+<h2>Todos os Leads</h2>
+
+<table border="1" cellpadding="8">
+<thead>
+<tr>
+  <th>ID</th><th>Nome</th><th>Telefone</th><th>Indicador</th><th>Status</th><th>Data</th>
+</tr>
+</thead>
+<tbody id="leads"></tbody>
+</table>
+
+<br>
 <a href="/logout">Sair</a>
+
+<script>
+fetch('/api/leads/admin')
+  .then(r => r.json())
+  .then(data => {
+    const tbody = document.getElementById('leads');
+    data.forEach(l => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${l.id}</td>
+          <td>${l.nome}</td>
+          <td>${l.telefone}</td>
+          <td>${l.indicadorId}</td>
+          <td>${l.status}</td>
+          <td>${new Date(l.criadoEm).toLocaleString()}</td>
+        </tr>`;
+    });
+  });
+</script>
 
 </body>
 </html>
