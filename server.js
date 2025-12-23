@@ -121,7 +121,7 @@ app.get('/api/leads/indicador', auth('indicador'), (req, res) => {
 });
 
 app.get('/api/leads/parceiro', auth('parceiro'), (req, res) => {
-  res.json(leads.filter(l => l.status !== 'novo'));
+  res.json(leads.filter(l => l.status === 'disponivel'));
 });
 
 /* ======================
@@ -139,7 +139,6 @@ app.get('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
   );
-
   if (!indicador) return res.send('Link inválido');
 
   res.send(`
@@ -156,7 +155,6 @@ app.post('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
   );
-
   if (!indicador) return res.send('Link inválido');
 
   leads.push({
@@ -165,11 +163,32 @@ app.post('/i/:codigo', (req, res) => {
     telefone: req.body.telefone,
     indicadorId: indicador.id,
     status: 'novo',
+    score: 0,
+    classificacao: 'frio',
     criadoEm: new Date()
   });
 
   res.send('Cadastro recebido. Em breve entraremos em contato.');
 });
+
+/* ======================
+   IA INVISÍVEL – SCORE
+====================== */
+setInterval(() => {
+  leads.forEach(lead => {
+    if (lead.status === 'novo') {
+      // score simulado (substituível por IA real)
+      lead.score = Math.floor(Math.random() * 100);
+
+      if (lead.score >= 70) lead.classificacao = 'quente';
+      else if (lead.score >= 40) lead.classificacao = 'morno';
+      else lead.classificacao = 'frio';
+
+      lead.status = 'disponivel';
+      lead.triadoEm = new Date();
+    }
+  });
+}, 10000);
 
 /* ======================
    LOGOUT
