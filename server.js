@@ -1,252 +1,201 @@
+// ===============================
+// INDICONS - SERVER FINAL
+// Google Calendar + Meet
+// Auth ÚNICA via Service Account
+// ===============================
+
 const express = require('express');
-const path = require('path');
 const session = require('express-session');
+const path = require('path');
 const crypto = require('crypto');
+const { google } = require('googleapis');
 
-/* ======================
-   GOOGLE CALENDAR (BLINDADO)
-====================== */
-let calendar = null;
-let googleAvailable = false;
-
-try {
-  const { google } = require('googleapis');
-
-  const auth = new google.auth.GoogleAuth({
-    keyFile: 'calendar.json',
-    scopes: ['https://www.googleapis.com/auth/calendar']
-  });
-
-  calendar = google.calendar({ version: 'v3', auth });
-  googleAvailable = true;
-  console.log('✅ Google Calendar ativo');
-
-} catch (err) {
-  console.warn('⚠️ Google Calendar desativado:', err.message);
-}
-
-/* ======================
-   APP
-====================== */
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-/* ======================
-   MIDDLEWARE / SESSÃO
-====================== */
-app.set('trust proxy', 1);
-app.use(express.urlencoded({ extended: true }));
+// ===============================
+// MIDDLEWARES
+// ===============================
 app.use(express.json());
-
-app.use(session({
-  name: 'indicons.sid',
-  secret: 'indicons-secret',
-  resave: false,
-  saveUninitialized: false,
-  proxy: true,
-  cookie: {
-    secure: true,
-    sameSite: 'lax'
-  }
-}));
-
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* ======================
-   CONFIG
-====================== */
-const CALENDAR_ID = 'indicons.agenda@gmail.com';
+app.use(
+  session({
+    secret: 'indicons-secret',
+    resave: false,
+    saveUninitialized: true
+  })
+);
 
-/* ======================
-   USUÁRIOS (MEMÓRIA)
-====================== */
-const users = [
-  { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
-  { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
-];
-let indicadorId = 100;
-
-/* ======================
-   LEADS (MEMÓRIA)
-====================== */
-let leads = [];
-let leadId = 1;
-
-/* ======================
-   LOGIN
-====================== */
-app.post('/login', (req, res) => {
-  const { email, senha } = req.body;
-
-  const user = users.find(u => u.email === email && u.senha === senha);
-  if (!user) return res.redirect('/login.html');
-
-  req.session.user = { id: user.id, role: user.role };
-  res.redirect('/dashboard');
+// ===============================
+// AUTH GOOGLE (ÚNICO E DEFINITIVO)
+// ===============================
+const auth = new google.auth.GoogleAuth({
+  keyFile: path.join(__dirname, 'calendar.json'),
+  scopes: ['https://www.googleapis.com/auth/calendar']
 });
 
-/* ======================
-   CADASTRO INDICADOR
-====================== */
-app.post('/cadastro-indicador', (req, res) => {
-  const { email, senha } = req.body;
+const calendar = google.calendar({
+  version: 'v3',
+  auth
+});
 
-  users.push({
-    id: indicadorId++,
-    email,
-    senha,
-    role: 'indicador',
-    codigo: crypto.randomBytes(4).toString('hex')
+// 🔎 Validação explícita da Service Account (LOG OBRIGATÓRIO)
+auth.getClient()
+  .then(() => {
+    console.log('✅ Service Account autenticada com sucesso');
+    console.log('INDICONS - servidor final com Google Calendar + Meet (OK)');
+  })
+  .catch(err => {
+    console.error('❌ Falha ao autenticar Service Account:', err.message);
   });
 
-  res.redirect('/login.html');
-});
+// ===============================
+// DADOS EM MEMÓRIA (MVP)
+// ===============================
+let indicadores = [];
+let leads = [];
+let parceiros = [
+  { id: 1, nome: 'Parceiro 1' }
+];
 
-/* ======================
-   DASHBOARD
-====================== */
-app.get('/dashboard', (req, res) => {
-  if (!req.session.user) return res.redirect('/login.html');
+// ===============================
+// LOGIN SIMPLES (ADMIN / PARCEIRO)
+// ===============================
+app.post('/login', (req, res) => {
+  const { email } = req.body;
 
-  if (req.session.user.role === 'admin') return res.redirect('/admin.html');
-  if (req.session.user.role === 'parceiro') return res.redirect('/parceiro.html');
-  if (req.session.user.role === 'indicador') return res.redirect('/indicador.html');
-});
-
-/* ======================
-   LINK DO INDICADOR
-====================== */
-app.get('/api/indicador/link', (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'indicador') {
-    return res.sendStatus(401);
+  if (email === 'admin@indicons.com.br') {
+    req.session.user = { role: 'admin' };
+    return res.json({ ok: true, role: 'admin' });
   }
 
-  const indicador = users.find(u => u.id === req.session.user.id);
-  res.json({ link: `https://app.indicons.com.br/i/${indicador.codigo}` });
-});
-
-/* ======================
-   LEADS – INDICADOR
-====================== */
-app.get('/api/leads/indicador', (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'indicador') {
-    return res.sendStatus(401);
+  if (email === 'parceiro@indicons.com.br') {
+    req.session.user = { role: 'parceiro', parceiroId: 1 };
+    return res.json({ ok: true, role: 'parceiro' });
   }
 
-  res.json(leads.filter(l => l.indicadorId === req.session.user.id));
+  return res.status(401).json({ error: 'Login inválido' });
 });
 
-/* ======================
-   LEADS – ADMIN
-====================== */
-app.get('/api/leads/admin', (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'admin') {
-    return res.sendStatus(401);
-  }
+// ===============================
+// CADASTRO INDICADOR
+// ===============================
+app.post('/cadastro-indicador', (req, res) => {
+  const id = indicadores.length + 1;
+  const codigo = crypto.randomBytes(4).toString('hex');
 
+  indicadores.push({
+    id,
+    email: req.body.email,
+    codigo
+  });
+
+  req.session.user = { role: 'indicador', indicadorId: id };
+
+  res.json({
+    ok: true,
+    link: `https://app.indicons.com.br/i/${codigo}`
+  });
+});
+
+// ===============================
+// CADASTRO LEAD VIA LINK INDICADOR
+// ===============================
+app.post('/i/:codigo', async (req, res) => {
+  try {
+    const indicador = indicadores.find(i => i.codigo === req.params.codigo);
+    if (!indicador) return res.status(404).send('Indicador inválido');
+
+    const score = Math.floor(Math.random() * 100);
+    const quente = score >= 70;
+
+    const lead = {
+      id: leads.length + 1,
+      nome: req.body.nome,
+      telefone: req.body.telefone,
+      indicadorId: indicador.id,
+      score,
+      classificacao: quente ? 'quente' : 'frio',
+      status: quente ? 'Aguardando agendamento' : 'Recebido',
+      parceiroId: null,
+      meetLink: null,
+      data: new Date()
+    };
+
+    // ===============================
+    // AGENDAMENTO AUTOMÁTICO (SE QUENTE)
+    // ===============================
+    if (quente) {
+      const start = new Date(Date.now() + 60 * 60 * 1000);
+      const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+      try {
+        const event = await calendar.events.insert({
+          calendarId: 'indicons.agenda@gmail.com',
+          conferenceDataVersion: 1,
+          requestBody: {
+            summary: `Reunião INDICONS – ${lead.nome}`,
+            start: { dateTime: start.toISOString() },
+            end: { dateTime: end.toISOString() },
+            attendees: [
+              { email: 'indicons.agenda@gmail.com' }
+            ],
+            conferenceData: {
+              createRequest: {
+                requestId: crypto.randomUUID(),
+                conferenceSolutionKey: { type: 'hangoutsMeet' }
+              }
+            }
+          }
+        });
+
+        lead.meetLink = event.data.hangoutLink;
+        lead.status = 'Reunião agendada';
+        lead.parceiroId = 1;
+
+        console.log('✅ Evento criado com sucesso');
+        console.log('Meet link:', lead.meetLink);
+
+      } catch (err) {
+        console.error('❌ Erro ao agendar:', err.message);
+      }
+    }
+
+    leads.push(lead);
+    res.json({ ok: true });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Erro interno');
+  }
+});
+
+// ===============================
+// APIs PAINÉIS
+// ===============================
+app.get('/api/admin/leads', (req, res) => {
   res.json(leads);
 });
 
-/* ======================
-   FORM CLIENTE (LINK)
-====================== */
-app.get('/i/:codigo', (req, res) => {
-  const indicador = users.find(
-    u => u.role === 'indicador' && u.codigo === req.params.codigo
-  );
-  if (!indicador) return res.send('Link inválido');
-
-  res.send(`
-    <h2>Receba uma simulação</h2>
-    <form method="POST">
-      <input name="nome" required placeholder="Nome"><br><br>
-      <input name="telefone" required placeholder="Telefone"><br><br>
-      <button>Enviar</button>
-    </form>
-  `);
-});
-
-/* ======================
-   RECEBE LEAD + AGENDAMENTO
-====================== */
-app.post('/i/:codigo', async (req, res) => {
-  const indicador = users.find(
-    u => u.role === 'indicador' && u.codigo === req.params.codigo
-  );
-  if (!indicador) return res.send('Link inválido');
-
-  // 🔴 FORÇADO QUENTE PARA TESTE
-  const score = 90;
-
-  let status = 'Recebido';
-  let reuniaoAgendada = false;
-  let meetLink = null;
-
-  if (score >= 70 && googleAvailable && calendar) {
-    try {
-      const start = new Date();
-      start.setHours(start.getHours() + 2);
-      const end = new Date(start);
-      end.setMinutes(end.getMinutes() + 30);
-
-      const event = await calendar.events.insert({
-        calendarId: CALENDAR_ID,
-        conferenceDataVersion: 1,
-        requestBody: {
-          summary: `Reunião INDICONS – ${req.body.nome}`,
-          start: { dateTime: start.toISOString() },
-          end: { dateTime: end.toISOString() },
-
-          attendees: [
-            { email: 'indicons.agenda@gmail.com' }
-          ],
-
-          conferenceData: {
-            createRequest: {
-              requestId: crypto.randomUUID(),
-              conferenceSolutionKey: { type: 'hangoutsMeet' }
-            }
-          }
-        }
-      });
-
-      reuniaoAgendada = true;
-      meetLink = event.data.hangoutLink;
-      status = 'Reunião agendada';
-
-    } catch (err) {
-      console.error('❌ Erro ao agendar:', err.message);
-      status = 'Aguardando agendamento';
-    }
-  } else if (score >= 70) {
-    status = 'Aguardando agendamento';
+app.get('/api/indicador/leads', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'indicador') {
+    return res.status(401).json([]);
   }
-
-  leads.push({
-    id: leadId++,
-    nome: req.body.nome,
-    telefone: req.body.telefone,
-    indicadorId: indicador.id,
-    score,
-    status,
-    reuniaoAgendada,
-    meetLink,
-    criadoEm: new Date()
-  });
-
-  res.send('Cadastro realizado com sucesso.');
+  res.json(leads.filter(l => l.indicadorId === req.session.user.indicadorId));
 });
 
-/* ======================
-   LOGOUT
-====================== */
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/login.html'));
+app.get('/api/parceiro/leads', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'parceiro') {
+    return res.status(401).json([]);
+  }
+  res.json(leads.filter(l => l.parceiroId === req.session.user.parceiroId));
 });
 
-/* ======================
-   START
-====================== */
+// ===============================
+// START SERVER
+// ===============================
 app.listen(PORT, () => {
-  console.log('INDICONS – servidor final com Google Calendar + Meet (OK)');
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
