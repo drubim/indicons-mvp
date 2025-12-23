@@ -1,46 +1,51 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Cadastro</title>
 </head>
 <body>
 
-<h2>Cadastro</h2>
+  <h1>Cadastro</h1>
 
-<form id="cadastroForm">
-  <input type="email" id="email" placeholder="E-mail" required><br><br>
-  <input type="password" id="senha" placeholder="Senha" required><br><br>
-  <button type="submit">Cadastrar</button>
-</form>
+  <form id="cadastroForm">
+    <input type="email" id="email" placeholder="E-mail" required />
+    <br><br>
+    <input type="password" id="senha" placeholder="Senha" required />
+    <br><br>
+    <button type="submit">Cadastrar</button>
+  </form>
 
-<p id="msg"></p>
+  <p id="erro" style="color:red; display:none;">Erro ao cadastrar</p>
+  <p id="ok" style="color:green; display:none;">Cadastro realizado com sucesso</p>
 
-<script>
-document.getElementById('cadastroForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
+  <script>
+    document.getElementById('cadastroForm').addEventListener('submit', function (e) {
+      e.preventDefault();
 
-  const res = await fetch('/api/cadastro', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: email.value,
-      senha: senha.value
-    })
-  });
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
 
-  const msg = document.getElementById('msg');
-
-  if (res.ok) {
-    msg.innerText = 'Cadastro realizado com sucesso';
-    msg.style.color = 'green';
-    document.getElementById('cadastroForm').reset();
-  } else {
-    msg.innerText = 'Erro ao cadastrar';
-    msg.style.color = 'red';
-  }
-});
-</script>
+      fetch('/api/cadastro-indicador', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, senha })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(() => {
+        document.getElementById('erro').style.display = 'none';
+        document.getElementById('ok').style.display = 'block';
+      })
+      .catch(() => {
+        document.getElementById('erro').style.display = 'block';
+      });
+    });
+  </script>
 
 </body>
 </html>
