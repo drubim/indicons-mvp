@@ -5,12 +5,18 @@
 
 <h1>Painel do Parceiro</h1>
 
-<h2>Leads Disponíveis</h2>
+<h2>Meus Leads</h2>
 
 <table border="1" cellpadding="8">
 <thead>
 <tr>
-  <th>ID</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Data</th>
+  <th>ID</th>
+  <th>Nome</th>
+  <th>Telefone</th>
+  <th>Status</th>
+  <th>Score</th>
+  <th>Classificação</th>
+  <th>Data</th>
 </tr>
 </thead>
 <tbody id="leads"></tbody>
@@ -31,6 +37,8 @@ fetch('/api/leads/parceiro')
           <td>${l.nome}</td>
           <td>${l.telefone}</td>
           <td>${l.status}</td>
+          <td>${l.score}</td>
+          <td>${l.classificacao}</td>
           <td>${new Date(l.criadoEm).toLocaleString()}</td>
         </tr>`;
     });
