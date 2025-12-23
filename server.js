@@ -41,13 +41,13 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
-   LEADS (CLIENTES)
+   LEADS
 ====================== */
 let leads = [];
 let leadId = 1;
 
 /* ======================
-   LOGIN (FORM)
+   LOGIN (FORM HTML)
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
@@ -65,10 +65,10 @@ app.post('/login', (req, res) => {
 });
 
 /* ======================
-   LOGIN (FETCH)
+   LOGIN (FETCH / API)
 ====================== */
 app.post('/api/login', (req, res) => {
-  const { email, senha };
+  const { email, senha } = req.body;
 
   const user = users.find(u => u.email === email && u.senha === senha);
   if (!user) {
@@ -88,7 +88,7 @@ app.post('/api/login', (req, res) => {
    CADASTRO INDICADOR
 ====================== */
 app.post('/cadastro-indicador', (req, res) => {
-  const { email, senha };
+  const { email, senha } = req.body;
   if (!email || !senha) return res.send('Dados inválidos');
 
   users.push({
@@ -135,7 +135,7 @@ app.get('/api/indicador/link', (req, res) => {
    ROTA INVISÍVEL – CLIENTE
 ====================== */
 
-// MOSTRA FORMULÁRIO
+// FORMULÁRIO
 app.get('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
@@ -192,5 +192,5 @@ app.get('/debug/leads', (req, res) => {
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS rodando – cadastro via link OK');
+  console.log('INDICONS rodando – base estável OK');
 });
