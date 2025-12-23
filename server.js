@@ -24,18 +24,8 @@ app.use(express.static(path.join(__dirname, 'public')));
    USUÁRIOS EM MEMÓRIA
 ====================== */
 const users = [
-  {
-    id: 1,
-    email: 'admin@indicons.com.br',
-    senha: 'admin123',
-    role: 'admin'
-  },
-  {
-    id: 2,
-    email: 'parceiro@indicons.com.br',
-    senha: 'parceiro123',
-    role: 'parceiro'
-  }
+  { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
+  { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
 ];
 
 let indicadorId = 100;
@@ -51,7 +41,6 @@ let leadId = 1;
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
-
   const user = users.find(u => u.email === email && u.senha === senha);
   if (!user) return res.redirect('/login.html');
 
@@ -70,7 +59,7 @@ app.post('/login', (req, res) => {
 app.post('/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
 
-  const codigo = crypto.randomBytes(4).toString('hex'); // código único
+  const codigo = crypto.randomBytes(4).toString('hex'); // 🔑 código único
 
   users.push({
     id: indicadorId++,
@@ -89,10 +78,9 @@ app.post('/cadastro-indicador', (req, res) => {
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
 
-  const role = req.session.user.role;
-  if (role === 'admin') return res.redirect('/admin');
-  if (role === 'parceiro') return res.redirect('/parceiro');
-  if (role === 'indicador') return res.redirect('/indicador');
+  if (req.session.user.role === 'admin') return res.redirect('/admin');
+  if (req.session.user.role === 'parceiro') return res.redirect('/parceiro');
+  if (req.session.user.role === 'indicador') return res.redirect('/indicador');
 });
 
 /* ======================
@@ -108,7 +96,7 @@ function auth(role) {
 }
 
 /* ======================
-   PAINÉIS
+   PAINÉIS (INTACTOS)
 ====================== */
 app.get('/admin', auth('admin'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/admin.html'))
@@ -123,17 +111,16 @@ app.get('/indicador', auth('indicador'), (req, res) =>
 );
 
 /* ======================
-   LINK DO INDICADOR
+   LINK DO INDICADOR (BACKEND)
 ====================== */
-app.get('/api/meu-link', auth('indicador'), (req, res) => {
+// endpoint para o painel usar futuramente (opcional)
+app.get('/api/link-indicador', auth('indicador'), (req, res) => {
   const indicador = users.find(u => u.id === req.session.user.id);
-  res.json({
-    link: `https://app.indicons.com.br/i/${indicador.codigo}`
-  });
+  res.json({ codigo: indicador.codigo });
 });
 
 /* ======================
-   ROTA INVISÍVEL CLIENTE
+   ROTA INVISÍVEL DO CLIENTE
 ====================== */
 app.get('/i/:codigo', (req, res) => {
   const indicador = users.find(
@@ -143,7 +130,7 @@ app.get('/i/:codigo', (req, res) => {
   if (!indicador) return res.send('Link inválido');
 
   res.send(`
-    <h2>Simulação</h2>
+    <h2>Receba uma simulação</h2>
     <form method="POST">
       <input name="nome" placeholder="Nome" required /><br><br>
       <input name="telefone" placeholder="Telefone" required /><br><br>
@@ -172,7 +159,7 @@ app.post('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   DEBUG
+   DEBUG (TEMPORÁRIO)
 ====================== */
 app.get('/debug/leads', (req, res) => res.json(leads));
 
