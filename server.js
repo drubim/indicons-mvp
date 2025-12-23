@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ======================
-   MIDDLEWARES
+   MIDDLEWARE
 ====================== */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -83,7 +83,7 @@ app.get('/dashboard', (req, res) => {
 });
 
 /* ======================
-   ROTAS PROTEGIDAS
+   MIDDLEWARE AUTH
 ====================== */
 function auth(role) {
   return (req, res, next) => {
@@ -94,6 +94,9 @@ function auth(role) {
   };
 }
 
+/* ======================
+   PAINÉIS PROTEGIDOS
+====================== */
 app.get('/admin', auth('admin'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
