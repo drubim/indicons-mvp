@@ -2,9 +2,20 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const crypto = require('crypto');
+const { google } = require('googleapis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+/* ======================
+   GOOGLE CALENDAR / MEET
+====================== */
+const authGoogle = new google.auth.GoogleAuth({
+  keyFile: 'calendar.json', // arquivo na raiz
+  scopes: ['https://www.googleapis.com/auth/calendar']
+});
+
+const calendar = google.calendar({ version: 'v3', auth: authGoogle });
 
 /* ======================
    MIDDLEWARE
@@ -31,19 +42,15 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
-   LEADS
+   LEADS / MEETINGS
 ====================== */
 let leads = [];
-let leadId = 1;
-
-/* ======================
-   REUNIÕES
-====================== */
 let meetings = [];
+let leadId = 1;
 let meetingId = 1;
 
 /* ======================
-   CONTROLE DE PARCEIROS
+   PARCEIROS (ROUND-ROBIN)
 ====================== */
 let parceiroIndex = 0;
 function getNextParceiroId() {
@@ -55,7 +62,7 @@ function getNextParceiroId() {
 }
 
 /* ======================
-   LOGIN
+   AUTH / LOGIN
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
@@ -65,6 +72,38 @@ app.post('/login', (req, res) => {
   req.session.user = { id: user.id, role: user.role };
   res.redirect('/dashboard');
 });
+
+function protect(role) {
+  return (req, res, next) => {
+    if (!req.session.user || req.session.user.role !== role) {
+      return res.redirect('/login.html');
+    }
+    next();
+  };
+}
+
+/* ======================
+   DASHBOARD
+====================== */
+app.get('/dashboard', (req, res) => {
+  if (!req.session.user) return res.redirect('/login.html');
+  if (req.session.user.role === 'admin') return res.redirect('/admin');
+  if (req.session.user.role === 'parceiro') return res.redirect('/parceiro');
+  if (req.session.user.role === 'indicador') return res.redirect('/indicador');
+});
+
+/* ======================
+   PAINÉIS (HTMLs EXISTENTES)
+====================== */
+app.get('/admin', protect('admin'), (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/admin.html'))
+);
+app.get('/parceiro', protect('parceiro'), (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/parceiro.html'))
+);
+app.get('/indicador', protect('indicador'), (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/indicador.html'))
+);
 
 /* ======================
    CADASTRO INDICADOR
@@ -85,66 +124,34 @@ app.post('/cadastro-indicador', (req, res) => {
 });
 
 /* ======================
-   DASHBOARD
+   LINK DO INDICADOR
 ====================== */
-app.get('/dashboard', (req, res) => {
-  if (!req.session.user) return res.redirect('/login.html');
-  if (req.session.user.role === 'admin') return res.redirect('/admin');
-  if (req.session.user.role === 'parceiro') return res.redirect('/parceiro');
-  if (req.session.user.role === 'indicador') return res.redirect('/indicador');
+app.get('/api/indicador/link', protect('indicador'), (req, res) => {
+  const indicador = users.find(u => u.id === req.session.user.id);
+  res.json({ link: `https://app.indicons.com.br/i/${indicador.codigo}` });
 });
-
-/* ======================
-   AUTH
-====================== */
-function auth(role) {
-  return (req, res, next) => {
-    if (!req.session.user || req.session.user.role !== role) {
-      return res.redirect('/login.html');
-    }
-    next();
-  };
-}
-
-/* ======================
-   PAINÉIS
-====================== */
-app.get('/admin', auth('admin'), (req, res) =>
-  res.sendFile(path.join(__dirname, 'public/admin.html'))
-);
-app.get('/parceiro', auth('parceiro'), (req, res) =>
-  res.sendFile(path.join(__dirname, 'public/parceiro.html'))
-);
-app.get('/indicador', auth('indicador'), (req, res) =>
-  res.sendFile(path.join(__dirname, 'public/indicador.html'))
-);
 
 /* ======================
    APIs DE LEADS
 ====================== */
-app.get('/api/leads/admin', auth('admin'), (req, res) => res.json(leads));
-app.get('/api/leads/indicador', auth('indicador'), (req, res) =>
+app.get('/api/leads/admin', protect('admin'), (req, res) => res.json(leads));
+
+app.get('/api/leads/indicador', protect('indicador'), (req, res) =>
   res.json(leads.filter(l => l.indicadorId === req.session.user.id))
 );
-app.get('/api/leads/parceiro', auth('parceiro'), (req, res) =>
+
+app.get('/api/leads/parceiro', protect('parceiro'), (req, res) =>
   res.json(leads.filter(l => l.parceiroId === req.session.user.id))
 );
 
 /* ======================
    APIs DE REUNIÕES
 ====================== */
-app.get('/api/meetings/admin', auth('admin'), (req, res) => res.json(meetings));
-app.get('/api/meetings/parceiro', auth('parceiro'), (req, res) =>
+app.get('/api/meetings/admin', protect('admin'), (req, res) => res.json(meetings));
+
+app.get('/api/meetings/parceiro', protect('parceiro'), (req, res) =>
   res.json(meetings.filter(m => m.parceiroId === req.session.user.id))
 );
-
-/* ======================
-   LINK DO INDICADOR
-====================== */
-app.get('/api/indicador/link', auth('indicador'), (req, res) => {
-  const indicador = users.find(u => u.id === req.session.user.id);
-  res.json({ link: `https://app.indicons.com.br/i/${indicador.codigo}` });
-});
 
 /* ======================
    ROTA INVISÍVEL DO CLIENTE
@@ -156,9 +163,9 @@ app.get('/i/:codigo', (req, res) => {
   res.send(`
     <h2>Receba uma simulação</h2>
     <form method="POST">
-      <input name="nome" placeholder="Nome" required /><br><br>
-      <input name="telefone" placeholder="Telefone" required /><br><br>
-      <button type="submit">Enviar</button>
+      <input name="nome" required placeholder="Nome"><br><br>
+      <input name="telefone" required placeholder="Telefone"><br><br>
+      <button>Enviar</button>
     </form>
   `);
 });
@@ -183,44 +190,94 @@ app.post('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   IA INVISÍVEL – SCORE + ATRIBUIÇÃO + AGENDAMENTO
+   IA INVISÍVEL + GOOGLE CALENDAR
 ====================== */
-setInterval(() => {
-  leads.forEach(lead => {
+setInterval(async () => {
+  for (const lead of leads) {
     if (lead.status === 'novo') {
-      // score
+      // score e classificação
       lead.score = Math.floor(Math.random() * 100);
       if (lead.score >= 70) lead.classificacao = 'quente';
       else if (lead.score >= 40) lead.classificacao = 'morno';
       else lead.classificacao = 'frio';
 
-      // atribuição
-      if (lead.classificacao !== 'frio') {
-        const parceiroId = getNextParceiroId();
-        if (parceiroId) {
-          lead.parceiroId = parceiroId;
-          lead.status = 'atribuido';
-
-          // 🔔 AGENDAMENTO AUTOMÁTICO
-          const data = new Date();
-          data.setHours(data.getHours() + 2); // +2h
-
-          meetings.push({
-            id: meetingId++,
-            leadId: lead.id,
-            parceiroId,
-            data,
-            link: `https://meet.google.com/${crypto.randomBytes(3).toString('hex')}`
-          });
-
-          lead.status = 'agendado';
-        }
-      } else {
+      if (lead.classificacao === 'frio') {
         lead.status = 'disponivel';
+        continue;
       }
+
+      const parceiroId = getNextParceiroId();
+      if (!parceiroId) continue;
+
+      // agenda para +2h, duração 30min
+      const start = new Date();
+      start.setHours(start.getHours() + 2);
+      const end = new Date(start);
+      end.setMinutes(end.getMinutes() + 30);
+
+      const event = await calendar.events.insert({
+        calendarId: 'primary',
+        conferenceDataVersion: 1,
+        requestBody: {
+          summary: `Reunião INDICONS – ${lead.nome}`,
+          description: `Lead automático INDICONS`,
+          start: { dateTime: start.toISOString() },
+          end: { dateTime: end.toISOString() },
+          conferenceData: {
+            createRequest: { requestId: crypto.randomUUID() }
+          }
+        }
+      });
+
+      meetings.push({
+        id: meetingId++,
+        leadId: lead.id,
+        parceiroId,
+        data: start,
+        meetLink: event.data.hangoutLink,
+        googleEventId: event.data.id
+      });
+
+      lead.parceiroId = parceiroId;
+      lead.status = 'agendado';
+      lead.triadoEm = new Date();
     }
-  });
-}, 10000);
+  }
+}, 15000);
+
+/* ======================
+   DEBUG – TESTE CALENDAR
+====================== */
+app.get('/debug/test-calendar', async (req, res) => {
+  try {
+    const start = new Date();
+    start.setHours(start.getHours() + 1);
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + 30);
+
+    const event = await calendar.events.insert({
+      calendarId: 'primary',
+      conferenceDataVersion: 1,
+      requestBody: {
+        summary: 'TESTE INDICONS',
+        description: 'Evento de teste automático',
+        start: { dateTime: start.toISOString() },
+        end: { dateTime: end.toISOString() },
+        conferenceData: {
+          createRequest: { requestId: crypto.randomUUID() }
+        }
+      }
+    });
+
+    res.json({
+      ok: true,
+      meet: event.data.hangoutLink,
+      eventId: event.data.id
+    });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
 
 /* ======================
    LOGOUT
@@ -232,4 +289,4 @@ app.get('/logout', (req, res) => {
 /* ======================
    START
 ====================== */
-app.listen(PORT, () => console.log('INDICONS rodando'));
+app.listen(PORT, () => console.log('INDICONS rodando com Google Calendar/Meet'));
