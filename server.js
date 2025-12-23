@@ -190,7 +190,7 @@ app.post('/i/:codigo', async (req, res) => {
 
   if (!indicador) return res.send('Link inválido');
 
-  const score = Math.floor(Math.random() * 100);
+ const score = 90; // FORÇAR QUENTE PARA TESTE
 
   let status = 'Recebido';
   let reuniaoAgendada = false;
