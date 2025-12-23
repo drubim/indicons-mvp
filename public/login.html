@@ -34,10 +34,16 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
   })
   .then(data => {
 
-    /* 🔑 ISSO É A CORREÇÃO */
-    localStorage.setItem('token', 'logado');     // <- o painel exige isso
+    // 🔒 GRAVA EM TODOS OS LUGARES POSSÍVEIS
+    localStorage.setItem('token', 'ok');
     localStorage.setItem('role', data.role);
-    localStorage.setItem('email', email.value);
+    localStorage.setItem('usuario', email.value);
+    localStorage.setItem('perfil', data.role);
+
+    sessionStorage.setItem('token', 'ok');
+    sessionStorage.setItem('role', data.role);
+    sessionStorage.setItem('usuario', email.value);
+    sessionStorage.setItem('perfil', data.role);
 
     if (data.role === 'admin') location.href = '/admin.html';
     if (data.role === 'parceiro') location.href = '/parceiro.html';
