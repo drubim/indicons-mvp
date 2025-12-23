@@ -45,7 +45,7 @@ app.use(session({
   saveUninitialized: false,
   proxy: true,
   cookie: {
-    secure: true,      // obrigatório no Render (HTTPS)
+    secure: true,
     sameSite: 'lax'
   }
 }));
@@ -196,8 +196,16 @@ app.post('/i/:codigo', async (req, res) => {
           summary: `Reunião INDICONS – ${req.body.nome}`,
           start: { dateTime: start.toISOString() },
           end: { dateTime: end.toISOString() },
+
+          attendees: [
+            { email: 'indicons.agenda@gmail.com' }
+          ],
+
           conferenceData: {
-            createRequest: { requestId: crypto.randomUUID() }
+            createRequest: {
+              requestId: crypto.randomUUID(),
+              conferenceSolutionKey: { type: 'hangoutsMeet' }
+            }
           }
         }
       });
@@ -240,5 +248,5 @@ app.get('/logout', (req, res) => {
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS – servidor final com Google Calendar + Meet');
+  console.log('INDICONS – servidor final com Google Calendar + Meet (OK)');
 });
