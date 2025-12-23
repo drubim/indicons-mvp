@@ -33,10 +33,9 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const calendar = google.calendar({ version: 'v3', auth });
-const CALENDAR_ID = 'indicons.calendar@gmail.com'
 
 // ⚠️ USE O EMAIL DO CALENDÁRIO COMPARTILHADO
-const CALENDAR_ID = 'SEU_CALENDARIO@gmail.com';
+const CALENDAR_ID = 'indicons.calendar@gmail.com'
 
 /* ======================
    CONFIGURAÇÃO
