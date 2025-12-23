@@ -177,7 +177,7 @@ app.post('/i/:codigo', (req, res) => {
     status,
     reuniaoAgendada: false,
     criadoEm: new Date()
-  };
+  }; 
 
   leads.push(lead);
   if (classificacao === 'quente') retryQueue.push({ leadId: lead.id });
