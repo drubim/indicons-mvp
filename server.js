@@ -47,40 +47,26 @@ let leads = [];
 let leadId = 1;
 
 /* ======================
-   LOGIN (FORM HTML)
+   LOGIN (FORM)
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
-
   const user = users.find(u => u.email === email && u.senha === senha);
   if (!user) return res.redirect('/login.html');
 
-  req.session.user = {
-    id: user.id,
-    role: user.role,
-    email: user.email
-  };
-
+  req.session.user = { id: user.id, role: user.role };
   res.redirect('/dashboard');
 });
 
 /* ======================
-   LOGIN (FETCH / API)
+   LOGIN (FETCH)
 ====================== */
 app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
-
   const user = users.find(u => u.email === email && u.senha === senha);
-  if (!user) {
-    return res.status(401).json({ error: 'Credenciais inválidas' });
-  }
+  if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
 
-  req.session.user = {
-    id: user.id,
-    role: user.role,
-    email: user.email
-  };
-
+  req.session.user = { id: user.id, role: user.role };
   res.json({ ok: true, role: user.role });
 });
 
@@ -107,7 +93,6 @@ app.post('/cadastro-indicador', (req, res) => {
 ====================== */
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
-
   if (req.session.user.role === 'admin') return res.redirect('/admin.html');
   if (req.session.user.role === 'parceiro') return res.redirect('/parceiro.html');
   if (req.session.user.role === 'indicador') return res.redirect('/indicador.html');
@@ -120,27 +105,37 @@ app.get('/api/indicador/link', (req, res) => {
   if (!req.session.user || req.session.user.role !== 'indicador') {
     return res.status(401).json({ error: 'Não autorizado' });
   }
-
   const indicador = users.find(u => u.id === req.session.user.id);
-  if (!indicador || !indicador.codigo) {
-    return res.status(404).json({ error: 'Indicador não encontrado' });
-  }
+  res.json({ link: `https://app.indicons.com.br/i/${indicador.codigo}` });
+});
 
-  res.json({
-    link: `https://app.indicons.com.br/i/${indicador.codigo}`
-  });
+/* ======================
+   APIs DE LEADS
+====================== */
+
+// ADMIN — todos os leads
+app.get('/api/leads/admin', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.status(401).json({ error: 'Não autorizado' });
+  }
+  res.json(leads);
+});
+
+// INDICADOR — apenas os seus leads
+app.get('/api/leads/indicador', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'indicador') {
+    return res.status(401).json({ error: 'Não autorizado' });
+  }
+  res.json(leads.filter(l => l.indicadorId === req.session.user.id));
 });
 
 /* ======================
    ROTA INVISÍVEL – CLIENTE
 ====================== */
-
-// FORMULÁRIO
 app.get('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
   );
-
   if (!indicador) return res.send('Link inválido');
 
   res.send(`
@@ -153,12 +148,10 @@ app.get('/i/:codigo', (req, res) => {
   `);
 });
 
-// RECEBE CADASTRO DO CLIENTE
 app.post('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
   );
-
   if (!indicador) return res.send('Link inválido');
 
   const { nome, telefone } = req.body;
@@ -171,7 +164,7 @@ app.post('/i/:codigo', (req, res) => {
     criadoEm: new Date()
   });
 
-  res.send('Cadastro realizado com sucesso. Em breve entraremos em contato.');
+  res.send('Cadastro realizado com sucesso.');
 });
 
 /* ======================
@@ -182,15 +175,8 @@ app.get('/logout', (req, res) => {
 });
 
 /* ======================
-   DEBUG
-====================== */
-app.get('/debug/leads', (req, res) => {
-  res.json(leads);
-});
-
-/* ======================
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS rodando – base estável OK');
+  console.log('INDICONS rodando – leads integrados nos painéis');
 });
