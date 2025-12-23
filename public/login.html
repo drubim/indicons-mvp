@@ -33,6 +33,10 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     return res.json();
   })
   .then(data => {
+    // 🔑 SALVA SESSÃO MÍNIMA
+    localStorage.setItem('role', data.role);
+    localStorage.setItem('email', email.value);
+
     if (data.role === 'admin') location.href = '/admin.html';
     if (data.role === 'parceiro') location.href = '/parceiro.html';
     if (data.role === 'indicador') location.href = '/indicador.html';
