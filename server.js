@@ -37,6 +37,18 @@ let leads = [];
 let leadId = 1;
 
 /* ======================
+   CONTROLE DE PARCEIROS
+====================== */
+let parceiroIndex = 0;
+function getNextParceiroId() {
+  const parceiros = users.filter(u => u.role === 'parceiro');
+  if (!parceiros.length) return null;
+  const parceiro = parceiros[parceiroIndex % parceiros.length];
+  parceiroIndex++;
+  return parceiro.id;
+}
+
+/* ======================
    LOGIN
 ====================== */
 app.post('/login', (req, res) => {
@@ -44,12 +56,7 @@ app.post('/login', (req, res) => {
   const user = users.find(u => u.email === email && u.senha === senha);
   if (!user) return res.redirect('/login.html');
 
-  req.session.user = {
-    id: user.id,
-    role: user.role,
-    email: user.email
-  };
-
+  req.session.user = { id: user.id, role: user.role, email: user.email };
   res.redirect('/dashboard');
 });
 
@@ -76,7 +83,6 @@ app.post('/cadastro-indicador', (req, res) => {
 ====================== */
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
-
   if (req.session.user.role === 'admin') return res.redirect('/admin');
   if (req.session.user.role === 'parceiro') return res.redirect('/parceiro');
   if (req.session.user.role === 'indicador') return res.redirect('/indicador');
@@ -100,11 +106,9 @@ function auth(role) {
 app.get('/admin', auth('admin'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/admin.html'))
 );
-
 app.get('/parceiro', auth('parceiro'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/parceiro.html'))
 );
-
 app.get('/indicador', auth('indicador'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/indicador.html'))
 );
@@ -112,17 +116,15 @@ app.get('/indicador', auth('indicador'), (req, res) =>
 /* ======================
    APIs DE LEADS
 ====================== */
-app.get('/api/leads/admin', auth('admin'), (req, res) => {
-  res.json(leads);
-});
+app.get('/api/leads/admin', auth('admin'), (req, res) => res.json(leads));
 
-app.get('/api/leads/indicador', auth('indicador'), (req, res) => {
-  res.json(leads.filter(l => l.indicadorId === req.session.user.id));
-});
+app.get('/api/leads/indicador', auth('indicador'), (req, res) =>
+  res.json(leads.filter(l => l.indicadorId === req.session.user.id))
+);
 
-app.get('/api/leads/parceiro', auth('parceiro'), (req, res) => {
-  res.json(leads.filter(l => l.status === 'disponivel'));
-});
+app.get('/api/leads/parceiro', auth('parceiro'), (req, res) =>
+  res.json(leads.filter(l => l.parceiroId === req.session.user.id))
+);
 
 /* ======================
    LINK DO INDICADOR
@@ -136,9 +138,7 @@ app.get('/api/indicador/link', auth('indicador'), (req, res) => {
    ROTA INVISÍVEL DO CLIENTE
 ====================== */
 app.get('/i/:codigo', (req, res) => {
-  const indicador = users.find(
-    u => u.role === 'indicador' && u.codigo === req.params.codigo
-  );
+  const indicador = users.find(u => u.role === 'indicador' && u.codigo === req.params.codigo);
   if (!indicador) return res.send('Link inválido');
 
   res.send(`
@@ -152,9 +152,7 @@ app.get('/i/:codigo', (req, res) => {
 });
 
 app.post('/i/:codigo', (req, res) => {
-  const indicador = users.find(
-    u => u.role === 'indicador' && u.codigo === req.params.codigo
-  );
+  const indicador = users.find(u => u.role === 'indicador' && u.codigo === req.params.codigo);
   if (!indicador) return res.send('Link inválido');
 
   leads.push({
@@ -162,6 +160,7 @@ app.post('/i/:codigo', (req, res) => {
     nome: req.body.nome,
     telefone: req.body.telefone,
     indicadorId: indicador.id,
+    parceiroId: null,
     status: 'novo',
     score: 0,
     classificacao: 'frio',
@@ -172,19 +171,29 @@ app.post('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   IA INVISÍVEL – SCORE
+   IA INVISÍVEL – SCORE + ATRIBUIÇÃO
 ====================== */
 setInterval(() => {
   leads.forEach(lead => {
     if (lead.status === 'novo') {
-      // score simulado (substituível por IA real)
+      // score simulado
       lead.score = Math.floor(Math.random() * 100);
 
       if (lead.score >= 70) lead.classificacao = 'quente';
       else if (lead.score >= 40) lead.classificacao = 'morno';
       else lead.classificacao = 'frio';
 
-      lead.status = 'disponivel';
+      // atribuição automática
+      if (lead.classificacao !== 'frio') {
+        const parceiroId = getNextParceiroId();
+        if (parceiroId) {
+          lead.parceiroId = parceiroId;
+          lead.status = 'atribuido';
+        }
+      } else {
+        lead.status = 'disponivel';
+      }
+
       lead.triadoEm = new Date();
     }
   });
