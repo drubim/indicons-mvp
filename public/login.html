@@ -33,7 +33,9 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     return res.json();
   })
   .then(data => {
-    // 🔑 SALVA SESSÃO MÍNIMA
+
+    /* 🔑 ISSO É A CORREÇÃO */
+    localStorage.setItem('token', 'logado');     // <- o painel exige isso
     localStorage.setItem('role', data.role);
     localStorage.setItem('email', email.value);
 
