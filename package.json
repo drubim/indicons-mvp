@@ -1,16 +1,13 @@
 {
   "name": "indicons",
   "version": "1.0.0",
-  "description": "Plataforma INDICONS com IA, Google Calendar e Google Meet",
+  "description": "Plataforma INDICONS",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
   "dependencies": {
     "express": "^4.18.2",
-    "googleapis": "^137.0.0"
+    "express-session": "^1.17.3"
   }
 }
