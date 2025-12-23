@@ -4,7 +4,7 @@ const session = require('express-session');
 const crypto = require('crypto');
 
 /* ======================
-   TENTAR CARREGAR GOOGLE
+   GOOGLE CALENDAR (BLINDADO)
 ====================== */
 let calendar = null;
 let googleAvailable = false;
@@ -19,10 +19,10 @@ try {
 
   calendar = google.calendar({ version: 'v3', auth });
   googleAvailable = true;
-  console.log('✅ Google Calendar carregado');
+  console.log('✅ Google Calendar ativo');
 
 } catch (err) {
-  console.warn('⚠️ Google Calendar DESATIVADO:', err.message);
+  console.warn('⚠️ Google Calendar desativado:', err.message);
 }
 
 /* ======================
@@ -45,7 +45,7 @@ app.use(session({
   saveUninitialized: false,
   proxy: true,
   cookie: {
-    secure: true,      // HTTPS Render
+    secure: true,      // obrigatório no Render (HTTPS)
     sameSite: 'lax'
   }
 }));
@@ -55,41 +55,33 @@ app.use(express.static(path.join(__dirname, 'public')));
 /* ======================
    CONFIG
 ====================== */
-const CALENDAR_ID = 'SEU_CALENDARIO@gmail.com';
+const CALENDAR_ID = 'indicons.agenda@gmail.com';
 
 /* ======================
-   USUÁRIOS EM MEMÓRIA
+   USUÁRIOS (MEMÓRIA)
 ====================== */
 const users = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
   { id: 2, email: 'parceiro@indicons.com.br', senha: 'parceiro123', role: 'parceiro' }
 ];
-
 let indicadorId = 100;
 
 /* ======================
-   LEADS EM MEMÓRIA
+   LEADS (MEMÓRIA)
 ====================== */
 let leads = [];
 let leadId = 1;
 
 /* ======================
-   LOGIN (FORM)
+   LOGIN
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
 
-  const user = users.find(
-    u => u.email === email && u.senha === senha
-  );
-
+  const user = users.find(u => u.email === email && u.senha === senha);
   if (!user) return res.redirect('/login.html');
 
-  req.session.user = {
-    id: user.id,
-    role: user.role
-  };
-
+  req.session.user = { id: user.id, role: user.role };
   res.redirect('/dashboard');
 });
 
@@ -130,10 +122,7 @@ app.get('/api/indicador/link', (req, res) => {
   }
 
   const indicador = users.find(u => u.id === req.session.user.id);
-
-  res.json({
-    link: `https://app.indicons.com.br/i/${indicador.codigo}`
-  });
+  res.json({ link: `https://app.indicons.com.br/i/${indicador.codigo}` });
 });
 
 /* ======================
@@ -144,9 +133,7 @@ app.get('/api/leads/indicador', (req, res) => {
     return res.sendStatus(401);
   }
 
-  res.json(
-    leads.filter(l => l.indicadorId === req.session.user.id)
-  );
+  res.json(leads.filter(l => l.indicadorId === req.session.user.id));
 });
 
 /* ======================
@@ -161,13 +148,12 @@ app.get('/api/leads/admin', (req, res) => {
 });
 
 /* ======================
-   FORM CLIENTE
+   FORM CLIENTE (LINK)
 ====================== */
 app.get('/i/:codigo', (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
   );
-
   if (!indicador) return res.send('Link inválido');
 
   res.send(`
@@ -181,16 +167,16 @@ app.get('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   RECEBE LEAD + GOOGLE (SE DISPONÍVEL)
+   RECEBE LEAD + AGENDAMENTO
 ====================== */
 app.post('/i/:codigo', async (req, res) => {
   const indicador = users.find(
     u => u.role === 'indicador' && u.codigo === req.params.codigo
   );
-
   if (!indicador) return res.send('Link inválido');
 
- const score = 90; // FORÇAR QUENTE PARA TESTE
+  // 🔴 FORÇADO QUENTE PARA TESTE
+  const score = 90;
 
   let status = 'Recebido';
   let reuniaoAgendada = false;
@@ -221,7 +207,7 @@ app.post('/i/:codigo', async (req, res) => {
       status = 'Reunião agendada';
 
     } catch (err) {
-      console.error('Erro ao agendar:', err.message);
+      console.error('❌ Erro ao agendar:', err.message);
       status = 'Aguardando agendamento';
     }
   } else if (score >= 70) {
@@ -254,5 +240,5 @@ app.get('/logout', (req, res) => {
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS – servidor estável (Calendar protegido)');
+  console.log('INDICONS – servidor final com Google Calendar + Meet');
 });
