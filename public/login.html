@@ -1,11 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Entrar</title>
-</head>
-<body>
-
 <h2>Entrar</h2>
 
 <form id="loginForm">
@@ -18,7 +10,7 @@
 
 <script>
 document.getElementById("loginForm").addEventListener("submit", function(e) {
-  e.preventDefault(); // 🔴 ESSENCIAL
+  e.preventDefault();
 
   fetch("/api/login", {
     method: "POST",
@@ -29,27 +21,18 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
     })
   })
   .then(res => {
-    if (!res.ok) throw new Error("Login inválido");
+    if (!res.ok) throw new Error();
     return res.json();
   })
   .then(data => {
-    if (data.role === "admin") {
-      location.href = "/painel-admin";
-    }
-    if (data.role === "parceiro") {
-      location.href = "/painel-parceiro";
-    }
-    if (data.role === "indicador") {
+    if (data.role === "admin") location.href = "/painel-admin";
+    if (data.role === "parceiro") location.href = "/painel-parceiro";
+    if (data.role === "indicador")
       location.href = "/painel-indicador?codigo=" + data.codigo_indicador;
-    }
   })
   .catch(() => {
-    const erro = document.getElementById("erro");
     erro.innerText = "Email ou senha inválidos";
     erro.style.display = "block";
   });
 });
 </script>
-
-</body>
-</html>
