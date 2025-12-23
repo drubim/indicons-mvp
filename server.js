@@ -58,8 +58,7 @@ app.post('/login', (req, res) => {
 ====================== */
 app.post('/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
-
-  const codigo = crypto.randomBytes(4).toString('hex'); // 🔑 código único
+  const codigo = crypto.randomBytes(4).toString('hex');
 
   users.push({
     id: indicadorId++,
@@ -96,7 +95,7 @@ function auth(role) {
 }
 
 /* ======================
-   PAINÉIS (INTACTOS)
+   PAINÉIS
 ====================== */
 app.get('/admin', auth('admin'), (req, res) =>
   res.sendFile(path.join(__dirname, 'public/admin.html'))
@@ -111,12 +110,26 @@ app.get('/indicador', auth('indicador'), (req, res) =>
 );
 
 /* ======================
-   LINK DO INDICADOR (BACKEND)
+   APIs DE LEADS
 ====================== */
-// endpoint para o painel usar futuramente (opcional)
-app.get('/api/link-indicador', auth('indicador'), (req, res) => {
+app.get('/api/leads/admin', auth('admin'), (req, res) => {
+  res.json(leads);
+});
+
+app.get('/api/leads/indicador', auth('indicador'), (req, res) => {
+  res.json(leads.filter(l => l.indicadorId === req.session.user.id));
+});
+
+app.get('/api/leads/parceiro', auth('parceiro'), (req, res) => {
+  res.json(leads.filter(l => l.status !== 'novo'));
+});
+
+/* ======================
+   LINK DO INDICADOR
+====================== */
+app.get('/api/indicador/link', auth('indicador'), (req, res) => {
   const indicador = users.find(u => u.id === req.session.user.id);
-  res.json({ codigo: indicador.codigo });
+  res.json({ link: `https://app.indicons.com.br/i/${indicador.codigo}` });
 });
 
 /* ======================
@@ -157,11 +170,6 @@ app.post('/i/:codigo', (req, res) => {
 
   res.send('Cadastro recebido. Em breve entraremos em contato.');
 });
-
-/* ======================
-   DEBUG (TEMPORÁRIO)
-====================== */
-app.get('/debug/leads', (req, res) => res.json(leads));
 
 /* ======================
    LOGOUT
