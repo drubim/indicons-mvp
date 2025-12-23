@@ -8,13 +8,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ======================
-   RENDER / PROXY
+   PROXY / MIDDLEWARE
 ====================== */
 app.set('trust proxy', 1);
-
-/* ======================
-   MIDDLEWARE
-====================== */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -29,7 +25,7 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ======================
-   GOOGLE CALENDAR / MEET
+   GOOGLE CALENDAR
 ====================== */
 const auth = new google.auth.GoogleAuth({
   keyFile: 'calendar.json',
@@ -38,13 +34,16 @@ const auth = new google.auth.GoogleAuth({
 
 const calendar = google.calendar({ version: 'v3', auth });
 
+// ⚠️ USE O EMAIL DO CALENDÁRIO COMPARTILHADO
+const CALENDAR_ID = 'SEU_CALENDARIO@gmail.com';
+
 /* ======================
-   CONFIG
+   CONFIGURAÇÃO
 ====================== */
 const INDICADOR_PERCENTUAL = 0.10;
 
 /* ======================
-   USERS
+   USUÁRIOS
 ====================== */
 const users = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
@@ -53,7 +52,7 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
-   LEADS
+   LEADS (MEMÓRIA)
 ====================== */
 let leads = [];
 let leadId = 1;
@@ -114,13 +113,13 @@ app.get('/api/indicador/link', (req, res) => {
    APIs DE LEADS
 ====================== */
 
-// ADMIN
+// ADMIN vê tudo
 app.get('/api/leads/admin', (req, res) => {
   if (req.session.user.role !== 'admin') return res.sendStatus(401);
   res.json(leads);
 });
 
-// PARCEIRO — só QUENTE + REUNIÃO
+// PARCEIRO vê SOMENTE quente + reunião
 app.get('/api/leads/parceiro', (req, res) => {
   if (req.session.user.role !== 'parceiro') return res.sendStatus(401);
   res.json(
@@ -132,7 +131,7 @@ app.get('/api/leads/parceiro', (req, res) => {
   );
 });
 
-// INDICADOR — resumo
+// INDICADOR vê resumo mínimo
 app.get('/api/leads/indicador', (req, res) => {
   if (req.session.user.role !== 'indicador') return res.sendStatus(401);
   res.json(
@@ -163,7 +162,7 @@ app.get('/i/:codigo', (req, res) => {
 });
 
 /* ======================
-   RECEBE CLIENTE + IA + CALENDAR
+   RECEBE CLIENTE + IA + AGENDA SEGURA
 ====================== */
 app.post('/i/:codigo', async (req, res) => {
   const ind = users.find(u => u.codigo === req.params.codigo);
@@ -180,41 +179,45 @@ app.post('/i/:codigo', async (req, res) => {
 
   if (score >= 70) {
     classificacao = 'quente';
-    status = 'Reunião agendada';
 
     const parceiro = users.find(u => u.role === 'parceiro');
     parceiroId = parceiro?.id || null;
 
-    // agenda reunião (+2h, 30min)
-    const start = new Date();
-    start.setHours(start.getHours() + 2);
-    const end = new Date(start);
-    end.setMinutes(end.getMinutes() + 30);
+    try {
+      const start = new Date();
+      start.setHours(start.getHours() + 2);
+      const end = new Date(start);
+      end.setMinutes(end.getMinutes() + 30);
 
-    const event = await calendar.events.insert({
-      calendarId: 'primary',
-      conferenceDataVersion: 1,
-      requestBody: {
-        summary: `Reunião INDICONS – ${req.body.nome}`,
-        start: { dateTime: start.toISOString() },
-        end: { dateTime: end.toISOString() },
-        conferenceData: {
-          createRequest: { requestId: crypto.randomUUID() }
+      const event = await calendar.events.insert({
+        calendarId: CALENDAR_ID,
+        conferenceDataVersion: 1,
+        requestBody: {
+          summary: `Reunião INDICONS – ${req.body.nome}`,
+          start: { dateTime: start.toISOString() },
+          end: { dateTime: end.toISOString() },
+          conferenceData: {
+            createRequest: { requestId: crypto.randomUUID() }
+          }
         }
-      }
-    });
+      });
 
-    reuniaoAgendada = true;
-    meetLink = event.data.hangoutLink;
-    dataReuniao = start;
+      reuniaoAgendada = true;
+      meetLink = event.data.hangoutLink;
+      dataReuniao = start;
+      status = 'Reunião agendada';
+
+    } catch (err) {
+      console.error('❌ ERRO GOOGLE CALENDAR:', err.message);
+      status = 'Aguardando agendamento';
+    }
+  } else if (score >= 40) {
+    classificacao = 'morno';
+    status = 'Em atendimento';
   }
 
-  const houveVenda = classificacao === 'quente';
-  const valorConsorcio = houveVenda ? 100000 : 0;
-  const comissaoTotal = houveVenda ? valorConsorcio * 0.06 : 0;
-  const comissaoIndicador = houveVenda
-    ? comissaoTotal * INDICADOR_PERCENTUAL
-    : 0;
+  const houveVenda = false;
+  const comissaoIndicador = 0;
 
   leads.push({
     id: leadId++,
@@ -228,7 +231,6 @@ app.post('/i/:codigo', async (req, res) => {
     reuniaoAgendada,
     dataReuniao,
     meetLink,
-    valorConsorcio,
     comissaoIndicador,
     criadoEm: new Date()
   });
@@ -243,6 +245,9 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login.html'));
 });
 
+/* ======================
+   START
+====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS – Google Calendar + Meet integrados');
+  console.log('INDICONS – ESTÁVEL, COM AGENDA SEGURA');
 });
