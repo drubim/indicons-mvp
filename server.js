@@ -5,11 +5,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =======================
-   MIDDLEWARES
+   MIDDLEWARE
 ======================= */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
+
+/* 🔴 SERVE A PASTA PUBLIC */
+app.use(express.static(path.join(__dirname, 'public')));
 
 /* =======================
    USUÁRIOS EM MEMÓRIA
@@ -22,6 +24,25 @@ let usuarios = [
 let indicadorIdCounter = 100;
 
 /* =======================
+   ROTAS HTML
+======================= */
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/cadastro.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'cadastro.html'));
+});
+
+app.get('/painel-indicador.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'indicador.html'));
+});
+
+/* =======================
    LOGIN
 ======================= */
 app.post('/api/login', (req, res) => {
@@ -32,17 +53,14 @@ app.post('/api/login', (req, res) => {
   );
 
   if (!user) {
-    return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+    return res.status(401).json({ error: 'Usuário inválido' });
   }
 
-  res.json({
-    token: 'fake-token',
-    role: user.role
-  });
+  res.json({ role: user.role });
 });
 
 /* =======================
-   CADASTRO DE INDICADOR
+   CADASTRO INDICADOR
 ======================= */
 app.post('/api/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
@@ -51,55 +69,30 @@ app.post('/api/cadastro-indicador', (req, res) => {
     return res.status(400).json({ error: 'Dados inválidos' });
   }
 
-  const existe = usuarios.find(u => u.email === email);
-  if (existe) {
+  if (usuarios.find(u => u.email === email)) {
     return res.status(409).json({ error: 'Usuário já existe' });
   }
 
-  const novoIndicador = {
+  usuarios.push({
     id: indicadorIdCounter++,
     email,
     senha,
     role: 'indicador'
-  };
-
-  usuarios.push(novoIndicador);
+  });
 
   res.json({ sucesso: true });
-});
-
-/* =======================
-   ROTAS HTML
-======================= */
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/login.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/cadastro.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'cadastro.html'));
-});
-
-app.get('/painel-indicador.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'painel-indicador.html'));
 });
 
 /* =======================
    ROTA INVISÍVEL
 ======================= */
 app.get('/i/:codigo', (req, res) => {
-  res.send(`
-    <h2>Cadastro recebido</h2>
-    <p>Em breve entraremos em contato.</p>
-  `);
+  res.send('Cadastro recebido. Em breve entraremos em contato.');
 });
 
 /* =======================
    START
 ======================= */
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log('Servidor rodando');
 });
