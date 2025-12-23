@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><title>Indicador | INDICONS</title></head>
+<head>
+<meta charset="UTF-8">
+<title>Indicador | INDICONS</title>
+</head>
 <body>
 
 <h1>Painel do Indicador</h1>
@@ -13,7 +16,10 @@
 <table border="1" cellpadding="8">
 <thead>
 <tr>
-  <th>ID</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Data</th>
+  <th>ID</th>
+  <th>Nome</th>
+  <th>Telefone</th>
+  <th>Data</th>
 </tr>
 </thead>
 <tbody id="leads"></tbody>
@@ -23,6 +29,7 @@
 <a href="/logout">Sair</a>
 
 <script>
+// link
 fetch('/api/indicador/link')
   .then(r => r.json())
   .then(d => {
@@ -30,6 +37,7 @@ fetch('/api/indicador/link')
       `<a href="${d.link}" target="_blank">${d.link}</a>`;
   });
 
+// leads
 fetch('/api/leads/indicador')
   .then(r => r.json())
   .then(data => {
@@ -40,7 +48,6 @@ fetch('/api/leads/indicador')
           <td>${l.id}</td>
           <td>${l.nome}</td>
           <td>${l.telefone}</td>
-          <td>${l.status}</td>
           <td>${new Date(l.criadoEm).toLocaleString()}</td>
         </tr>`;
     });
