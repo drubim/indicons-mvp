@@ -9,8 +9,6 @@ const PORT = process.env.PORT || 3000;
 ======================= */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-/* 🔴 SERVE A PASTA PUBLIC */
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* =======================
@@ -22,25 +20,6 @@ let usuarios = [
 ];
 
 let indicadorIdCounter = 100;
-
-/* =======================
-   ROTAS HTML
-======================= */
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/login.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/cadastro.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'cadastro.html'));
-});
-
-app.get('/painel-indicador.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'indicador.html'));
-});
 
 /* =======================
    LOGIN
@@ -60,7 +39,7 @@ app.post('/api/login', (req, res) => {
 });
 
 /* =======================
-   CADASTRO INDICADOR
+   CADASTRO DE INDICADOR
 ======================= */
 app.post('/api/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
@@ -94,5 +73,5 @@ app.get('/i/:codigo', (req, res) => {
    START
 ======================= */
 app.listen(PORT, () => {
-  console.log('Servidor rodando');
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
