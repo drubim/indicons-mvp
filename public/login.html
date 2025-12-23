@@ -2,20 +2,58 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Login | INDICONS</title>
+  <title>Acesso ao Sistema</title>
 </head>
 <body>
 
 <h2>Acesso ao Sistema</h2>
 
 <form id="loginForm">
-  <input type="email" id="email" placeholder="E-mail" required>
-  <br><br>
-  <input type="password" id="senha" placeholder="Senha" required>
-  <br><br>
+  <input type="email" id="email" placeholder="E-mail" required><br><br>
+  <input type="password" id="senha" placeholder="Senha" required><br><br>
   <button type="submit">Entrar</button>
 </form>
 
-<script src="login.js"></script>
+<p id="erro" style="color:red; display:none;"></p>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const email = document.getElementById('email').value;
+  const senha = document.getElementById('senha').value;
+  const erro = document.getElementById('erro');
+
+  erro.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha })
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('role', data.role);
+
+    if (data.role === 'admin') {
+      window.location.href = '/admin.html';
+    } else if (data.role === 'parceiro') {
+      window.location.href = '/parceiro.html';
+    } else if (data.role === 'indicador') {
+      window.location.href = '/indicador.html';
+    }
+
+  } catch {
+    erro.innerText = 'Usuário ou senha inválidos';
+    erro.style.display = 'block';
+  }
+});
+</script>
+
 </body>
 </html>
