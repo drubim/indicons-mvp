@@ -22,7 +22,7 @@ let usuarios = [
 let indicadorIdCounter = 100;
 
 /* =======================
-   LOGIN
+   LOGIN API
 ======================= */
 app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
@@ -39,7 +39,7 @@ app.post('/api/login', (req, res) => {
 });
 
 /* =======================
-   CADASTRO DE INDICADOR
+   CADASTRO INDICADOR
 ======================= */
 app.post('/api/cadastro-indicador', (req, res) => {
   const { email, senha } = req.body;
@@ -63,6 +63,41 @@ app.post('/api/cadastro-indicador', (req, res) => {
 });
 
 /* =======================
+   🔒 AUTH BRIDGE (CHAVE)
+======================= */
+app.get('/auth/:role', (req, res) => {
+  const { role } = req.params;
+
+  if (!['admin', 'parceiro', 'indicador'].includes(role)) {
+    return res.status(403).send('Acesso inválido');
+  }
+
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"></head>
+    <body>
+      <script>
+        // grava tudo que QUALQUER painel possa exigir
+        localStorage.setItem('token', 'ok');
+        localStorage.setItem('role', '${role}');
+        localStorage.setItem('perfil', '${role}');
+        localStorage.setItem('usuario', 'logado');
+
+        sessionStorage.setItem('token', 'ok');
+        sessionStorage.setItem('role', '${role}');
+        sessionStorage.setItem('perfil', '${role}');
+        sessionStorage.setItem('usuario', 'logado');
+
+        // redireciona para o painel real
+        window.location.href = '/${role}.html';
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+/* =======================
    ROTA INVISÍVEL
 ======================= */
 app.get('/i/:codigo', (req, res) => {
@@ -75,4 +110,3 @@ app.get('/i/:codigo', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
- 
