@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ======================
-   RENDER FIX
+   RENDER / PROXY FIX
 ====================== */
 app.set('trust proxy', 1);
 
@@ -41,34 +41,38 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
-   LOGIN (FORM)
+   LOGIN (FORM HTML)
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
 
   const user = users.find(u => u.email === email && u.senha === senha);
-  if (!user) return res.send('LOGIN INVALIDO');
+  if (!user) return res.redirect('/login.html');
 
   req.session.user = {
     id: user.id,
-    role: user.role
+    role: user.role,
+    email: user.email
   };
 
   res.redirect('/dashboard');
 });
 
 /* ======================
-   LOGIN (FETCH)
+   LOGIN (FETCH / API)
 ====================== */
 app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
 
   const user = users.find(u => u.email === email && u.senha === senha);
-  if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
+  if (!user) {
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
 
   req.session.user = {
     id: user.id,
-    role: user.role
+    role: user.role,
+    email: user.email
   };
 
   res.json({ ok: true, role: user.role });
@@ -93,7 +97,7 @@ app.post('/cadastro-indicador', (req, res) => {
 });
 
 /* ======================
-   DASHBOARD
+   DASHBOARD / REDIRECIONAMENTO
 ====================== */
 app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login.html');
@@ -104,7 +108,52 @@ app.get('/dashboard', (req, res) => {
 });
 
 /* ======================
-   DEBUG
+   LINK DO INDICADOR
+====================== */
+app.get('/api/indicador/link', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'indicador') {
+    return res.status(401).json({ error: 'Não autorizado' });
+  }
+
+  const indicador = users.find(u => u.id === req.session.user.id);
+  if (!indicador || !indicador.codigo) {
+    return res.status(404).json({ error: 'Indicador não encontrado' });
+  }
+
+  res.json({
+    link: `https://app.indicons.com.br/i/${indicador.codigo}`
+  });
+});
+
+/* ======================
+   ROTA INVISÍVEL DO CLIENTE (BASE)
+====================== */
+app.get('/i/:codigo', (req, res) => {
+  const indicador = users.find(
+    u => u.role === 'indicador' && u.codigo === req.params.codigo
+  );
+
+  if (!indicador) return res.send('Link inválido');
+
+  res.send(`
+    <h2>Receba uma simulação</h2>
+    <form method="POST">
+      <input name="nome" required placeholder="Nome"><br><br>
+      <input name="telefone" required placeholder="Telefone"><br><br>
+      <button>Enviar</button>
+    </form>
+  `);
+});
+
+/* ======================
+   LOGOUT
+====================== */
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login.html'));
+});
+
+/* ======================
+   DEBUG (opcional)
 ====================== */
 app.get('/debug/users', (req, res) => {
   res.json(users);
@@ -114,5 +163,5 @@ app.get('/debug/users', (req, res) => {
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS rodando – login e cadastro OK');
+  console.log('INDICONS rodando – base estável com login, cadastro e link');
 });
