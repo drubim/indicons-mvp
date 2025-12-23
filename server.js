@@ -2,24 +2,14 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const crypto = require('crypto');
-const { google } = require('googleapis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ======================
-   RENDER / PROXY FIX
+   RENDER FIX
 ====================== */
 app.set('trust proxy', 1);
-
-/* ======================
-   GOOGLE CALENDAR
-====================== */
-const authGoogle = new google.auth.GoogleAuth({
-  keyFile: 'calendar.json',
-  scopes: ['https://www.googleapis.com/auth/calendar']
-});
-const calendar = google.calendar({ version: 'v3', auth: authGoogle });
 
 /* ======================
    MIDDLEWARE
@@ -33,7 +23,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true,      // HTTPS
+    secure: true,
     sameSite: 'lax'
   }
 }));
@@ -41,7 +31,7 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ======================
-   USERS
+   USUÁRIOS EM MEMÓRIA
 ====================== */
 const users = [
   { id: 1, email: 'admin@indicons.com.br', senha: 'admin123', role: 'admin' },
@@ -51,42 +41,78 @@ const users = [
 let indicadorId = 100;
 
 /* ======================
-   LEADS
-====================== */
-let leads = [];
-let leadId = 1;
-
-/* ======================
-   LOGIN (TESTE VISÍVEL)
+   LOGIN (FORM)
 ====================== */
 app.post('/login', (req, res) => {
   const { email, senha } = req.body;
 
   const user = users.find(u => u.email === email && u.senha === senha);
-  if (!user) {
-    return res.send('LOGIN INVALIDO');
-  }
+  if (!user) return res.send('LOGIN INVALIDO');
 
   req.session.user = {
     id: user.id,
     role: user.role
   };
 
-  res.send(`LOGADO COMO ${user.role}`);
+  res.redirect('/dashboard');
 });
 
 /* ======================
-   TESTE DE SESSÃO
+   LOGIN (FETCH)
 ====================== */
-app.get('/debug/session', (req, res) => {
-  res.json({
-    session: req.session.user || null
+app.post('/api/login', (req, res) => {
+  const { email, senha } = req.body;
+
+  const user = users.find(u => u.email === email && u.senha === senha);
+  if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
+
+  req.session.user = {
+    id: user.id,
+    role: user.role
+  };
+
+  res.json({ ok: true, role: user.role });
+});
+
+/* ======================
+   CADASTRO INDICADOR
+====================== */
+app.post('/cadastro-indicador', (req, res) => {
+  const { email, senha } = req.body;
+  if (!email || !senha) return res.send('Dados inválidos');
+
+  users.push({
+    id: indicadorId++,
+    email,
+    senha,
+    role: 'indicador',
+    codigo: crypto.randomBytes(4).toString('hex')
   });
+
+  res.redirect('/login.html');
+});
+
+/* ======================
+   DASHBOARD
+====================== */
+app.get('/dashboard', (req, res) => {
+  if (!req.session.user) return res.redirect('/login.html');
+
+  if (req.session.user.role === 'admin') return res.redirect('/admin.html');
+  if (req.session.user.role === 'parceiro') return res.redirect('/parceiro.html');
+  if (req.session.user.role === 'indicador') return res.redirect('/indicador.html');
+});
+
+/* ======================
+   DEBUG
+====================== */
+app.get('/debug/users', (req, res) => {
+  res.json(users);
 });
 
 /* ======================
    START
 ====================== */
 app.listen(PORT, () => {
-  console.log('INDICONS rodando (login fix Render)');
+  console.log('INDICONS rodando – login e cadastro OK');
 });
