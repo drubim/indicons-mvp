@@ -1,51 +1,82 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Indicador</title>
+  <meta charset="UTF-8">
+  <title>Indicador</title>
 </head>
+
 <body>
 
-<h1>Meus Indicados</h1>
+  <h1>Meus Indicados</h1>
 
-<p><strong>Meu link:</strong></p>
-<p id="link"></p>
+  <p>
+    Meu link:
+    <input type="text" id="meuLink" readonly style="width:350px;">
+    <button onclick="copiarLink()">Copiar</button>
+  </p>
 
-<table border="1" cellpadding="8">
-<thead>
-<tr>
-  <th>Nome</th>
-  <th>Status</th>
-  <th>Comissão</th>
-  <th>Data</th>
-</tr>
-</thead>
-<tbody id="leads"></tbody>
-</table>
+  <table border="1" cellpadding="5">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Status</th>
+        <th>Comissão</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody id="listaLeads">
+      <!-- preenchido via JS -->
+    </tbody>
+  </table>
 
-<br>
-<a href="/logout">Sair</a>
+  <br>
+  <a href="/logout">Sair</a>
 
-<script>
-fetch('/api/indicador/link')
-  .then(r => r.json())
-  .then(d => document.getElementById('link').innerText = d.link);
+  <script>
+    // 🔹 Carrega o link do indicador
+    fetch('/api/indicador/link')
+      .then(res => {
+        if (!res.ok) throw new Error('Não autorizado');
+        return res.json();
+      })
+      .then(data => {
+        document.getElementById('meuLink').value = data.link;
+      })
+      .catch(() => {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = '/login.html';
+      });
 
-fetch('/api/leads/indicador')
-  .then(r => r.json())
-  .then(data => {
-    const tb = document.getElementById('leads');
-    data.forEach(l => {
-      tb.innerHTML += `
-        <tr>
-          <td>${l.nome}</td>
-          <td>${l.status}</td>
-          <td>R$ ${Number(l.comissao).toFixed(2)}</td>
-          <td>${new Date(l.criadoEm).toLocaleDateString()}</td>
-        </tr>`;
-    });
-  });
-</script>
+    // 🔹 Copiar link
+    function copiarLink() {
+      const input = document.getElementById('meuLink');
+      input.select();
+      document.execCommand('copy');
+      alert('Link copiado!');
+    }
+
+    // 🔹 Carrega leads do indicador
+    fetch('/api/leads/indicador')
+      .then(res => {
+        if (!res.ok) throw new Error('Erro');
+        return res.json();
+      })
+      .then(leads => {
+        const tbody = document.getElementById('listaLeads');
+        tbody.innerHTML = '';
+
+        leads.forEach(l => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${l.nome}</td>
+            <td>${l.status}</td>
+            <td>${l.comissao || 0}</td>
+            <td>${new Date(l.criadoEm).toLocaleString()}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+  </script>
 
 </body>
 </html>
