@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard | INDICONS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">INDICONS</div>
+  <a href="/logout" class="logout">Sair</a>
+</header>
+
+<main class="container">
+
+  <!-- RESUMO -->
+  <section class="cards">
+    <div class="card">
+      <h4>Pré-adesões</h4>
+      <strong id="totalLeads">0</strong>
+    </div>
+    <div class="card">
+      <h4>Vendas aprovadas</h4>
+      <strong id="totalVendas">0</strong>
+    </div>
+    <div class="card">
+      <h4>Comissão estimada</h4>
+      <strong id="totalComissao">R$ 0</strong>
+    </div>
+  </section>
+
+  <!-- GRÁFICO FUNIL -->
+  <section class="panel">
+    <h3>Funil de indicações</h3>
+    <canvas id="funilChart"></canvas>
+  </section>
+
+  <!-- PAINEL FINANCEIRO -->
+  <section class="panel">
+    <h3>Painel financeiro</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Administradora</th>
+          <th>Valor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="financeiroTabela">
+        <!-- JS -->
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
