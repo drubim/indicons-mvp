@@ -1,24 +1,26 @@
-<h2>Cadastro de Indicador</h2>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro Indicador - INDICONS</title>
+</head>
+<body>
 
-<input id="nome" placeholder="Nome"><br>
-<input id="email" placeholder="Email"><br>
-<input id="telefone" placeholder="Telefone"><br>
-<input id="senha" placeholder="Senha"><br>
-<button onclick="cadastrar()">Cadastrar</button>
+  <h1>Cadastro de Indicador</h1>
 
-<script>
-function cadastrar() {
-  fetch("/api/indicadores", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      nome: nome.value,
-      email: email.value,
-      telefone: telefone.value,
-      senha: senha.value
-    })
-  })
-  .then(r => r.json())
-  .then(d => alert("Cadastro ok. Código: " + d.codigo_indicador));
-}
-</script>
+  <form id="cadastroIndicadorForm">
+    <label>
+      E-mail<br>
+      <input type="email" id="email" required>
+    </label>
+    <br><br>
+
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <p id="erro" style="color:red; display:none;"></p>
+
+  <script src="/cadastro-indicador.js"></script>
+
+</body>
+</html>
